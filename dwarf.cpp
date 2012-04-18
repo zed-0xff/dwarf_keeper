@@ -11,10 +11,11 @@ typedef vector<Wearing*> WearingVector;
 class Dwarf{
     public:
 
-    static const int  RACE_OFFSET = 0x44;
-    static const int FLAGS_OFFSET = 0x8c;
-    static const int    ID_OFFSET = 0xa8;
-    static const int  WEAR_OFFSET = 0x22c;
+    static const int      RACE_OFFSET = 0x44;
+    static const int     FLAGS_OFFSET = 0x8c;
+    static const int        ID_OFFSET = 0xa8;
+    static const int      WEAR_OFFSET = 0x22c;
+    static const int HAPPINESS_OFFSET = 0x6a4; // dword
 
     string getName(){
         string s;
@@ -43,6 +44,19 @@ class Dwarf{
     WearingVector* getWear(){
         return (WearingVector*)((char*)this + WEAR_OFFSET);
     }
+
+    int getHappiness(){
+        return *(int*)((char*)this+HAPPINESS_OFFSET);
+    }
+
+    string getThoughts(){
+        string s;
+
+        ((func_t_2_pvoids)(DWARF_THOUGHTS_FUNC))(this, &s);
+        return s;
+    }
+
+    //////////////////////////////////////////////////////////////////
 
     static Dwarf* getNext(int*idx){
         void **vector, **vend;

@@ -118,6 +118,12 @@ vector<string> http_get_strings(struct MHD_Connection* conn, const char*param_na
     return r;
 }
 
+bool is_ajax(struct MHD_Connection* conn){
+    str_param_t sp("X-Requested-With","");
+    MHD_get_connection_values(conn, MHD_HEADER_KIND, &http_str_param_iter, &sp);
+    return sp.second == "XMLHttpRequest";
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 static int ahc_echo(void * cls,
@@ -152,8 +158,14 @@ static int ahc_echo(void * cls,
   if(!strcmp(url, "/dwarves")){
       //html += "<h1>Dwarves</h1>\n";
       html += "<table class='dwarves sortable'>";
-      html += "<tr><th>name <th>profession <th title='number of items weared'>items <th class=sorttable_numeric title='total items value'>value\n";
-      html += "<th>flags";
+      html += "<tr>"
+          "<th>name "
+          "<th>profession "
+          "<th title='number of items weared'>items "
+          "<th class=sorttable_numeric title='total items value'>value "
+          "<th class=sorttable_numeric title='greater is better'>happiness"
+          "\n";
+      html += "<th class=flags>flags";
 
       int idx = 0;
       int nDwarves = 0;
@@ -183,7 +195,10 @@ static int ahc_echo(void * cls,
           sprintf(buf, "<td class=r>%d</td><td class=r>%d<span class=currency>&#9788;</span></td>", nItems, totalValue);
           html += buf;
 
-          sprintf(buf, "<td class=r>%x</td>", pDwarf->getFlags());
+          sprintf(buf, "<td class=r>%d</td>", pDwarf->getHappiness());
+          html += buf;
+
+          sprintf(buf, "<td class='flags r'>%x</td>", pDwarf->getFlags());
           html += buf;
 
           html += "</tr>\n";
@@ -196,11 +211,14 @@ static int ahc_echo(void * cls,
       long dwarf_id = strtol(url+9,NULL,0x10);
       int idx = 0;
       bool found = false;
-
+    
       while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
           if(dwarf_id == pDwarf->getId()){
               found = true;
-              html += "<h1>" + pDwarf->getName() + "</h1>";
+              html += "<div id=dwarf>\n";
+              html += "<h1>" + pDwarf->getName() + "</h1>\n";
+
+              sprintf(buf, "<div id=happiness>%d</div>\n", pDwarf->getHappiness()); html += buf;
 
               WearingVector*wv = pDwarf->getWear();
 
@@ -212,9 +230,11 @@ static int ahc_echo(void * cls,
                   html += HTML::Item((*itr)->item);
               }
 
-              html += "</table>";
+              html += "</table>\n";
 
-              //html += "<pre>" + pDwarf->getWear() + "</pre>";
+              html += "<div class=thoughts>" + pDwarf->getThoughts() + "</div>\n";
+              html += "</div>\n"; // div id=dwarf
+
               break;
           }
       }
@@ -226,9 +246,12 @@ static int ahc_echo(void * cls,
   } else if(!strcmp(url, "/items")){
       Clothes clothes;
 
-      clothes.want_owned = http_get_int(conn, "owned", 1);
-      clothes.want_free  = http_get_int(conn, "free", 1);
-      clothes.want_types = http_get_strings(conn, "t");
+      clothes.want_owned    = http_get_int(conn, "owned", 1);
+      clothes.want_free     = http_get_int(conn, "free", 1);
+      clothes.want_unusable = http_get_int(conn, "unusable", 0);
+      clothes.free_max_wear = http_get_int(conn, "free_max_wear", Item::WEAR_OK);
+      clothes.want_types    = http_get_strings(conn, "t");
+      clothes.want_stats    = !is_ajax(conn);
 
       html.reserve(100*1024);
       html += clothes.to_html();
@@ -259,7 +282,7 @@ static int ahc_echo(void * cls,
       ret = MHD_queue_response (conn, MHD_HTTP_OK, response);
       MHD_destroy_response (response);
       return ret;
-  } else if(!strcmp(url+strlen(url)-3,".js") && !strstr(url,"..") && !strstr(url+1,"/")){
+  } else if(!strcmp(url+strlen(url)-3,".js") && !strstr(url,"..") && !strchr(url+1,'/') && !strchr(url,'\\')){
       sprintf(buf,"dwarf_keeper%s",url);
       int fd;
       struct stat sbuf;
@@ -277,6 +300,12 @@ static int ahc_echo(void * cls,
   } else if(!strcmp(url,"/hexdump")){
       struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
       MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &get_hexdump_params, &hp);
+
+      string title = http_get_string(conn,"title","");
+      if(!title.empty()){
+          html += "<title>" + html_escape(title) + "</title>\n";
+          html += "<h2>" + html_escape(title) + "</h2>\n";
+      }
 
       html += "<pre>";
       switch(hp.width){
@@ -305,14 +334,18 @@ static int ahc_echo(void * cls,
   string html_utf8;
   if(is_json){
       html_utf8 = html;
+  } else if(is_ajax(conn)){
+      html_utf8 = cp850_to_utf8(html);
   } else {
       html_utf8 = 
           "<html><head>\n"
           "\t<link href='/style.css' rel='stylesheet' type='text/css' />\n"
-          "\t<script src='/sorttable.js'></script>\n"
           "</head><body>\n" +
-          cp850_to_utf8(html) +
-          "\n</body></html>";
+          cp850_to_utf8(html) + "\n\n" +
+          "<script src='/jquery-1.7.2.min.js'></script>\n"
+          "<script src='/sorttable.js'></script>\n"
+          "<script src='/dwarf_keeper.js'></script>\n"
+          "</body></html>";
   }
 
   response = MHD_create_response_from_buffer(html_utf8.size(), (void*) html_utf8.data(), MHD_RESPMEM_MUST_COPY);

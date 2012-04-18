@@ -15,7 +15,7 @@ class HTML{
         else if(is_worn)
             add_class = " worn";
 
-        sprintf(buf, "<tr><td class='name%s'>%s</td><td class='value r'>%d<span class=currency>&#9788;</span></td>\n",
+        sprintf(buf, "<tr><td class='name%s'>%s</td><td class='value r'>%d<span class=currency>&#9788;</span>\n",
           add_class,
           name,
           pItem->getValue()

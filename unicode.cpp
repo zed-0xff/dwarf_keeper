@@ -86,3 +86,28 @@ string url_escape(string src){
     return dst;
 }
 
+string html_escape(string src){
+    string dst;
+    const char*c;
+    int l=src.size();
+    dst.reserve(l + l/10);
+    const unsigned char*p = (const unsigned char*) src.data();
+
+    for(int i=0;i<l;i++){
+        switch(p[i]){
+            case '<':
+                dst += "&lt;";
+                break;
+            case '>':
+                dst += "&gt;";
+                break;
+            case '&':
+                dst += "&amp;";
+                break;
+            default:
+                dst += p[i];
+                break;
+        }
+    }
+    return dst;
+}
