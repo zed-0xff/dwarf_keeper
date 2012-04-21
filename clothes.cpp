@@ -14,56 +14,55 @@ struct ClothType {
     const char* name;
     layer_t     layer;
     item_type_t type;
-    int         subtype;
+    uint16_t    subtype;
+    uint16_t    flags;
+
+    uint32_t inline full_id(){
+        return (type<<16) + subtype;
+    }
 };
+
+#define FLAG_CRAFTABLE 1
 
 static ClothType clothtypes[] = {
-    {"breastplate", LAYER_ARMOR, ITEM_ARMOR ,  0 },
-    {"mail shirt" , LAYER_ARMOR, ITEM_ARMOR ,  1 },
-    {"armor"      , LAYER_ARMOR, ITEM_ARMOR ,  2 },
-    {"coat"       , LAYER_OVER , ITEM_ARMOR ,  3 },
-    {"shirt"      , LAYER_UNDER, ITEM_ARMOR ,  4 },
-    {"cloak"      , LAYER_COVER, ITEM_ARMOR ,  5 },
-    {"tunic"      , LAYER_UNDER, ITEM_ARMOR ,  6 },
-    {"toga"       , LAYER_OVER , ITEM_ARMOR ,  7 },
-    {"cape"       , LAYER_COVER, ITEM_ARMOR ,  8 },
-    {"vest"       , LAYER_OVER , ITEM_ARMOR ,  9 },
-    {"dress"      , LAYER_UNDER, ITEM_ARMOR , 10 },
-    {"robe"       , LAYER_OVER , ITEM_ARMOR , 11 },
-    {"gauntlet"   , LAYER_ARMOR, ITEM_GLOVES,  0 },
-    {"glove"      , LAYER_UNDER, ITEM_GLOVES,  1 },
-    {"mitten"     , LAYER_COVER, ITEM_GLOVES,  2 },
-    {"helm"       , LAYER_ARMOR, ITEM_HELM  ,  0 },
-    {"cap"        , LAYER_OVER , ITEM_HELM  ,  1 },
-    {"hood"       , LAYER_COVER, ITEM_HELM  ,  2 },
-    {"turban"     , LAYER_OVER , ITEM_HELM  ,  3 },
-    {"mask"       , LAYER_UNDER, ITEM_HELM  ,  4 },
-    {"head veil"  , LAYER_OVER , ITEM_HELM  ,  5 },
-    {"face veil"  , LAYER_UNDER, ITEM_HELM  ,  6 },
-    {"headscarf"  , LAYER_OVER , ITEM_HELM  ,  7 },
-    {"trousers"   , LAYER_OVER , ITEM_PANTS ,  0 },
-    {"greaves"    , LAYER_ARMOR, ITEM_PANTS ,  1 },
-    {"leggings"   , LAYER_ARMOR, ITEM_PANTS ,  2 },
-    {"loincloth"  , LAYER_UNDER, ITEM_PANTS ,  3 },
-    {"thong"      , LAYER_UNDER, ITEM_PANTS ,  4 },
-    {"skirt"      , LAYER_OVER , ITEM_PANTS ,  5 },
-    {"short skirt", LAYER_OVER , ITEM_PANTS ,  6 },
-    {"long skirt" , LAYER_OVER , ITEM_PANTS ,  7 },
-    {"braies"     , LAYER_UNDER, ITEM_PANTS ,  8 },
-    {"shoe"       , LAYER_OVER , ITEM_SHOES ,  0 },
-    {"high boot"  , LAYER_OVER , ITEM_SHOES ,  1 },
-    {"low boot"   , LAYER_OVER , ITEM_SHOES ,  2 },
-    {"sandal"     , LAYER_OVER , ITEM_SHOES ,  3 },
-    {"chausse"    , LAYER_UNDER, ITEM_SHOES ,  4 },
-    {"sock"       , LAYER_UNDER, ITEM_SHOES ,  5 },
-};
-
-static const char* CLOTH_TYPES[] = {
-    "armor", "braies", "breastplate", "cap", "cape", "chausse", "cloak", "coat", "dress", "face veil", "gauntlet", "glove", "greaves", "head veil", "headscarf", "helm", "high boot", "hood", "leggings", "loincloth", "long skirt", "low boot", "mail shirt", "mask", "mitten", "robe", "sandal", "shirt", "shoe", "short skirt", "skirt", "sock", "thong", "toga", "trousers", "tunic", "turban", "vest"
-};
-
-static const char* CRAFTABLES[] = {
-    "armor", "breastplate", "cap", "cloak", "dress", "gauntlet", "glove", "greaves", "helm", "high boot", "hood", "leggins", "low boot", "mail shirt", "mitten", "robe", "shirt", "shoe", "sock", "trousers"
+    {"breastplate", LAYER_ARMOR, ITEM_ARMOR ,  0, FLAG_CRAFTABLE },
+    {"mail shirt" , LAYER_ARMOR, ITEM_ARMOR ,  1, FLAG_CRAFTABLE },
+    {"armor"      , LAYER_ARMOR, ITEM_ARMOR ,  2, FLAG_CRAFTABLE },
+    {"coat"       , LAYER_OVER , ITEM_ARMOR ,  3, 0 },
+    {"shirt"      , LAYER_UNDER, ITEM_ARMOR ,  4, FLAG_CRAFTABLE },
+    {"cloak"      , LAYER_COVER, ITEM_ARMOR ,  5, FLAG_CRAFTABLE },
+    {"tunic"      , LAYER_UNDER, ITEM_ARMOR ,  6, 0 },
+    {"toga"       , LAYER_OVER , ITEM_ARMOR ,  7, 0 },
+    {"cape"       , LAYER_COVER, ITEM_ARMOR ,  8, 0 },
+    {"vest"       , LAYER_OVER , ITEM_ARMOR ,  9, 0 },
+    {"dress"      , LAYER_UNDER, ITEM_ARMOR , 10, FLAG_CRAFTABLE },
+    {"robe"       , LAYER_OVER , ITEM_ARMOR , 11, FLAG_CRAFTABLE },
+    {"gauntlet"   , LAYER_ARMOR, ITEM_GLOVES,  0, FLAG_CRAFTABLE },
+    {"glove"      , LAYER_UNDER, ITEM_GLOVES,  1, FLAG_CRAFTABLE },
+    {"mitten"     , LAYER_COVER, ITEM_GLOVES,  2, FLAG_CRAFTABLE },
+    {"helm"       , LAYER_ARMOR, ITEM_HELM  ,  0, FLAG_CRAFTABLE },
+    {"cap"        , LAYER_OVER , ITEM_HELM  ,  1, FLAG_CRAFTABLE },
+    {"hood"       , LAYER_COVER, ITEM_HELM  ,  2, FLAG_CRAFTABLE },
+    {"turban"     , LAYER_OVER , ITEM_HELM  ,  3, 0 },
+    {"mask"       , LAYER_UNDER, ITEM_HELM  ,  4, 0 },
+    {"head veil"  , LAYER_OVER , ITEM_HELM  ,  5, 0 },
+    {"face veil"  , LAYER_UNDER, ITEM_HELM  ,  6, 0 },
+    {"headscarf"  , LAYER_OVER , ITEM_HELM  ,  7, 0 },
+    {"trousers"   , LAYER_OVER , ITEM_PANTS ,  0, FLAG_CRAFTABLE },
+    {"greaves"    , LAYER_ARMOR, ITEM_PANTS ,  1, FLAG_CRAFTABLE },
+    {"leggings"   , LAYER_ARMOR, ITEM_PANTS ,  2, FLAG_CRAFTABLE },
+    {"loincloth"  , LAYER_UNDER, ITEM_PANTS ,  3, 0 },
+    {"thong"      , LAYER_UNDER, ITEM_PANTS ,  4, 0 },
+    {"skirt"      , LAYER_OVER , ITEM_PANTS ,  5, 0 },
+    {"short skirt", LAYER_OVER , ITEM_PANTS ,  6, 0 },
+    {"long skirt" , LAYER_OVER , ITEM_PANTS ,  7, 0 },
+    {"braies"     , LAYER_UNDER, ITEM_PANTS ,  8, 0 },
+    {"shoe"       , LAYER_OVER , ITEM_SHOES ,  0, FLAG_CRAFTABLE },
+    {"high boot"  , LAYER_OVER , ITEM_SHOES ,  1, FLAG_CRAFTABLE },
+    {"low boot"   , LAYER_OVER , ITEM_SHOES ,  2, FLAG_CRAFTABLE },
+    {"sandal"     , LAYER_OVER , ITEM_SHOES ,  3, 0 },
+    {"chausse"    , LAYER_UNDER, ITEM_SHOES ,  4, 0 },
+    {"sock"       , LAYER_UNDER, ITEM_SHOES ,  5, FLAG_CRAFTABLE },
 };
 
 #define MIN_FREE_CRAFTABLES 5
@@ -72,14 +71,10 @@ static const char* CRAFTABLES[] = {
 
 class Clothes{
     map<Item*, Dwarf*>  items2dwarves;
-    //set<void*> vtables; // vtables of clothing-only items, i.e. all from CLOTH_TYPES list
-    vector<void*>vtables;  // using vector instead of set saves ~300ms total
-    //map<string, void*> types2vtables;
-    map<void*, string> items2basenames;
+    vector<uint32_t>    want_types;
 
     public:
     int want_free, want_owned, want_stats, want_unusable, free_max_wear;
-    vector<string> want_types;
 
     Clothes(){
       // fill a pItem->pDwarf map
@@ -100,59 +95,30 @@ class Clothes{
               }
       }
       BENCH_END("filling items2dwarves");
+    }
 
-      BENCH_START;
-      // gather vtables
-      set<void*> avtables, svtables;
-      ItemsVector*v = Item::getVector();
-      ItemsVector::iterator itr;
-      for( itr = v->begin(); itr < v->end(); ++itr) {
-          string item_name;
-          int l;
-
-          if(avtables.find((*itr)->pvtbl) != avtables.end()) continue; // already in all vtables
-          avtables.insert((*itr)->pvtbl);
-
-          for(int i=0; i<(sizeof(CLOTH_TYPES)/sizeof(CLOTH_TYPES[0])); i++){
-              // if item_name ends on one of clothtypes[] array
-              if(check_item_type(*itr, CLOTH_TYPES[i])){
-                  svtables.insert((*itr)->pvtbl);
-                  break;
-              }
-          }
-      }
-      BENCH_END("gathering vtables");
-
-      vtables.reserve(svtables.size());
-      for( set<void*>::iterator it = svtables.begin(); it != svtables.end(); it++){
-          vtables.push_back(*it);
-      }
-
-      // caching items basenames saves ~50ms total
-//      BENCH_START;
-//      // map of ~20k entries
-//      for( itr = v->begin(); itr < v->end(); ++itr) {
-//          if(avtables.find((*itr)->pvtbl) == vtables.end()) continue; // not in vtables
-//          items2basenames[*itr] = (*itr)->getBaseName(1);
-//      }
-//      BENCH_END("gathering basenames");
-//      //printf("[d] %ld basenames\n", items2basenames.size());
+    void setWantTypes(vector<string> typeNames){
+        want_types.clear();
+        for(int i=0; i<typeNames.size(); i++){
+            for(int j=0; j<sizeof(clothtypes)/sizeof(clothtypes[0]); j++){
+                if(!typeNames[i].compare(clothtypes[j].name)){
+                    want_types.push_back(clothtypes[j].full_id());
+                    break;
+                }
+            }
+        }
     }
 
     private:
 
-    bool check_item_type(Item* pItem, const char*type, int l){
-        string item_name = pItem->getBaseName(1);
-        return(item_name.size() > l && !strncmp(item_name.data()+item_name.size()-l, type, l));
-    }
-    bool check_item_type(Item* pItem, const char*type){
-        return check_item_type(pItem, type, strlen(type));
-    }
-
-    bool is_clothes_vtable(void*pvtbl){
-        // using operator[] instead of vector::iterator saves ~500ms total!
-        for(int i=0; i<vtables.size(); i++){
-            if(vtables[i] == pvtbl) return true;
+    bool is_clothing(Item*pItem){
+        switch(pItem->getTypeId()){
+            case ITEM_GLOVES:
+            case ITEM_ARMOR:
+            case ITEM_SHOES:
+            case ITEM_PANTS:
+            case ITEM_HELM:
+                return true;
         }
         return false;
     }
@@ -162,78 +128,10 @@ class Clothes{
         int cnt = 0;
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-            if( is_clothes_vtable((*itr)->pvtbl) && (*itr)->getSize() != Item::SIZE_OK )
+            if( is_clothing(*itr) && (*itr)->getSize() != Item::SIZE_OK )
                 cnt++;
         }
         return cnt;
-    }
-
-    string count_by_names(const char* name0, ...){
-        ItemsVector*v = Item::getVector();
-        va_list ap; va_start(ap, name0);
-        void *pvtbl = NULL;
-        int i, l, cnt_free = 0, cnt_owned = 0;
-        string item_name,rs;
-        char buf[0x200];
-        const char*p;
-        map<Item*,Dwarf*>::iterator i2d_it;
-
-        rs = "\n<td class=r title='";
-        for(va_start(ap,name0), p = name0; p; p = va_arg(ap, const char*)){
-            if( p != name0) rs += ", ";
-            l = strlen(p);
-            for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-                if(
-                        is_clothes_vtable((*itr)->pvtbl) && 
-                        check_item_type(*itr,p,l) &&
-                        (*itr)->getSize() == Item::SIZE_OK
-                ){
-                    if(items2dwarves.find(*itr) != items2dwarves.end())
-                        cnt_owned++;
-                    else if((*itr)->getWear() <= free_max_wear )
-                        cnt_free++;
-                }
-            }
-            rs += p;
-        }
-        va_end(ap);
-
-        rs += "'>"; // end of TD
-
-        string url; // common part of url
-        for(va_start(ap,name0), p=name0; p; p = va_arg(ap, const char*)){
-            url += (p == name0) ? "?" : "&";
-            url += "t=";
-            url += url_escape(p);
-        }
-        va_end(ap);
-
-        sprintf(buf,"<a class=cnt-owned href='%s&owned=1&free=0'>%d</a>", url.c_str(), cnt_owned); rs += buf;
-
-        bool shortage = false;
-        if(cnt_free < MIN_FREE_CRAFTABLES){
-            for(va_start(ap,name0), p=name0; p && !shortage; p = va_arg(ap, const char*)){
-                for(int i=0; i<sizeof(CRAFTABLES)/sizeof(CRAFTABLES[0]); i++){
-                    if(!strcmp(CRAFTABLES[i], p)){
-                        // itemtype is craftable and number of free items of type < 10
-                        // looks like we have shortage on it
-                        shortage = true;
-                        break;
-                    }
-                }
-            }
-            va_end(ap);
-        }
-
-        if( shortage ){
-            sprintf(buf,"<a class='cnt-free shortage'"
-                    " title='low count of free items!'"
-                    " href='%s&owned=0&free=1'>%d</a>", url.c_str(), cnt_free);  rs += buf;
-        } else {
-            sprintf(buf,"<a class=cnt-free  href='%s&owned=0&free=1'>%d</a>", url.c_str(), cnt_free);  rs += buf;
-        }
-
-        return rs;
     }
 
     void count_by_type( item_type_t type, int subtype, int*cnt_owned, int*cnt_free ){
@@ -260,12 +158,14 @@ class Clothes{
         char buf[0x200];
         vector <const char*> item_names;
         bool found = false;
+        bool craftable = false;
 
         for(int i=0; i<sizeof(clothtypes)/sizeof(clothtypes[0]); i++){
             pct = &clothtypes[i];
             if( pct->layer == layer && pct->type == type ){
                 count_by_type(pct->type, pct->subtype, &cnt_owned, &cnt_free);
                 item_names.push_back(pct->name);
+                if(pct->flags & FLAG_CRAFTABLE) craftable = true;
                 found = true;
             }
         }
@@ -286,8 +186,17 @@ class Clothes{
         }
         html += "'>";
 
+
+        if( craftable && cnt_free < MIN_FREE_CRAFTABLES ){
+            // looks like we have a shortage
+            sprintf(buf,"<a class='cnt-free shortage'"
+                    " title='low count of free items!'"
+                    " href='%s&owned=0&free=1'>%d</a>", url.c_str(), cnt_free);  html += buf;
+        } else {
+            sprintf(buf,"<a class=cnt-free  href='%s&owned=0&free=1'>%d</a>", url.c_str(), cnt_free);  html += buf;
+        }
+
         sprintf(buf,"<a class=cnt-owned href='%s&owned=1&free=0'>%d</a>", url.c_str(), cnt_owned); html += buf;
-        sprintf(buf,"<a class=cnt-free  href='%s&owned=0&free=1'>%d</a>", url.c_str(), cnt_free ); html += buf;
 
         return html;
     }
@@ -357,15 +266,16 @@ class Clothes{
       ItemsVector::iterator itr;
       int nItems = 0;
       for ( itr = v->begin(); itr < v->end(); ++itr ) {
-          if(!is_clothes_vtable((*itr)->pvtbl)) continue;
+          if(!is_clothing(*itr)) continue;
 
           if(want_types.size() > 0){
               bool ok = false;
-              for(vector<string>::iterator itt = want_types.begin(); itt<want_types.end(); itt++){
-                  if(check_item_type(*itr,itt->data(),itt->size())){
-                      ok = true;
-                      break;
-                  }
+              uint32_t itfid = (*itr)->getFullId(); // item type full id
+              for(int i=0; i<want_types.size(); i++){
+                if(want_types[i] == itfid){
+                    ok = true;
+                    break;
+                }
               }
               if(!ok) continue; // not in want_types
           }
@@ -423,9 +333,14 @@ class Clothes{
 
       s += " items of type: ";
 
-      for(vector<string>::iterator itt = want_types.begin(); itt<want_types.end(); itt++){
-          if( itt != want_types.begin()) s += ", ";
-          s += "<span class=important>" + html_escape(*itt) + "</span>";
+      for(int i=0; i<want_types.size(); i++){
+          for(int j=0; j<sizeof(clothtypes)/sizeof(clothtypes[0]); j++){
+              if(want_types[i] == clothtypes[j].full_id()){
+                  if( i>0 ) s += ", ";
+                  s += "<span class=important>" + html_escape(clothtypes[j].name) + "</span>";
+                  break;
+              }
+          }
       }
       s += "</h2>\n";
       s += html;

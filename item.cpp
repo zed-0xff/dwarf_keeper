@@ -41,6 +41,10 @@ class Item{
         return ((pvoid_arg_func_t)(((void**)pvtbl)[VTBL_FUNC_SUBTYPE_ID]))(this);
     }
 
+    uint32_t inline getFullId(){
+        return (getTypeId()<<16) + getSubTypeId();
+    }
+
     int getRaceId(){
         return *(int16_t*)((char*)this+RACE_ID_OFFSET);
     }

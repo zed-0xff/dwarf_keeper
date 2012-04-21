@@ -2,9 +2,9 @@
 
 class HTML{
     public:
-    static char* Item(::Item* pItem){
+
+    static char* Item(const char*name, int value){
         static char buf[0x200];
-        const char* name = pItem->getName().c_str();
         const char* add_class = "";
 
         bool is_worn   = (name[0] == 'X' && name[strlen(name)-1] == 'X');
@@ -18,8 +18,12 @@ class HTML{
         sprintf(buf, "<tr><td class='name%s'>%s</td><td class='value r'>%d<span class=currency>&#9788;</span>\n",
           add_class,
           name,
-          pItem->getValue()
+          value
         );
         return buf;
+    }
+
+    static char* Item(::Item* pItem){
+        return Item(pItem->getName().c_str(), pItem->getValue());
     }
 };

@@ -16,6 +16,7 @@
 
 #include "common.h"
 #include "clothes.cpp"
+#include "items_controller.cpp"
 
 //#define USE_FORK
 
@@ -142,6 +143,8 @@ static int ahc_echo(void * cls,
   int is_json = 0;
   int resp_code = MHD_HTTP_OK;
 
+  HTTPRequest request(conn, url);
+
   if (0 != strcmp(method, "GET")) return MHD_NO; /* unexpected method */
   if (&dummy != *ptr){
       /* The first time only the headers are valid,
@@ -243,18 +246,23 @@ static int ahc_echo(void * cls,
           resp_code = MHD_HTTP_NOT_FOUND;
       }
 
-  } else if(!strcmp(url, "/items")){
+  } else if(!strcmp(url, "/clothes")){
       Clothes clothes;
 
       clothes.want_owned    = http_get_int(conn, "owned", 1);
       clothes.want_free     = http_get_int(conn, "free", 1);
       clothes.want_unusable = http_get_int(conn, "unusable", 0);
       clothes.free_max_wear = http_get_int(conn, "free_max_wear", Item::WEAR_OK);
-      clothes.want_types    = http_get_strings(conn, "t");
       clothes.want_stats    = !is_ajax(conn);
+
+      clothes.setWantTypes(http_get_strings(conn, "t"));
 
       html.reserve(100*1024);
       html += clothes.to_html();
+
+  } else if(!strcmp(url, "/items")){
+      ItemsController c(request);
+      html += c.to_html();
 
   } else if(!strcmp(url, "/dwarves.json")){
       is_json = 1;
