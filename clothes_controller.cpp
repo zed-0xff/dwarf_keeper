@@ -69,22 +69,26 @@ static ClothType clothtypes[] = {
 
 // http://dwarffortresswiki.org/index.php/40d:Clothing#Layering_of_clothing
 
-class Clothes{
+class ClothesController{
+    HTTPRequest* request;
     map<Item*, Dwarf*>  items2dwarves;
     vector<uint32_t>    want_types;
 
     public:
     int want_free, want_owned, want_stats, want_unusable, free_max_wear;
 
-    Clothes(){
+    ClothesController(HTTPRequest&req){
+      request = &req;
+
+      want_owned    = request->get_int("owned", 1);
+      want_free     = request->get_int("free", 1);
+      want_unusable = request->get_int("unusable", 0);
+      free_max_wear = request->get_int("free_max_wear", Item::WEAR_OK);
+      want_stats    = !request->is_ajax();
+
+      setWantTypes(request->get_strings("t"));
+
       // fill a pItem->pDwarf map
-
-      want_stats  = 1;
-      want_owned  = 1;
-      want_free   = 1;
-      want_unusable = 0;
-      free_max_wear = Item::WEAR_OK;
-
       BENCH_START;
       int idx=0;
       while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
@@ -292,7 +296,7 @@ class Clothes{
               if(!want_owned) continue;
 
               html += HTML::Item(*itr);
-              sprintf(buf, "<td class=owner><a href='/dwarves/%04x'>%s</a>", 
+              sprintf(buf, "<td class=owner><a href='/dwarves?id=%d'>%s</a>", 
                       i2d_it->second->getId(),
                       i2d_it->second->getName().c_str());
               html += buf;

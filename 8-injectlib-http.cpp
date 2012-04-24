@@ -15,7 +15,7 @@
 //#define DEBUG
 
 #include "common.h"
-#include "clothes.cpp"
+#include "clothes_controller.cpp"
 #include "items_controller.cpp"
 #include "creatures_controller.cpp"
 
@@ -59,23 +59,6 @@ int get_hexdump_params(void *cls, enum MHD_ValueKind kind, const char *key, cons
     return MHD_YES;
 }
 
-typedef pair<const char*, int> int_param_t;
-int http_int_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
-    int_param_t*p = (int_param_t*)cls;
-    if(!strcmp(p->first, key)){
-        p->second = atoi(value);
-        return MHD_NO;
-    } else {
-        return MHD_YES; // continue iteration
-    }
-}
-int http_get_int(struct MHD_Connection* conn, const char*param_name, int default_value){
-    int_param_t ip(param_name,default_value);
-    MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_int_param_iter, &ip);
-    return ip.second;
-}
-
-
 typedef pair<const char*, string> str_param_t;
 int http_str_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
     str_param_t*p = (str_param_t*)cls;
@@ -90,29 +73,6 @@ string http_get_string(struct MHD_Connection* conn, const char*param_name, const
     str_param_t sp(param_name,default_value);
     MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_str_param_iter, &sp);
     return sp.second;
-}
-
-
-typedef pair<const char*, vector<string>* > strs_param_t;
-int http_strs_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
-    strs_param_t*p = (strs_param_t*)cls;
-    if(!strcmp(p->first, key)){
-        p->second->push_back(value);
-        return MHD_YES; // continue iteration
-    }
-}
-vector<string> http_get_strings(struct MHD_Connection* conn, const char*param_name){
-    static vector<string>r;
-    r.clear();
-    strs_param_t sp(param_name, &r);
-    MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_strs_param_iter, &sp);
-    return r;
-}
-
-bool is_ajax(struct MHD_Connection* conn){
-    str_param_t sp("X-Requested-With","");
-    MHD_get_connection_values(conn, MHD_HEADER_KIND, &http_str_param_iter, &sp);
-    return sp.second == "XMLHttpRequest";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -148,24 +108,15 @@ static int ahc_echo(void * cls,
 
   html.reserve(50*1024);
 
-  if(!strcmp(url, "/dwarves") || !strcmp(url, "/creatures")){
+  if(request.url_match("/dwarves") || request.url_match("/creatures")){
       CreaturesController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
 
-  } else if(!strcmp(url, "/clothes")){
-      Clothes clothes;
-
-      clothes.want_owned    = http_get_int(conn, "owned", 1);
-      clothes.want_free     = http_get_int(conn, "free", 1);
-      clothes.want_unusable = http_get_int(conn, "unusable", 0);
-      clothes.free_max_wear = http_get_int(conn, "free_max_wear", Item::WEAR_OK);
-      clothes.want_stats    = !is_ajax(conn);
-
-      clothes.setWantTypes(http_get_strings(conn, "t"));
-
+  } else if(request.url_match("/clothes")){
+      ClothesController c(request);
       html.reserve(100*1024);
-      html += clothes.to_html();
+      html += c.to_html();
 
   } else if(!strcmp(url, "/items")){
       ItemsController c(request);
@@ -249,7 +200,7 @@ static int ahc_echo(void * cls,
   string html_utf8;
   if(is_json){
       html_utf8 = html;
-  } else if(is_ajax(conn)){
+  } else if(request.is_ajax()){
       html_utf8 = cp850_to_utf8(html);
   } else {
       html_utf8 = 

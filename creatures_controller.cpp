@@ -76,7 +76,6 @@ class CreaturesController {
             "<th class=sorttable_numeric title='greater is better'>happiness"
             "\n";
         html += "<th class=flags>flags";
-        html += "<th>a4";
 
         int idx = 0, nDwarves = 0, race_filter;
 
@@ -120,9 +119,6 @@ class CreaturesController {
             html += buf;
 
             sprintf(buf, "<td class='flags r'>%x</td>", pc->getFlags());
-            html += buf;
-
-            sprintf(buf, "<td class='flags r'>%x</td>", pc->w(0xa4));
             html += buf;
 
             html += "</tr>\n";
