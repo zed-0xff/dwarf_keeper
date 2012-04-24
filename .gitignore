@@ -4,3 +4,5 @@ a.out
 ?
 *.a
 *.dylib
+*.ini
+target

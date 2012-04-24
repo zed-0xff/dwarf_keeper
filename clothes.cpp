@@ -314,7 +314,7 @@ class Clothes{
                   "%p"
                   "</a>"
                   "<td class=r>%x:%x",
-                  *itr, Item::SIZE, url_escape((*itr)->getName()).c_str(), *itr,
+                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), *itr,
                   (*itr)->getTypeId(), (*itr)->getSubTypeId() );
           html += buf;
 #endif

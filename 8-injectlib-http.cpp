@@ -17,6 +17,7 @@
 #include "common.h"
 #include "clothes.cpp"
 #include "items_controller.cpp"
+#include "creatures_controller.cpp"
 
 //#define USE_FORK
 
@@ -39,17 +40,6 @@ pid_t getpid(){
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-
-void str_replace(string&s, const char*from, const char*to){
-    int i = 0;
-    int lto = strlen(to);
-    int lfrom = strlen(from);
-
-    while( (i=s.find(from, i)) != string::npos ){
-        s.replace(i, lfrom, to);
-        i += lto-lfrom+1;
-    }
-}
 
 struct hexdump_params{
     unsigned long offset;
@@ -158,93 +148,10 @@ static int ahc_echo(void * cls,
 
   html.reserve(50*1024);
 
-  if(!strcmp(url, "/dwarves")){
-      //html += "<h1>Dwarves</h1>\n";
-      html += "<table class='dwarves sortable'>";
-      html += "<tr>"
-          "<th>name "
-          "<th>profession "
-          "<th title='number of items weared'>items "
-          "<th class=sorttable_numeric title='total items value'>value "
-          "<th class=sorttable_numeric title='greater is better'>happiness"
-          "\n";
-      html += "<th class=flags>flags";
-
-      int idx = 0;
-      int nDwarves = 0;
-      while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
-          s = pDwarf->getName();
-
-          nDwarves++;
-
-          // dwarven babies have no useful info
-          if(s.find(", Dwarven Baby") != string::npos) continue;
-
-          str_replace(s, ", ", "</a></td><td class=prof>");
-          sprintf(buf, "<tr id=\"dwarf_%04x\"><td><a href=\"/dwarves/%04x\">%s</td>", 
-                  pDwarf->getId(),
-                  pDwarf->getId(),
-                  s.c_str());
-          html += buf;
-
-          int nItems = 0, totalValue = 0;
-          WearingVector*wv = pDwarf->getWear();
-          WearingVector::iterator itr;
-          for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-              Item* pItem = (*itr)->item;
-              totalValue += pItem->getValue();
-              nItems++;
-          }
-          sprintf(buf, "<td class=r>%d</td><td class=r>%d<span class=currency>&#9788;</span></td>", nItems, totalValue);
-          html += buf;
-
-          sprintf(buf, "<td class=r>%d</td>", pDwarf->getHappiness());
-          html += buf;
-
-          sprintf(buf, "<td class='flags r'>%x</td>", pDwarf->getFlags());
-          html += buf;
-
-          html += "</tr>\n";
-      }
-      html += "</table>";
-
-      sprintf(buf, "<h1>Dwarves (%d)</h1>\n", nDwarves);
-      html = buf + html;
-  } else if(!strncmp(url, "/dwarves/", 9) && strlen(url) == 13){
-      long dwarf_id = strtol(url+9,NULL,0x10);
-      int idx = 0;
-      bool found = false;
-    
-      while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
-          if(dwarf_id == pDwarf->getId()){
-              found = true;
-              html += "<div id=dwarf>\n";
-              html += "<h1>" + pDwarf->getName() + "</h1>\n";
-
-              sprintf(buf, "<div id=happiness>%d</div>\n", pDwarf->getHappiness()); html += buf;
-
-              WearingVector*wv = pDwarf->getWear();
-
-              html += "<table class='items sortable'>\n";
-              html += "<tr><th>item <th class=sorttable_numeric>value\n";
-
-              WearingVector::iterator itr;
-              for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                  html += HTML::Item((*itr)->item);
-              }
-
-              html += "</table>\n";
-
-              html += "<div class=thoughts>" + pDwarf->getThoughts() + "</div>\n";
-              html += "</div>\n"; // div id=dwarf
-
-              break;
-          }
-      }
-      if(!found){
-          html += "Not Found";
-          resp_code = MHD_HTTP_NOT_FOUND;
-      }
+  if(!strcmp(url, "/dwarves") || !strcmp(url, "/creatures")){
+      CreaturesController c(request);
+      html += c.to_html();
+      resp_code = c.resp_code;
 
   } else if(!strcmp(url, "/clothes")){
       Clothes clothes;

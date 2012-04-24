@@ -83,8 +83,6 @@ class ItemsController {
                     break;
             }
             count_chunk& cc = m[name];
-            //    html += HTML::Item(*itr);
-            //    cnt += 1;
             cc.count++;
             cc.total_value += (*itr)->getValue();
             cc.pItem = *itr;
@@ -93,9 +91,10 @@ class ItemsController {
 
         for(map<string,count_chunk>::iterator it = m.begin(); it != m.end(); it++){
             html += HTML::Item(it->first.c_str(), it->second.total_value / it->second.count);
-            sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span>\n",
+            sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span> <td class=comment>%s\n",
                     it->second.count,
-                    it->second.total_value
+                    it->second.total_value,
+                    it->second.pItem->getBaseName(1).c_str()
                     );
             html += buf;
         }
@@ -159,8 +158,10 @@ class ItemsController {
             case 34: return "cabinets";
             case 38: return "ammo";
             case 39: return "crowns";
+            case 40: return "rings";
             case 41: return "earrings";
             case 43: return "large cut gems";
+            case 44: return "anvils";
             case 48: return "fish";
             case 54: return "leather";
             case 57: return "cloth";

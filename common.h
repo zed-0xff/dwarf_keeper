@@ -39,6 +39,22 @@ info_func4_t getItemName         = (info_func4_t)ITEM_NAME_FUNC;
 info_func3_t getItemBaseName     = (info_func3_t)ITEM_BASE_NAME_FUNC;
 value_func_t getItemValue        = (value_func_t)ITEM_VALUE_FUNC;
 
+int str_replace(string&s, const char*from, const char*to){
+    int i = 0;
+    int lto = strlen(to);
+    int lfrom = strlen(from);
+    int nreplaces = 0;
+
+    while( (i=s.find(from, i)) != string::npos ){
+        s.replace(i, lfrom, to);
+        i += lto-lfrom+1;
+        nreplaces++;
+    }
+
+    return nreplaces;
+}
+
+
 int diff_ms(timeval t1, timeval t2)
 {
     return (((t1.tv_sec - t2.tv_sec) * 1000000) + 

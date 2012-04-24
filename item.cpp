@@ -6,7 +6,7 @@ class Item{
     public:
     void *pvtbl;    // pointer to vtable
 
-    static const int SIZE = 0xb0;
+    static const int RECORD_SIZE = 0xb0;
 
     string getName(){
         string s;
@@ -70,7 +70,7 @@ class Item{
                 getTypeId(),
                 getSubTypeId(),
                 getRaceId(),
-                Dwarf::RACE_DWARF
+                RACE_DWARF
                 );
     }
 
