@@ -1,4 +1,5 @@
 #include "common.h"
+#include "soul.cpp"
 
 static const int RACE_CAT   = 0x09e;
 static const int RACE_DUCK  = 0x0a8;
@@ -12,7 +13,7 @@ class Wearing{
 
 typedef vector<Wearing*> WearingVector;
 
-class Creature{
+class Creature : public MemClass {
     public:
 
     static const int RECORD_SIZE = 0xa00;
@@ -55,17 +56,7 @@ class Creature{
     // 0 = FEMALE, 1 = MALE
     int getSex(){ return w(SEX_OFFSET); }
 
-    //////////////////////////////////////////////////////////////////
- 
-    uint16_t w(int offset){
-        return *(uint16_t*)((char*)this+offset);
-    }
-    uint32_t dw(int offset){
-        return *(uint32_t*)((char*)this+offset);
-    }
-    int32_t i(int offset){
-        return *(int32_t*)((char*)this+offset);
-    }
+    Soul* getSoul(){ return (Soul*)(dw(SOUL_OFFSET)); } // XXX will not work on 64bit
 
     //////////////////////////////////////////////////////////////////
 
@@ -101,6 +92,7 @@ class Creature{
     static const int       SEX_OFFSET =  0xa4; // word
     static const int        ID_OFFSET =  0xa8;
     static const int      WEAR_OFFSET = 0x22c;
+    static const int      SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
     static const int HAPPINESS_OFFSET = 0x6a4; // dword
 
 };

@@ -25,6 +25,12 @@ class HTTPRequest;
 // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
 #define CMP_ITEMSIZE_FUNC       0x947760 
 
+// int skill_lvl_2_string(string*, int level)
+#define SKILL_LVL_2_S_FUNC      0x209e80
+
+// int skill_id_2_string(string*, int skill_id, int race, int sex)
+#define SKILL_ID_2_S_FUNC       0x20b170
+
 typedef int(*info_func3_t)(void*, string*, int);
 typedef int(*info_func4_t)(void*, string*, int, int);
 typedef int(*value_func_t)(void*, int, int);
@@ -33,6 +39,8 @@ typedef int(*no_arg_func_t)();
 typedef int(*pvoid_arg_func_t)(void*);
 typedef int(*func_t_4_ints)(int,int,int,int);
 typedef int(*func_t_2_pvoids)(void*, void*);
+typedef int(*func_t_si)(string*, int);
+typedef int(*func_t_siii)(string*, int, int, int);
 
 info_func3_t getCreatureFullName = (info_func3_t)CREATURE_FULL_NAME_FUNC;
 info_func4_t getItemName         = (info_func4_t)ITEM_NAME_FUNC;
@@ -65,6 +73,7 @@ static struct timeval g_t0,g_t1;
 #define BENCH_START      gettimeofday(&g_t0, NULL);
 #define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
 
+#include "mem_class.cpp"
 #include "dwarf.cpp"
 #include "item.cpp"
 #include "html.cpp"

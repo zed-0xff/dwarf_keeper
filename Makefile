@@ -12,7 +12,7 @@ injectlib-memserver1.dylib: 6-injectlib-memserver.c
 injectlib-memserver2.dylib: 7-injectlib-memserver.cpp
 	g++ -arch i386 -flat_namespace -dynamiclib -o $@ $<
 
-injectlib-memserver.dylib: 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp creatures_controller.cpp
+injectlib-memserver.dylib: 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp creatures_controller.cpp mem_class.cpp soul.cpp creature.cpp skill.cpp
 	g++ -g -arch i386 -flat_namespace -dynamiclib libmicrohttpd.a -o $@ $<
 
 

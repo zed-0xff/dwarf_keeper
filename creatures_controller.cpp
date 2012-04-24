@@ -36,17 +36,50 @@ class CreaturesController {
 
                 sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
 
+                // wearings
+
                 WearingVector*wv = pc->getWear();
+                if(wv && wv->size() > 0){
+                    html += "<table class='items sortable'>\n";
+                    html += "<tr><th>item <th class=sorttable_numeric>value\n";
 
-                html += "<table class='items sortable'>\n";
-                html += "<tr><th>item <th class=sorttable_numeric>value\n";
+                    WearingVector::iterator itr;
+                    for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
+                        html += HTML::Item((*itr)->item);
+                    }
 
-                WearingVector::iterator itr;
-                for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                    html += HTML::Item((*itr)->item);
+                    html += "</table>\n";
                 }
 
-                html += "</table>\n";
+                // skills
+
+                SkillsVector* psv = pc->getSoul()->getSkillsVector();
+                if(psv && psv->size() > 0){
+                    html += "<table id=skills class='sortable skills'>\n";
+                    html += "<tr><th class=sorttable_numeric>level<th>skill\n";
+                    for(SkillsVector::iterator it=psv->begin(); it<psv->end(); it++){
+                        const char*type = NULL;
+                        switch((*it)->getType()){
+                            case Skill::TYPE_COMBAT:
+                                type = "st_combat";
+                                break;
+                            case Skill::TYPE_LABOR:
+                                type = "st_labor";
+                                break;
+                            case Skill::TYPE_MISC:
+                                type = "st_misc";
+                                break;
+                        }
+                        sprintf(buf, "<tr class='%s'><td class=skill_level><tt>%2d</tt> %s <td class=skill_name>%s \n",
+                                type ? type : "",
+                                (*it)->getLevel(),
+                                (*it)->levelString().c_str(),
+                                (*it)->nameString(pc->getRace(), pc->getSex()).c_str()
+                                ); html+=buf;
+                    }
+                    html += "</table>\n";
+                }
+
 
                 html += "<div class=thoughts>" + pc->getThoughts() + "</div>\n";
                 html += "</div>\n"; // div id=dwarf
@@ -76,6 +109,7 @@ class CreaturesController {
             "<th class=sorttable_numeric title='greater is better'>happiness"
             "\n";
         html += "<th class=flags>flags";
+        html += "<th>test";
 
         int idx = 0, nDwarves = 0, race_filter;
 
@@ -119,6 +153,9 @@ class CreaturesController {
             html += buf;
 
             sprintf(buf, "<td class='flags r'>%x</td>", pc->getFlags());
+            html += buf;
+
+            sprintf(buf, "<td class='flags r'>%x</td>", pc->dw(0x5fc) - pc->dw(0x5f8));
             html += buf;
 
             html += "</tr>\n";

@@ -2,7 +2,7 @@
 
 typedef vector<Item*> ItemsVector;
 
-class Item{
+class Item : public MemClass {
     public:
     void *pvtbl;    // pointer to vtable
 
