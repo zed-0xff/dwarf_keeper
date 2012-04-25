@@ -1,4 +1,5 @@
 #include "common.h"
+#include "screen.cpp"
 
 class CreaturesController {
     HTTPRequest* request;
@@ -15,82 +16,103 @@ class CreaturesController {
     string to_html(){
         int id = request->get_int("id",0);
         if(id){
-            return show(id);
+            Creature *pc = Creature::find(id);
+            if(pc){
+                if( request->get_int("center",0) == 1 ){
+                    int x=0, y=0, z=0;
+                    pc->getCoords(&x,&y,&z);
+
+                    // XXX HACK
+                    *((int*)0x1563A3C) = -30000;
+                    *((int*)0x1563A48) = -30000;
+                    *((uint16_t*)0x156A97C) = 0x17;
+                    *((int*)0x1563B5C) = -1;
+                    *((int*)0x1563B68) = 0;
+                    *((uint8_t*)0x16FEA54) = 1;
+                    *((uint8_t*)0x16FEA55) = 1;
+
+                    Screen::moveTo(x,y,z);
+                    ((func_t_i)(FOO_FUNC))(pc->getId());
+
+                    return "OK";
+                } else {
+                    return show(pc);
+                }
+            } else {
+                resp_code = MHD_HTTP_NOT_FOUND;
+                return "Not Found";
+            }
         } else {
             return list();
         }
     }
 
     // show one creature
-    string show(int id){
-        int idx = 0;
+    string show(Creature *pc){
         char buf[0x200];
         string html;
-        bool found = false;
         
-        while(Creature* pc=Creature::getNext(&idx)){
-            if(id == pc->getId()){
-                found = true;
-                html += "<div id=dwarf>\n";
-                html += "<h1>" + pc->getName() + "</h1>\n";
+        html += "<div id=dwarf>\n";
+        html += "<h1>" + pc->getName() + "</h1>\n";
 
-                sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
+        //sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
+        sprintf(buf,
+                "<table class=tools>"
+                    "<tr id='creature_%d'>"
+                        "<td>"
+                            "<div class=crosshair></div>"
+                        "<td title='Happiness' class=happiness>%d"
+                "</table>\n",
+                pc->getId(), pc->getHappiness()
+        ); html += buf;
 
-                // wearings
+        // wearings
 
-                WearingVector*wv = pc->getWear();
-                if(wv && wv->size() > 0){
-                    html += "<table class='items sortable'>\n";
-                    html += "<tr><th>item <th class=sorttable_numeric>value\n";
+        WearingVector*wv = pc->getWear();
+        if(wv && wv->size() > 0){
+            html += "<table class='items sortable'>\n";
+            html += "<tr><th>item <th class=sorttable_numeric>value\n";
 
-                    WearingVector::iterator itr;
-                    for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                        html += HTML::Item((*itr)->item);
-                    }
-
-                    html += "</table>\n";
-                }
-
-                // skills
-
-                SkillsVector* psv = pc->getSoul()->getSkillsVector();
-                if(psv && psv->size() > 0){
-                    html += "<table id=skills class='sortable skills'>\n";
-                    html += "<tr><th class=sorttable_numeric>level<th>skill\n";
-                    for(SkillsVector::iterator it=psv->begin(); it<psv->end(); it++){
-                        const char*type = NULL;
-                        switch((*it)->getType()){
-                            case Skill::TYPE_COMBAT:
-                                type = "st_combat";
-                                break;
-                            case Skill::TYPE_LABOR:
-                                type = "st_labor";
-                                break;
-                            case Skill::TYPE_MISC:
-                                type = "st_misc";
-                                break;
-                        }
-                        sprintf(buf, "<tr class='%s'><td class=skill_level><tt>%2d</tt> %s <td class=skill_name>%s \n",
-                                type ? type : "",
-                                (*it)->getLevel(),
-                                (*it)->levelString().c_str(),
-                                (*it)->nameString(pc->getRace(), pc->getSex()).c_str()
-                                ); html+=buf;
-                    }
-                    html += "</table>\n";
-                }
-
-
-                html += "<div class=thoughts>" + pc->getThoughts() + "</div>\n";
-                html += "</div>\n"; // div id=dwarf
-
-                break;
+            WearingVector::iterator itr;
+            for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
+                html += HTML::Item((*itr)->item);
             }
+
+            html += "</table>\n";
         }
-        if(!found){
-            html += "Not Found";
-            resp_code = MHD_HTTP_NOT_FOUND;
+
+        // skills
+
+        SkillsVector* psv = pc->getSoul()->getSkillsVector();
+        if(psv && psv->size() > 0){
+            html += "<table id=skills class='sortable skills'>\n";
+            html += "<tr><th class=sorttable_numeric>level<th>skill\n";
+            for(SkillsVector::iterator it=psv->begin(); it<psv->end(); it++){
+                const char*type = NULL;
+                switch((*it)->getType()){
+                    case Skill::TYPE_COMBAT:
+                        type = "st_combat";
+                        break;
+                    case Skill::TYPE_LABOR:
+                        type = "st_labor";
+                        break;
+                    case Skill::TYPE_MISC:
+                        type = "st_misc";
+                        break;
+                }
+                sprintf(buf, "<tr class='%s'><td class=skill_level><tt>%2d</tt> %s <td class=skill_name>%s \n",
+                        type ? type : "",
+                        (*it)->getLevel(),
+                        (*it)->levelString().c_str(),
+                        (*it)->nameString(pc->getRace(), pc->getSex()).c_str()
+                        ); html+=buf;
+            }
+            html += "</table>\n";
         }
+
+
+        html += "<div class=thoughts>" + pc->getThoughts() + "</div>\n";
+        html += "</div>\n"; // div id=dwarf
 
         return html;
     }
@@ -109,7 +131,6 @@ class CreaturesController {
             "<th class=sorttable_numeric title='greater is better'>happiness"
             "\n";
         html += "<th class=flags>flags";
-        html += "<th>test";
 
         int idx = 0, nDwarves = 0, race_filter;
 
@@ -132,7 +153,11 @@ class CreaturesController {
                 s += "</a></td><td class=prof>";
             }
 
-            sprintf(buf, "<tr id=\"dwarf_%04x\"><td><a href=\"?id=%d\">%s</td>", 
+            sprintf(buf, 
+                    "<tr id=\"creature_%d\">"
+                        "<td>"
+                            "<div class=crosshair></div>"
+                            "<a href='?id=%d'>%s</a>", 
                     pc->getId(),
                     pc->getId(),
                     s.c_str());
@@ -153,9 +178,6 @@ class CreaturesController {
             html += buf;
 
             sprintf(buf, "<td class='flags r'>%x</td>", pc->getFlags());
-            html += buf;
-
-            sprintf(buf, "<td class='flags r'>%x</td>", pc->dw(0x5fc) - pc->dw(0x5f8));
             html += buf;
 
             html += "</tr>\n";

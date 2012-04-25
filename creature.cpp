@@ -11,7 +11,10 @@ class Wearing{
     int body_part;
 };
 
+class Creature;
+
 typedef vector<Wearing*> WearingVector;
+typedef vector<Creature*> CreaturesVector;
 
 class Creature : public MemClass {
     public:
@@ -58,18 +61,28 @@ class Creature : public MemClass {
 
     Soul* getSoul(){ return (Soul*)(dw(SOUL_OFFSET)); } // XXX will not work on 64bit
 
+    void getCoords(int*px, int*py, int*pz){
+        ((func_t_pppp)(CREATURE_COORDS_FUNC))(this, px, py, pz);
+    }
+
     //////////////////////////////////////////////////////////////////
 
+    static Creature* find(int id){
+        CreaturesVector* v = (CreaturesVector*)CREATURES_VECTOR;
+        for(int i=0; i<v->size(); i++){
+            if(v->at(i)->getId() == id){
+                return v->at(i);
+            }
+        }
+        return NULL;
+    }
+
     static Creature* getNext(int*idx, int race_filter = -1){
-        void **vector, **vend;
+        CreaturesVector* v = (CreaturesVector*)CREATURES_VECTOR;
         Creature *pc;
 
-        vector = *(void***)CREATURES_VECTOR;
-        vend   = *(void***)(CREATURES_VECTOR+4);
-        
-        while((vector+*idx) < vend){
-            pc = (Creature*)vector[(*idx)++];
-            if(!pc) break;
+        while((*idx) < v->size()){
+            pc = v->at((*idx)++);
 
             // apply race_filter
             if( race_filter != -1 && pc->getRace() != race_filter ) 

@@ -96,6 +96,7 @@ static int ahc_echo(void * cls,
   HTTPRequest request(conn, url);
 
   if (0 != strcmp(method, "GET")) return MHD_NO; /* unexpected method */
+
   if (&dummy != *ptr){
       /* The first time only the headers are valid,
          do not respond in the first round... */
@@ -203,15 +204,35 @@ static int ahc_echo(void * cls,
   } else if(request.is_ajax()){
       html_utf8 = cp850_to_utf8(html);
   } else {
-      html_utf8 = 
-          "<html><head>\n"
-          "\t<link href='/style.css' rel='stylesheet' type='text/css' />\n"
-          "</head><body>\n" +
-          cp850_to_utf8(html) + "\n\n" +
-          "<script src='/jquery-1.7.2.min.js'></script>\n"
-          "<script src='/sorttable.js'></script>\n"
-          "<script src='/dwarf_keeper.js'></script>\n"
-          "</body></html>";
+      int fd;
+      struct stat sbuf;
+      size_t size = 0;
+
+      if ( (-1 == (fd = open ("dwarf_keeper/template.html", O_RDONLY))) || (0 != fstat (fd, &sbuf)) ){
+          perror("[!] template.html: ");
+          if (fd != -1) close (fd);
+      } else {
+          html_utf8.resize(sbuf.st_size, ' ');
+          read(fd, &html_utf8[0], sbuf.st_size);
+          close(fd);
+      }
+
+      html = cp850_to_utf8(html);
+
+      if( str_replace(html_utf8, "{CONTENT}", html) == 0 ){
+          html_utf8 =
+              "<html><head>\n"
+              "\t<link href='/style.css' rel='stylesheet' type='text/css' />\n"
+              "</head><body>\n" +
+              html + "\n\n" +
+              "<script src='/jquery-1.7.2.min.js'></script>\n"
+              "<script src='/sorttable.js'></script>\n"
+              "<script src='/dwarf_keeper.js'></script>\n"
+              "<font color=red>"
+                  " no {CONTENT} tag in template.html, or template.html not found. Using built-in default"
+              "</font>\n"
+              "</body></html>";
+      }
   }
 
   response = MHD_create_response_from_buffer(html_utf8.size(), (void*) html_utf8.data(), MHD_RESPMEM_MUST_COPY);

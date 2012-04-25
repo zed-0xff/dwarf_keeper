@@ -31,6 +31,20 @@ class HTTPRequest;
 // int skill_id_2_string(string*, int skill_id, int race, int sex)
 #define SKILL_ID_2_S_FUNC       0x20b170
 
+// int foo_func(int creature_id)
+#define FOO_FUNC 0x3021f0
+
+// int getCreatureCoords(Creature *pc, int *px, int *py, int *pz)
+#define CREATURE_COORDS_FUNC    0x949af0
+
+// int setScreenCenter(int center_mode) - actual coords are set via following global variables
+#define SET_SCREEN_CENTER_FUNC  0x2d5240
+
+// global variables for SET_SCREEN_CENTER_FUNC
+#define SCR_TARGET_CENTER_X     0x1563a30
+#define SCR_TARGET_CENTER_Y     0x1563a34
+#define SCR_TARGET_CENTER_Z     0x1563a38
+
 typedef int(*info_func3_t)(void*, string*, int);
 typedef int(*info_func4_t)(void*, string*, int, int);
 typedef int(*value_func_t)(void*, int, int);
@@ -41,6 +55,9 @@ typedef int(*func_t_4_ints)(int,int,int,int);
 typedef int(*func_t_2_pvoids)(void*, void*);
 typedef int(*func_t_si)(string*, int);
 typedef int(*func_t_siii)(string*, int, int, int);
+typedef int(*func_t_i)(int);
+typedef int(*func_t_p)(void*);
+typedef int(*func_t_pppp)(void*, void*, void*, void*);
 
 info_func3_t getCreatureFullName = (info_func3_t)CREATURE_FULL_NAME_FUNC;
 info_func4_t getItemName         = (info_func4_t)ITEM_NAME_FUNC;
@@ -50,6 +67,21 @@ value_func_t getItemValue        = (value_func_t)ITEM_VALUE_FUNC;
 int str_replace(string&s, const char*from, const char*to){
     int i = 0;
     int lto = strlen(to);
+    int lfrom = strlen(from);
+    int nreplaces = 0;
+
+    while( (i=s.find(from, i)) != string::npos ){
+        s.replace(i, lfrom, to);
+        i += lto-lfrom+1;
+        nreplaces++;
+    }
+
+    return nreplaces;
+}
+
+int str_replace(string&s, const char*from,const string&to){
+    int i = 0;
+    int lto = to.size();
     int lfrom = strlen(from);
     int nreplaces = 0;
 

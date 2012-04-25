@@ -1,0 +1,247 @@
+* {
+    font-family: verdana;
+}
+
+pre, .ptr, tt {
+    font-family: monospace;
+}
+
+a {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+h2 {
+    font-size: 16pt;
+}
+
+.name {
+    white-space: pre;
+}
+
+.worn {
+    color: #c00;
+}
+
+.forbid {
+    color: #b0b;
+}
+
+.prof {
+    font-size: 80%;
+}
+
+.currency {
+    color: #aaa;
+}
+
+.comment {
+    color: #999;
+    font-size: 80%;
+}
+
+.r {
+    text-align: right;
+    padding-left: 1em !important;
+    /*font-family: monospace;*/
+    font-size: 90%;
+}
+
+
+.items .owner {
+    font-size: 80%;
+}
+
+/*
+ * autorefresh
+ */
+
+div.autorefresh select {
+    display: none;
+}
+div.autorefresh {
+    font-size: 8pt;
+    color: #ccc;
+    position: absolute;
+    top: 0; left: 200px;
+    width: 20em;
+}
+div.autorefresh label {
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+}
+
+/*
+ * dwarves
+ */
+
+table.dwarves .flags {
+    color: #ccc;
+    font-family: monospace;
+}
+
+.crosshair {
+    width: 9px;
+    height: 9px;
+    opacity: 0.3;
+    margin-right: 2px;
+    cursor: pointer;
+    background-image:url(data:image/gif;base64,R0lGODlhCQAJAIAAAAAAAP///yH5BAAAAAAALAAAAAAJAAkAAAISTIBoZ9D8mosnOTthXfnGbhkFADs=);
+    background-repeat: no-repeat;
+}
+
+table.dwarves .crosshair {
+    position: relative; left: -2px; top: 7px;
+    float: left;
+}
+
+/*
+ * dwarf info page
+ */
+
+#dwarf table#skills {
+    float: left;
+    margin-right: 1.2em;
+    margin-bottom: 0.7em;
+    font-size: 11pt;
+}
+
+#dwarf table#skills tr td tt {
+    white-space: pre;
+    color: #ccc;
+    font-size: 9pt;
+}
+#dwarf table#skills tr td.skill_level {
+    padding-left: 3px;
+}
+#dwarf table#skills tr.st_misc {
+    color: #aaa;
+}
+#dwarf table#skills tr.st_combat {
+    color: #a00;
+}
+#dwarf table#skills tr.st_labor {
+    color: #090;
+}
+
+#dwarf .crosshair {
+}
+
+#dwarf .happiness {
+    color: #ccc;
+    font-size: 10pt;
+    font-family: monospace;
+}
+
+#dwarf .items {
+    float: left;
+    margin-left: 0.5em;
+    margin-right: 1.2em;
+    margin-bottom: 0.7em;
+    font-size: 11pt;
+}
+
+#dwarf .thoughts {
+    padding-right: 0.5em;
+    text-align: justify;
+}
+#dwarf .thoughts, #dwarf .thoughts p {
+    margin: 0 0 0.7em 0;
+    font-size: 11pt;
+   /* font-family: monospace; */
+}
+
+#dwarf .color-301 { color:#66f } /* cyan, kinda  */
+#dwarf .color-101 { color:#00c } /* dark   blue  */
+#dwarf .color-601 { color:#966 } /* yellow/brown */
+#dwarf .color-400 { color:#900 } /* dark   red   */
+#dwarf .color-401 { color:#f00 } /* bright red   */
+#dwarf .color-200 { color:#060 } /* dark   green */
+#dwarf .color-201 { color:#0a0 } /* bright green */
+
+/* 
+ * clothes counts
+ */
+
+.clothes-counts .na {
+    text-align: center;
+    color: #ccc;
+}
+.cnt-owned {
+    display: none;
+}
+#btn-clothes-toggle {
+    float: left;
+    margin-top: 2px;
+    margin-right: 7px;
+    padding: 4px 6px 5px 6px;
+}
+table.clothes-counts {
+    clear: both;
+}
+h2 .important {
+/*    border-bottom: solid 2px #ccc; */
+}
+.clothes-counts .unusable {
+    text-align: center;
+    padding-top: 5px;
+}
+.clothes-counts .shortage {
+    color: red !important;
+    font-weight: bold !important;
+}
+
+h2.cnt-free #max-wear-sel{
+    font-size: 8pt;
+    color: #ccc;
+    text-decoration: none;
+    font-weight: normal;
+    display: inline;
+    margin-left: 1.5em;
+    margin-top: 5px;
+    position: absolute;
+}
+h2.cnt-free #max-wear-sel select {
+    font-family: monospace;
+    color: #aaa;
+}
+
+/* 
+ * general/sortable table 
+ */
+
+table.sortable, table.t1 {
+  border: solid 1px #ddd;
+  border-collapse: collapse;
+  margin-top: 5px; }
+  table.sortable td, table.sortable th, table.t1 td, table.t1 th {
+    border: solid 1px #ddd;
+    padding: 1px 5px;
+    /*font-family: Monospace;*/ }
+  table.sortable th, table.t1 th {
+    font-family: Monospace;
+    cursor: pointer;
+    text-align: center;
+    font-weight: bold; }
+  table.sortable td.tools, table.t1 td.tools {
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+    vertical-align: top; }
+  table.sortable td hr, table.t1 td hr {
+    height: 1px;
+    border: 0;
+    color: red;
+    background-color: #eeeeee; }
+
+/* 
+ * items
+ */
+
+#items .counts-by-type {
+    float: left;
+    margin-right: 2em;
+}
