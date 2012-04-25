@@ -6,6 +6,14 @@ static const char* GEM_CUTS[] = {
     "pear", "point", "cushion", "single"
 };
 
+static const char* TREE_NAMES[] = {
+    "black-cap", "blood thorn", "tower-cap", "alder", "spore tree", "ashen", "tunnel tube",
+    "cedar", "fungiwood"
+};
+
+#define ITEM_TYPE_SMALL_CUT_GEMS    1
+#define ITEM_TYPE_AMMUNITION       38
+
 
 class ItemsController {
     map<uint32_t, int> counts_map;
@@ -41,7 +49,7 @@ class ItemsController {
         string html, name;
         ItemsVector*v = Item::getVector();
         char buf[0x200];
-        int cnt = 0;
+        int cnt = 0, pos, add_count;
         map <string, count_chunk> m;
 
         html += "<table class='items sortable'>\n"
@@ -55,13 +63,13 @@ class ItemsController {
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if(type_id != (*itr)->getTypeId()) continue;
 
+            add_count = 1; // one item by default
+
             name = (*itr)->getName();
             switch(type_id){
-                case 1: // cut gems
-                    int pos = name.find(" cut ");
-                    if( pos != string::npos ){
-                        name.erase(0,pos+1);
-                    }
+                case ITEM_TYPE_SMALL_CUT_GEMS:
+                    pos = name.find(" cut ");
+                    if( pos != string::npos ) name.erase(0,pos+1);
 
                     // "oval prases" => "cut prases"
                     for(int i=0; i<sizeof(GEM_CUTS)/sizeof(GEM_CUTS[0]); i++){
@@ -81,9 +89,40 @@ class ItemsController {
                         name.erase(name.size()-1,1);
                     }
                     break;
+
+                case ITEM_TYPE_AMMUNITION:
+                    // ignore quality modifiers
+                    name = (*itr)->getBaseName(0);
+
+                    // "walrus bone bolts [5]" => "bone bolts [5]"
+                    pos = name.find(" bone bolt");
+                    if(pos != string::npos) name.erase(0,pos+1);
+
+                    // "bone bolts [5]" => "bone bolts" + increase counter by 5
+                    pos = name.find(" [");
+                    if(pos != string::npos && name.find("]") == name.size()-1){
+                        printf("[d] '%s'\n", name.substr(pos+2, name.size()-pos-3).c_str());
+                        add_count = atoi(name.substr(pos+2, name.size()-pos-3).c_str());
+                        name.erase(pos);
+                    }
+
+                    // "bone bolt"  => "bone bolts"
+                    // "ashen dart" => "ashen darts"
+                    if( name.size() > 0 && name[name.size()-1] != 's'){
+                        name += "s";
+                    }
+
+                    // "ashen bolts" => "wood bolts"
+                    for(int i=0; i<sizeof(TREE_NAMES)/sizeof(TREE_NAMES[0]); i++){
+                        if( name.substr(0, strlen(TREE_NAMES[i])) == TREE_NAMES[i] ){
+                            name.replace(0,strlen(TREE_NAMES[i]), "wood");
+                            break;
+                        }
+                    }   
+                    break;
             }
             count_chunk& cc = m[name];
-            cc.count++;
+            cc.count += add_count;
             cc.total_value += (*itr)->getValue();
             cc.pItem = *itr;
             cnt++;
@@ -94,7 +133,7 @@ class ItemsController {
             sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span> <td class=comment>%s\n",
                     it->second.count,
                     it->second.total_value,
-                    it->second.pItem->getBaseName(1).c_str()
+                    it->second.pItem->getBaseName(0).c_str()
                     );
             html += buf;
         }
@@ -156,7 +195,7 @@ class ItemsController {
             case 32: return "armor stands";
             case 33: return "weapon racks";
             case 34: return "cabinets";
-            case 38: return "ammo";
+            case 38: return "ammunition";
             case 39: return "crowns";
             case 40: return "rings";
             case 41: return "earrings";
