@@ -66,8 +66,6 @@ if($('h2.cnt-free')[0]){ // only if element exists
 
 $('.crosshair').attr('title', 'Center screen on this unit').click(function(){
     var parent = $(this).closest('tr')
-    if(!parent) parent = $(this).closest('h1')
-    if(!parent) parent = $(this).closest('h2')
     var id = parent.attr('id')
     if(!id || id.indexOf('unit_') != 0){
         alert("cannot find unit id parent")

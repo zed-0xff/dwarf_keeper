@@ -88,7 +88,7 @@ class Unit : public MemClass {
             if( race_filter != -1 && pc->getRace() != race_filter ) 
                 continue;
 
-            // skip dead creatures
+            // skip dead units
             if((pc->getFlags() & FLAG_DEAD) != 0) 
                 continue;
 

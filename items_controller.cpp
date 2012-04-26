@@ -1,4 +1,4 @@
-#include "common.h"
+#include "controller.cpp"
 
 static const char* GEM_CUTS[] = { 
     "square", "oval", "tapered", "octagon", "rectangular", "round", "cushion", "emerald",
@@ -16,7 +16,7 @@ static const char* TREE_NAMES[] = {
 #define ITEM_TYPE_CLOTH            57
 
 
-class ItemsController {
+class ItemsController : Controller {
     map<uint32_t, int> counts_map;
     HTTPRequest* request;
     int want_group;
@@ -66,12 +66,11 @@ class ItemsController {
 
         html += "<div id=item>\n";
         html += "<h1>" + item->getName() + "</h1>\n";
-        html += "</div>\n";
 
         html += "<table class=t1>\n";
 
-        html += "<tr><th> full name <td>" + item->getName() + "\n";
-        html += "<tr><th> base name <td>" + item->getBaseName(0) + "\n";
+        html += "<tr><th> full name <td class=fullname>" + item->getName() + "\n";
+        html += "<tr><th> base name <td class=basename>" + item->getBaseName(0) + "\n";
 
         sprintf(buf, "<tr><th>value <td class=r>%d<span class=currency>&#9788;</span>\n", 
                 item->getValue()); html += buf;
@@ -79,14 +78,38 @@ class ItemsController {
         sprintf(buf, "<tr><th>flags <td class='r comment'>%x\n", 
                 item->getFlags()); html += buf;
 
-        if( RefsVector* refs = item->getRefs() ){
+        html += "</table>\n";
+
+        RefsVector* refs = item->getRefs();
+        if( refs && refs->size() > 0 ){
+            html += "<table id=refs class=t1>\n";
             for(int i=0; i<refs->size(); i++){
-                sprintf(buf, "<tr><th>ref <td class='r comment'>%x\n", 
-                    refs->at(i)->getType()); html += buf;
+                Reference *ref = refs->at(i);
+
+                html += "<tr><th>";
+                html += ref->getTypeString();
+
+                if(Unit *p = ref->getUnit()){
+                    sprintf(buf, "<td><a href='/units?id=%d'>%s</a>", p->getId(), p->getName().c_str());
+                    html += buf;
+                }
+
+                if(Item *p = ref->getItem()){
+                    html += "<td>";
+                    html += link_to_item(p);
+                }
+
+                if(Building *p = ref->getBuilding()){
+                    html += "<td>" + html_escape(p->getName());
+                }
+
+                string s = ref->getDescription();
+                if( !s.empty() ) html += "<td>" + html_escape(s);
             }
+            html += "</table>\n";
         }
 
-        html += "</table>\n";
+        html += "</div>\n";
 
         return html;
     }
@@ -185,7 +208,12 @@ class ItemsController {
         }
 
         for(map<string,count_chunk>::iterator it = m.begin(); it != m.end(); it++){
-            html += HTML::Item(it->first.c_str(), it->second.total_value / it->second.count);
+            const char* title = it->first.c_str();
+
+            // if there's only one item of a kind => show it with link to actual item info page
+            if(it->second.count == 1) title = link_to_item(it->second.pItem, title);
+            html += HTML::Item(title, it->second.total_value / it->second.count);
+
             sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span> <td class=comment>%s\n",
                     it->second.count,
                     it->second.total_value,
@@ -218,8 +246,7 @@ class ItemsController {
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if(type_id != (*itr)->getTypeId()) continue;
 
-            sprintf(buf, "<a href='?id=%d'>%s</a>", (*itr)->getId(), (*itr)->getName().c_str() );
-            html += HTML::Item(buf, (*itr)->getValue());
+            html += HTML::Item(link_to_item(*itr), (*itr)->getValue());
 
 #ifdef DEBUG
             sprintf(buf,

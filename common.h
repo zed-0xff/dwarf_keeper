@@ -57,6 +57,7 @@ typedef int(*func_t_si)(string*, int);
 typedef int(*func_t_siii)(string*, int, int, int);
 typedef int(*func_t_i)(int);
 typedef int(*func_t_p)(void*);
+typedef int(*func_t_pp)(void*, void*);
 typedef int(*func_t_pppp)(void*, void*, void*, void*);
 
 info_func3_t getUnitFullName     = (info_func3_t)UNIT_FULL_NAME_FUNC;

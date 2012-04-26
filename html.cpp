@@ -19,12 +19,10 @@ class HTML{
                 "<tr>"
                     "<td class='name%s'>%s"
                     "<td class='value r'>%d<span class=currency>&#9788;</span>"
-                    "<td class='comment'>%x"
                     "\n",
           add_class,
           name,
-          value,
-          flags
+          value
         );
         return buf;
     }

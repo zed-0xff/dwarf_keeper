@@ -245,3 +245,12 @@ table.sortable, table.t1 {
     float: left;
     margin-right: 2em;
 }
+
+/*
+ * item info
+ */
+
+#item td.fullname, #item td.basename { text-align: center }
+#item table.t1 th { min-width: 10em }
+#item table.t1 td { min-width: 10em }
+
