@@ -64,20 +64,20 @@ if($('h2.cnt-free')[0]){ // only if element exists
  * crosshair
  */
 
-$('.crosshair').attr('title', 'Center screen on this creature').click(function(){
+$('.crosshair').attr('title', 'Center screen on this unit').click(function(){
     var parent = $(this).closest('tr')
     if(!parent) parent = $(this).closest('h1')
     if(!parent) parent = $(this).closest('h2')
     var id = parent.attr('id')
-    if(!id || id.indexOf('creature_') != 0){
-        alert("cannot find creature id parent")
+    if(!id || id.indexOf('unit_') != 0){
+        alert("cannot find unit id parent")
         return
     }
 
-    id = parseInt(id.replace("creature_",""))
+    id = parseInt(id.replace("unit_",""))
     $(this).parent().effect('highlight')
 
-    $.ajax({ url: "/creatures?id=" + id + "&center=1" });
+    $.ajax({ url: "/units?id=" + id + "&center=1" });
 })
 
 

@@ -1,10 +1,10 @@
-#include "creature.cpp"
+#include "unit.cpp"
 
-class Dwarf : public Creature {
+class Dwarf : public Unit {
     public:
 
     // returns only ALIVE DWARVES
     static Dwarf* getNext(int*idx){
-        return (Dwarf*)Creature::getNext(idx, RACE_DWARF);
+        return (Dwarf*)Unit::getNext(idx, RACE_DWARF);
     }
 };

@@ -3,7 +3,7 @@
 class HTML{
     public:
 
-    static char* Item(const char*name, int value){
+    static char* Item(const char*name, int value, int flags=0){
         static char buf[0x200];
         const char* add_class = "";
 
@@ -15,15 +15,21 @@ class HTML{
         else if(is_worn)
             add_class = " worn";
 
-        sprintf(buf, "<tr><td class='name%s'>%s</td><td class='value r'>%d<span class=currency>&#9788;</span>\n",
+        sprintf(buf, 
+                "<tr>"
+                    "<td class='name%s'>%s"
+                    "<td class='value r'>%d<span class=currency>&#9788;</span>"
+                    "<td class='comment'>%x"
+                    "\n",
           add_class,
           name,
-          value
+          value,
+          flags
         );
         return buf;
     }
 
     static char* Item(::Item* pItem){
-        return Item(pItem->getName().c_str(), pItem->getValue());
+        return Item(pItem->getName().c_str(), pItem->getValue(), pItem->getFlags());
     }
 };

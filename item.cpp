@@ -1,4 +1,5 @@
 #include "common.h"
+#include "reference.cpp"
 
 typedef vector<Item*> ItemsVector;
 
@@ -6,7 +7,10 @@ class Item : public MemClass {
     public:
     void *pvtbl;    // pointer to vtable
 
-    static const int RECORD_SIZE = 0xb0;
+    // 0xb0 for clothes
+    // 0x90 for other items
+    // +may be other sizes depending on item type
+    static const int RECORD_SIZE = 0xb0; 
 
     string getName(){
         string s;
@@ -23,12 +27,23 @@ class Item : public MemClass {
         return s;
     }
 
+    // http://dwarffortresswiki.org/index.php/Stocks#Color_Code
+    static const int FLAG_DUMP         =    0x20000;
+    static const int FLAG_FORBID       =    0x80000;
+    static const int FLAG_MELT         =   0x800000;
+    static const int FLAG_HIDE         =  0x1000000;
+    static const int FLAG_NOT_FORT_OWN = 0x20000000; // not belongs to fort
+
+    uint32_t getFlags(){
+        return dw(FLAGS_OFFSET);
+    }
+
     int getValue(){
         return getItemValue(this, 0, 0);
     }
 
     int getId(){
-        return *(int*)((char*)this+ID_OFFSET);
+        return dw(ID_OFFSET);
     }
 
     int getTypeId(){
@@ -57,7 +72,7 @@ class Item : public MemClass {
     static const int WEAR_XX = 3;
 
     int getWear(){
-        return *(int16_t*)((char*)this+WEAR_OFFSET);
+        return w(WEAR_OFFSET);
     }
 
     static const int SIZE_OK    = 0;
@@ -74,19 +89,37 @@ class Item : public MemClass {
                 );
     }
 
+    RefsVector* getRefs(){
+        return (RefsVector*)((char*)this + REFS_VECTOR_OFFSET);
+    }
+
     //////////////////////////////////////////////////////////////////
 
     static ItemsVector* getVector(){
         return (ItemsVector*)ITEMS_VECTOR;
     }
 
+    static Item* find(int id){
+        ItemsVector*v = getVector();
+        for(int i=0; i<v->size(); i++){
+            if( v->at(i)->getId() == id ) return v->at(i);
+        }
+        return NULL;
+    }
+
     //////////////////////////////////////////////////////////////////
 
     private:
     // offset in instance data
-    static const int ID_OFFSET         = 0x14;
-    static const int WEAR_OFFSET       = 0x6c; // word
-    static const int RACE_ID_OFFSET    = 0x84; // word
+    static const int FLAGS_OFFSET           = 0x0c;
+    static const int ID_OFFSET              = 0x14;
+    static const int REFS_VECTOR_OFFSET     = 0x24; // item references vector, 3x4 bytes
+    static const int AMOUNT_OFFSET          = 0x58; // 20 in "iron bolts [20]"
+    static const int WEAR_OFFSET            = 0x6c; // word - item condition
+    static const int MATERIAL_ID_OFFSET     = 0x7c;
+    static const int MATERIAL_SUB_ID_OFFSET = 0x80;
+    static const int RACE_ID_OFFSET         = 0x84; // word
+    static const int QUALITY_OFFSET         = 0x86; // word
 
     // index of functions in vtable
     static const int VTBL_FUNC_TYPE_ID    = 0; // static - no args

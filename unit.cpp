@@ -11,19 +11,19 @@ class Wearing{
     int body_part;
 };
 
-class Creature;
+class Unit;
 
 typedef vector<Wearing*> WearingVector;
-typedef vector<Creature*> CreaturesVector;
+typedef vector<Unit*> UnitsVector;
 
-class Creature : public MemClass {
+class Unit : public MemClass {
     public:
 
     static const int RECORD_SIZE = 0xa00;
 
     string getName(){
         string s;
-        getCreatureFullName(this, &s, 0);
+        getUnitFullName(this, &s, 0);
         return s;
     }
 
@@ -62,13 +62,13 @@ class Creature : public MemClass {
     Soul* getSoul(){ return (Soul*)(dw(SOUL_OFFSET)); } // XXX will not work on 64bit
 
     void getCoords(int*px, int*py, int*pz){
-        ((func_t_pppp)(CREATURE_COORDS_FUNC))(this, px, py, pz);
+        ((func_t_pppp)(UNIT_COORDS_FUNC))(this, px, py, pz);
     }
 
     //////////////////////////////////////////////////////////////////
 
-    static Creature* find(int id){
-        CreaturesVector* v = (CreaturesVector*)CREATURES_VECTOR;
+    static Unit* find(int id){
+        UnitsVector* v = (UnitsVector*)UNITS_VECTOR;
         for(int i=0; i<v->size(); i++){
             if(v->at(i)->getId() == id){
                 return v->at(i);
@@ -77,9 +77,9 @@ class Creature : public MemClass {
         return NULL;
     }
 
-    static Creature* getNext(int*idx, int race_filter = -1){
-        CreaturesVector* v = (CreaturesVector*)CREATURES_VECTOR;
-        Creature *pc;
+    static Unit* getNext(int*idx, int race_filter = -1){
+        UnitsVector* v = (UnitsVector*)UNITS_VECTOR;
+        Unit *pc;
 
         while((*idx) < v->size()){
             pc = v->at((*idx)++);

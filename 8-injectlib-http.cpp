@@ -17,7 +17,7 @@
 #include "common.h"
 #include "clothes_controller.cpp"
 #include "items_controller.cpp"
-#include "creatures_controller.cpp"
+#include "units_controller.cpp"
 
 //#define USE_FORK
 
@@ -109,8 +109,8 @@ static int ahc_echo(void * cls,
 
   html.reserve(50*1024);
 
-  if(request.url_match("/dwarves") || request.url_match("/creatures")){
-      CreaturesController c(request);
+  if(request.url_match("/dwarves") || request.url_match("/units")){
+      UnitsController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
 
@@ -122,6 +122,7 @@ static int ahc_echo(void * cls,
   } else if(!strcmp(url, "/items")){
       ItemsController c(request);
       html += c.to_html();
+      resp_code = c.resp_code;
 
   } else if(!strcmp(url, "/dwarves.json")){
       is_json = 1;
@@ -179,7 +180,7 @@ static int ahc_echo(void * cls,
           case 4:{
                   uint32_t *p = (uint32_t*)hp.offset;
                   for(long i=0; i<hp.size; i+=4, p++){
-                      if(i%0x10 == 0){ sprintf(buf, "\n%p ", p); html += buf; }
+                      if(i%0x10 == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
                       sprintf(buf, " %08x", *p); 
                       html += buf;
                   }
@@ -188,7 +189,7 @@ static int ahc_echo(void * cls,
           default:{
                   unsigned char*p = (unsigned char*)hp.offset;
                   for(long i=0; i<hp.size; i++, p++){
-                      if(i%0x10 == 0){ sprintf(buf, "\n%p ", p); html += buf; }
+                      if(i%0x10 == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
                       sprintf(buf, " %02x", *p); 
                       html += buf;
                   }

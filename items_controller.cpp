@@ -13,28 +13,45 @@ static const char* TREE_NAMES[] = {
 
 #define ITEM_TYPE_SMALL_CUT_GEMS    1
 #define ITEM_TYPE_AMMUNITION       38
+#define ITEM_TYPE_CLOTH            57
 
 
 class ItemsController {
     map<uint32_t, int> counts_map;
     HTTPRequest* request;
+    int want_group;
 
     public:
+    int resp_code;
 
     ItemsController(HTTPRequest& req){
         request = &req;
+        resp_code = MHD_HTTP_OK;
+        want_group = req.get_int("group", 1);
     }
 
     string to_html(){
-        int type_id;
+        int type_id, id;
         string html;
+
+        if( -1 != (id = request->get_int("id", -1))){
+            if(Item* item = Item::find(id)){
+                return show(item);
+            } else {
+                resp_code = MHD_HTTP_NOT_FOUND;
+                return "Not Found";
+            }
+        }
 
         html += "<div id=items>\n";
         html += index();
 
         type_id = request->get_int("t", -1);
         if(type_id != -1){
-            html += items_of_type(type_id);
+            if(want_group)
+                html += grouped_items(type_id);
+            else
+                html += ungrouped_items(type_id);
         }
 
         html += "</div>\n";
@@ -43,9 +60,40 @@ class ItemsController {
 
     private:
 
+    string show(Item *item){
+        string html;
+        char buf[0x200];
+
+        html += "<div id=item>\n";
+        html += "<h1>" + item->getName() + "</h1>\n";
+        html += "</div>\n";
+
+        html += "<table class=t1>\n";
+
+        html += "<tr><th> full name <td>" + item->getName() + "\n";
+        html += "<tr><th> base name <td>" + item->getBaseName(0) + "\n";
+
+        sprintf(buf, "<tr><th>value <td class=r>%d<span class=currency>&#9788;</span>\n", 
+                item->getValue()); html += buf;
+
+        sprintf(buf, "<tr><th>flags <td class='r comment'>%x\n", 
+                item->getFlags()); html += buf;
+
+        if( RefsVector* refs = item->getRefs() ){
+            for(int i=0; i<refs->size(); i++){
+                sprintf(buf, "<tr><th>ref <td class='r comment'>%x\n", 
+                    refs->at(i)->getType()); html += buf;
+            }
+        }
+
+        html += "</table>\n";
+
+        return html;
+    }
+
     struct count_chunk { int count; int total_value; Item*pItem; };
 
-    string items_of_type(int type_id){
+    string grouped_items(int type_id){
         string html, name;
         ItemsVector*v = Item::getVector();
         char buf[0x200];
@@ -65,9 +113,9 @@ class ItemsController {
 
             add_count = 1; // one item by default
 
-            name = (*itr)->getName();
             switch(type_id){
                 case ITEM_TYPE_SMALL_CUT_GEMS:
+                    name = (*itr)->getName();
                     pos = name.find(" cut ");
                     if( pos != string::npos ) name.erase(0,pos+1);
 
@@ -101,7 +149,6 @@ class ItemsController {
                     // "bone bolts [5]" => "bone bolts" + increase counter by 5
                     pos = name.find(" [");
                     if(pos != string::npos && name.find("]") == name.size()-1){
-                        printf("[d] '%s'\n", name.substr(pos+2, name.size()-pos-3).c_str());
                         add_count = atoi(name.substr(pos+2, name.size()-pos-3).c_str());
                         name.erase(pos);
                     }
@@ -120,6 +167,15 @@ class ItemsController {
                         }
                     }   
                     break;
+
+                case ITEM_TYPE_CLOTH:
+                    // ignore quality modifiers
+                    name = (*itr)->getBaseName(0);
+                    break;
+
+                default:
+                    name = (*itr)->getName();
+                    break;
             }
             count_chunk& cc = m[name];
             cc.count += add_count;
@@ -136,6 +192,46 @@ class ItemsController {
                     it->second.pItem->getBaseName(0).c_str()
                     );
             html += buf;
+        }
+
+        html += "</table>\n";
+
+        sprintf(buf, "<h2>%d items of type %d</h2>\n", cnt, type_id);
+        html = buf + html;
+
+        return html;
+    }
+
+    string ungrouped_items(int type_id){
+        string html, name;
+        ItemsVector*v = Item::getVector();
+        char buf[0x200];
+        int cnt = 0, pos, add_count;
+        map <string, count_chunk> m;
+
+        html += "<table class='items sortable'>\n"
+            "<tr>"
+            "<th>item"
+            "<th class=sorttable_numeric title='value'>value"
+            "\n";
+
+        for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
+            if(type_id != (*itr)->getTypeId()) continue;
+
+            sprintf(buf, "<a href='?id=%d'>%s</a>", (*itr)->getId(), (*itr)->getName().c_str() );
+            html += HTML::Item(buf, (*itr)->getValue());
+
+#ifdef DEBUG
+            sprintf(buf,
+                  "<td class=r>"
+                  "<a class=ptr href='/hexdump?offset=%p&size=%d&width=4&title=%s'>"
+                  "%p"
+                  "</a>",
+                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), *itr);
+            html += buf;
+#endif
+
+            cnt++;
         }
 
         html += "</table>\n";
@@ -184,7 +280,10 @@ class ItemsController {
             case  7: return "floodgates";
             case  8: return "beds";
             case  9: return "thrones";
+            case 10: return "chains &amp; ropes";
             case 17: return "barrels";
+            case 18: return "buckets";
+            case 22: return "statues";
             case 25: return "bodywear";
             case 26: return "footwear";
             case 27: return "shields";
@@ -206,6 +305,7 @@ class ItemsController {
             case 57: return "cloth";
             case 59: return "legwear";
             case 66: return "mechanisms";
+            case 73: return "coins";
             case 76: return "pipe sections";
             case 83: return "traction benches";
             case 86: return "slabs";

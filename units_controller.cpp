@@ -1,14 +1,14 @@
 #include "common.h"
 #include "screen.cpp"
 
-class CreaturesController {
+class UnitsController {
     HTTPRequest* request;
 
     public:
 
     int resp_code;
 
-    CreaturesController(HTTPRequest& req){
+    UnitsController(HTTPRequest& req){
         request = &req;
         resp_code = MHD_HTTP_OK;
     }
@@ -16,7 +16,7 @@ class CreaturesController {
     string to_html(){
         int id = request->get_int("id",0);
         if(id){
-            Creature *pc = Creature::find(id);
+            Unit *pc = Unit::find(id);
             if(pc){
                 if( request->get_int("center",0) == 1 ){
                     int x=0, y=0, z=0;
@@ -47,8 +47,8 @@ class CreaturesController {
         }
     }
 
-    // show one creature
-    string show(Creature *pc){
+    // show one unit
+    string show(Unit *pc){
         char buf[0x200];
         string html;
         
@@ -58,7 +58,7 @@ class CreaturesController {
         //sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
         sprintf(buf,
                 "<table class=tools>"
-                    "<tr id='creature_%d'>"
+                    "<tr id='unit_%d'>"
                         "<td>"
                             "<div class=crosshair></div>"
                         "<td title='Happiness' class=happiness>%d"
@@ -117,7 +117,7 @@ class CreaturesController {
         return html;
     }
 
-    // list of creatures
+    // list of units
     string list(){
         string html,s;
         char buf[0x1000];
@@ -140,7 +140,7 @@ class CreaturesController {
             race_filter = request->get_int("race",-1);
         }
 
-        while(Creature* pc=Creature::getNext(&idx, race_filter)){
+        while(Unit* pc=Unit::getNext(&idx, race_filter)){
             s = pc->getName();
 
             nDwarves++;
@@ -154,7 +154,7 @@ class CreaturesController {
             }
 
             sprintf(buf, 
-                    "<tr id=\"creature_%d\">"
+                    "<tr id=\"unit_%d\">"
                         "<td>"
                             "<div class=crosshair></div>"
                             "<a href='?id=%d'>%s</a>", 
@@ -184,7 +184,7 @@ class CreaturesController {
         }
         html += "</table>";
 
-        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Creatures" ,nDwarves);
+        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Units" ,nDwarves);
         html = buf + html;
 
         return html;

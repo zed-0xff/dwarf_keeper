@@ -12,10 +12,10 @@ class Item;
 class Dwarf;
 class HTTPRequest;
 
-#define CREATURES_VECTOR        0x157e5f8
+#define UNITS_VECTOR        0x157e5f8
 #define ITEMS_VECTOR            0x157e668
 
-#define CREATURE_FULL_NAME_FUNC 0x96b030
+#define UNIT_FULL_NAME_FUNC 0x96b030
 #define DWARF_THOUGHTS_FUNC     0xa1aa60 // (pDwarf, string*)
 
 #define ITEM_BASE_NAME_FUNC     0x612c10 // item name w/o any modifiers
@@ -31,11 +31,11 @@ class HTTPRequest;
 // int skill_id_2_string(string*, int skill_id, int race, int sex)
 #define SKILL_ID_2_S_FUNC       0x20b170
 
-// int foo_func(int creature_id)
+// int foo_func(int unit_id)
 #define FOO_FUNC 0x3021f0
 
-// int getCreatureCoords(Creature *pc, int *px, int *py, int *pz)
-#define CREATURE_COORDS_FUNC    0x949af0
+// int getUnitCoords(Unit *pc, int *px, int *py, int *pz)
+#define UNIT_COORDS_FUNC    0x949af0
 
 // int setScreenCenter(int center_mode) - actual coords are set via following global variables
 #define SET_SCREEN_CENTER_FUNC  0x2d5240
@@ -59,7 +59,7 @@ typedef int(*func_t_i)(int);
 typedef int(*func_t_p)(void*);
 typedef int(*func_t_pppp)(void*, void*, void*, void*);
 
-info_func3_t getCreatureFullName = (info_func3_t)CREATURE_FULL_NAME_FUNC;
+info_func3_t getUnitFullName     = (info_func3_t)UNIT_FULL_NAME_FUNC;
 info_func4_t getItemName         = (info_func4_t)ITEM_NAME_FUNC;
 info_func3_t getItemBaseName     = (info_func3_t)ITEM_BASE_NAME_FUNC;
 value_func_t getItemValue        = (value_func_t)ITEM_VALUE_FUNC;
