@@ -30,15 +30,13 @@ class TradeController : Controller {
                 "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";
         }
 
-        html += "<script src='/jstree.min.js'></script>\n";
-
-        html += "<script src='/jQuery.Tree.js'></script>\n";
-		html += "<link rel=stylesheet type='text/css' href='/css/jQuery.Tree.css' />\n";
-
         if( request->get_int("m",0) == 1 ){
+            html += "<script src='/jQuery.Tree.js'></script>\n";
+            html += "<link rel=stylesheet type='text/css' href='/css/jQuery.Tree.css' />\n";
             html += "<script> $(function(){ $('#ltree').Tree() }) </script>\n";
             html += "<script> $(function(){ $('#rtree').Tree() }) </script>\n";
         } else {
+            html += "<script src='/jstree.min.js'></script>\n";
             html += "<script> $(function(){ $('#ltree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
             html += "<script> $(function(){ $('#rtree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
         }
