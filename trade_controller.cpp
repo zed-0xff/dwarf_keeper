@@ -22,31 +22,39 @@ class TradeController : Controller {
     }
 
     string to_html(){
-        string html;
-
         if(!trade_screen){
-            return 
-                "Please open Trade screen first."
-                "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";
+            return "Please open Trade screen first."
+                   "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";
         }
 
-        if( request->get_int("m",0) == 1 ){
-            html += "<script src='/jQuery.Tree.js'></script>\n";
-            html += "<link rel=stylesheet type='text/css' href='/css/jQuery.Tree.css' />\n";
-            html += "<script> $(function(){ $('#ltree').Tree() }) </script>\n";
-            html += "<script> $(function(){ $('#rtree').Tree() }) </script>\n";
-        } else {
-            html += "<script src='/jstree.min.js'></script>\n";
-            html += "<script> $(function(){ $('#ltree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
-            html += "<script> $(function(){ $('#rtree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
+        string html;
+        html.reserve(400*1024);
+        html += "<div id=trade>\n";
+
+        switch( request->get_int("m",0) ){
+            case 1:
+                // jQuery.Tree
+                html += "<script src='/jQuery.Tree.js'></script>\n";
+                html += "<link rel=stylesheet type='text/css' href='/css/jQuery.Tree.css' />\n";
+                html += "<script> $(function(){ $('#ltree').Tree() }) </script>\n";
+                html += "<script> $(function(){ $('#rtree').Tree() }) </script>\n";
+                break;
+            case 2:
+                // jstree
+                html += "<script src='/jstree.min.js'></script>\n";
+                html += "<script> $(function(){ $('#ltree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
+                html += "<script> $(function(){ $('#rtree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
+                break;
         }
 
         html += "<div id=ltree>";
-        html += items_tree(trade_screen->getLeftTradeVector());
+        html += items_treetable(trade_screen->getLeftTradeVector());
         html += "</div>\n";
 
         html += "<div id=rtree>";
-        html += items_tree(trade_screen->getRightTradeVector());
+        html += items_treetable(trade_screen->getRightTradeVector());
+        html += "</div>\n";
+
         html += "</div>\n";
 
         return html;
@@ -54,11 +62,69 @@ class TradeController : Controller {
 
     private:
 
+    string items_treetable(ItemsVector*v){
+        string html, chunk;
+        char buf[0x200];
+        int sum_price;
+
+        html += "<table class='sortable items'>\n";
+        html += "<thead>"
+                    "<tr>"
+                        "<th class='sorttable_nosort'>"
+                        "<th class='sorttable_alpha th-item-name' >item"
+                        "<th class='sorttable_numeric'>price"
+                "</thead>\n";
+
+        // TODO: optimize loop
+        for( int type_id=0; type_id<100; type_id++){
+            chunk.clear();
+            sum_price = 0;
+
+            for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
+                Item *item = *it;
+                if(item->getTypeId() != type_id) continue;
+
+                int price = item->getPrice();
+                sum_price += price;
+
+                sprintf(buf,
+                        "<tr>"
+                            "<td>"
+                            "<td>"
+                                "<input name=i%d type=checkbox>"
+                                "%s"
+                            "<td class=r>"
+                                "%d<span class=currency>&#9788;</span>"
+                        "\n",
+                        item->getId(),
+                        HTML::colored_item_name(item),
+                        price
+                       );
+                chunk += buf;
+            }
+
+            if(!chunk.empty()){
+                sprintf(buf, 
+                        "<tbody class=category id=cat%d>"
+                            "<tr>"
+                                "<th class=tristate>"
+                                "<th class=category-name>%s"
+                                "<th class=r>%d<span class=currency>&#9788;</span>\n"
+                        "<tbody class=cat_items id=tb%d>\n", 
+                        type_id, ItemType::type2string(type_id), sum_price, type_id); html += buf;
+                html += chunk;
+            }
+        }
+        html += "</table>";
+        return html;
+    }
+
     string items_tree(ItemsVector*v){
         string html;
         char buf[0x200];
 
         html += "<ul>\n";
+        // TODO: optimize loop
         for( int type_id=0; type_id<100; type_id++){
             bool was = false;
             for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
@@ -84,14 +150,7 @@ class TradeController : Controller {
         html += "<tr><th>item <th class=sorttable_numeric>price\n";
         //ItemsVector *v = trade_screen->getLeftTradeVector();
         for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
-            int price = (*it)->getValue();
-            RefsVector* rv = (*it)->getRefs();
-            for(int i=0; i<rv->size(); i++){
-                if(rv->at(i)->getType() == Reference::REF_CONTAINS_ITEM){
-                    price += rv->at(i)->getItem()->getValue();
-                }
-            }
-            html += HTML::Item(link_to_item(*it), price);
+            html += HTML::Item(link_to_item(*it), (*it)->getPrice());
         }
         html += "</table>\n";
 

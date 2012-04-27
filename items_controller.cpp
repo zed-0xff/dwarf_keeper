@@ -11,11 +11,6 @@ static const char* TREE_NAMES[] = {
     "cedar", "fungiwood"
 };
 
-#define ITEM_TYPE_SMALL_CUT_GEMS    1
-#define ITEM_TYPE_AMMUNITION       38
-#define ITEM_TYPE_CLOTH            57
-
-
 class ItemsController : Controller {
     map<uint32_t, int> counts_map;
     HTTPRequest* request;
@@ -137,7 +132,7 @@ class ItemsController : Controller {
             add_count = 1; // one item by default
 
             switch(type_id){
-                case ITEM_TYPE_SMALL_CUT_GEMS:
+                case ItemType::SMALL_CUT_GEMS:
                     name = (*itr)->getName();
                     pos = name.find(" cut ");
                     if( pos != string::npos ) name.erase(0,pos+1);
@@ -161,7 +156,7 @@ class ItemsController : Controller {
                     }
                     break;
 
-                case ITEM_TYPE_AMMUNITION:
+                case ItemType::AMMUNITION:
                     // ignore quality modifiers
                     name = (*itr)->getBaseName(0);
 
@@ -191,7 +186,7 @@ class ItemsController : Controller {
                     }   
                     break;
 
-                case ITEM_TYPE_CLOTH:
+                case ItemType::CLOTH:
                     // ignore quality modifiers
                     name = (*itr)->getBaseName(0);
                     break;
@@ -282,7 +277,7 @@ class ItemsController : Controller {
 
         for(map<uint32_t,int>::iterator it = counts_map.begin(); it != counts_map.end(); it++){
             sprintf(buf, "<tr><td>%s <td class=r><a href='?t=%d'>%d</a>\n", 
-                    type2name(it->first), 
+                    ItemType::type2string(it->first), 
                     it->first, 
                     it->second);
             html += buf;
@@ -293,56 +288,6 @@ class ItemsController : Controller {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////
-
-    const char* type2name(int type_id){
-        static char buf[0x100];
-        switch(type_id){
-            case  0: return "bars";
-            case  1: return "small cut gems";
-            case  2: return "blocks";
-            case  3: return "rough gems";
-            case  4: return "stones";
-            case  5: return "logs";
-            case  6: return "doors";
-            case  7: return "floodgates";
-            case  8: return "beds";
-            case  9: return "thrones";
-            case 10: return "chains &amp; ropes";
-            case 17: return "barrels";
-            case 18: return "buckets";
-            case 22: return "statues";
-            case 25: return "bodywear";
-            case 26: return "footwear";
-            case 27: return "shields";
-            case 28: return "headwear";
-            case 29: return "handwear";
-            case 30: return "boxes &amp; bags";
-            case 31: return "bins";
-            case 32: return "armor stands";
-            case 33: return "weapon racks";
-            case 34: return "cabinets";
-            case 38: return "ammunition";
-            case 39: return "crowns";
-            case 40: return "rings";
-            case 41: return "earrings";
-            case 43: return "large cut gems";
-            case 44: return "anvils";
-            case 48: return "fish";
-            case 54: return "leather";
-            case 57: return "cloth";
-            case 59: return "legwear";
-            case 66: return "mechanisms";
-            case 73: return "coins";
-            case 76: return "pipe sections";
-            case 83: return "traction benches";
-            case 86: return "slabs";
-            case 87: return "eggs";
-            case 88: return "books";
-            default:
-                     sprintf(buf, "%d", type_id);
-                     return buf;
-        }
-    }
 
     void count_by_types(){
         ItemsVector*v = Item::getVector();

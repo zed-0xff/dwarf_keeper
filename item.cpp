@@ -1,5 +1,6 @@
 #include "common.h"
 #include "reference.cpp"
+#include "item_type.cpp"
 
 typedef vector<Item*> ItemsVector;
 
@@ -40,6 +41,18 @@ class Item : public MemClass {
 
     int getValue(){
         return getItemValue(this, 0, 0);
+    }
+
+    // self value + sum of all values of contained items, if any
+    int getPrice(){
+        int price = getValue();
+        RefsVector* rv = getRefs();
+        for(int i=0; i<rv->size(); i++){
+            if(rv->at(i)->getType() == Reference::REF_CONTAINS_ITEM){
+                price += rv->at(i)->getItem()->getValue();
+            }
+        }
+        return price;
     }
 
     int getId(){

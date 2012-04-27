@@ -1,4 +1,9 @@
 
+// http://stackoverflow.com/questions/920236/jquery-detect-if-selector-returns-null
+$.fn.exists = function () {
+    return this.length !== 0;
+}
+
 /*
  * clothes counts
  */
@@ -146,3 +151,56 @@ $(function(){
         }
     }
 });
+
+/*
+ * trade
+ */
+
+if( $('div#trade').exists() ){
+    $('#trade tbody.category').click(function(){
+        var id = this.id
+        if(!id) return
+        id = id.substr(3) // "cat12" => "12"
+        $('#tb'+id, $(this).closest('table')).toggle();
+    })
+
+    $('.tristate').click(function(){
+        var ts = $(this)
+        var id = ts.closest('tbody').attr('id').replace("cat","tb")
+        var checkboxes = $("#"+id+" input", ts.closest('table'))
+        if( ts.is(".checked, .intermediate") ){
+            ts.removeClass("checked intermediate")
+            // remove all checks from children
+            checkboxes.attr("checked", false)
+        } else {
+            ts.addClass("checked")
+            // check all children
+            checkboxes.attr("checked", true)
+        }
+        return false;
+    })
+
+    function update_tristate_state(ts){
+        var ts = $(ts)
+        var id = ts.closest('tbody').attr('id').replace("cat","tb")
+        var checkboxes = $("#"+id+" input", ts.closest('table'))
+        var has_checked = checkboxes.filter(":checked").exists()
+        var has_unchecked = checkboxes.not(":checked").exists()
+    
+        if( has_checked && has_unchecked ){
+            ts.removeClass("checked").addClass("intermediate")
+        } else if( has_checked ){
+            ts.removeClass("intermediate").addClass("checked")
+        } else if( has_unchecked ){
+            ts.removeClass("checked intermediate")
+        }
+    }
+
+    // checkboxes
+    $('input').change(function(){
+        var id = $(this).closest('tbody').attr('id').replace("tb","cat")
+        var tristate = $("#"+id+" .tristate", $(this).closest('table'))
+        update_tristate_state(tristate)
+    })
+}
+

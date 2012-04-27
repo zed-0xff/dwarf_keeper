@@ -215,7 +215,7 @@ static int ahc_echo(void * cls,
           perror("[!] template.html: ");
           if (fd != -1) close (fd);
       } else {
-          html_utf8.resize(sbuf.st_size, ' ');
+          html_utf8.resize(sbuf.st_size); // fills with NULL chars by default
           read(fd, &html_utf8[0], sbuf.st_size);
           close(fd);
       }
