@@ -18,8 +18,7 @@
 #include "clothes_controller.cpp"
 #include "items_controller.cpp"
 #include "units_controller.cpp"
-
-//#define USE_FORK
+#include "trade_controller.cpp"
 
 static pid_t(*orig_getpid)() = NULL;
 
@@ -121,6 +120,11 @@ static int ahc_echo(void * cls,
 
   } else if(!strcmp(url, "/items")){
       ItemsController c(request);
+      html += c.to_html();
+      resp_code = c.resp_code;
+
+  } else if(!strcmp(url, "/trade")){
+      TradeController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
 

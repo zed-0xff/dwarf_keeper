@@ -12,10 +12,10 @@ class Item;
 class Dwarf;
 class HTTPRequest;
 
-#define UNITS_VECTOR        0x157e5f8
+#define UNITS_VECTOR            0x157e5f8
 #define ITEMS_VECTOR            0x157e668
 
-#define UNIT_FULL_NAME_FUNC 0x96b030
+#define UNIT_FULL_NAME_FUNC     0x96b030
 #define DWARF_THOUGHTS_FUNC     0xa1aa60 // (pDwarf, string*)
 
 #define ITEM_BASE_NAME_FUNC     0x612c10 // item name w/o any modifiers
@@ -32,7 +32,7 @@ class HTTPRequest;
 #define SKILL_ID_2_S_FUNC       0x20b170
 
 // int foo_func(int unit_id)
-#define FOO_FUNC 0x3021f0
+#define FOO_FUNC 0x3021f0 // open unit info right panel?
 
 // int getUnitCoords(Unit *pc, int *px, int *py, int *pz)
 #define UNIT_COORDS_FUNC    0x949af0
@@ -44,6 +44,9 @@ class HTTPRequest;
 #define SCR_TARGET_CENTER_X     0x1563a30
 #define SCR_TARGET_CENTER_Y     0x1563a34
 #define SCR_TARGET_CENTER_Z     0x1563a38
+
+//#define PSCREENS_LIST            0x17ce5c8 // ptr to double-linked list of active screens
+#define ROOT_SCREEN             0xe27044
 
 typedef int(*info_func3_t)(void*, string*, int);
 typedef int(*info_func4_t)(void*, string*, int, int);

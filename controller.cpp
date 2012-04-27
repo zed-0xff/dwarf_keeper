@@ -1,5 +1,8 @@
 #include "common.h"
 
+#ifndef CONTROLLER_H
+#define CONTROLLER_H
+
 class Controller {
     public:
 
@@ -15,3 +18,5 @@ class Controller {
         return buf;
     }
 };
+
+#endif

@@ -31,6 +31,7 @@ class UnitsController {
                     *((uint8_t*)0x16FEA54) = 1;
                     *((uint8_t*)0x16FEA55) = 1;
 
+                    Screen::enumerate();
                     Screen::moveTo(x,y,z);
                     ((func_t_i)(FOO_FUNC))(pc->getId());
 
