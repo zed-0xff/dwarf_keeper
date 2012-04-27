@@ -20,6 +20,13 @@
 #include "units_controller.cpp"
 #include "trade_controller.cpp"
 
+static const char* ALLOWED_CONTENT_TYPES[][2] = {
+    {".js",  "application/x-javascript"},
+    {".css", "text/css"},
+    {".gif", "image/gif"},
+    {".png", "image/png"}
+};
+
 static pid_t(*orig_getpid)() = NULL;
 
 static struct MHD_Daemon* mhd = NULL;
@@ -128,47 +135,6 @@ static int ahc_echo(void * cls,
       html += c.to_html();
       resp_code = c.resp_code;
 
-  } else if(!strcmp(url, "/dwarves.json")){
-      is_json = 1;
-      html = "[";
-      int idx = 0;
-      int was_first = 0;
-      while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
-          s = cp850_to_json(pDwarf->getName());
-          sprintf(buf, "%s{\"id\":%d,\"name\":\"%s\"}", was_first?",":"", pDwarf->getId(), s.c_str());
-          html += buf;
-          was_first = 1;
-      }
-      html += "]";
-  } else if(!strcmp(url, "/style.css")){
-      int fd;
-      struct stat sbuf;
-      if ( (-1 == (fd = open ("dwarf_keeper/style.css", O_RDONLY))) || (0 != fstat (fd, &sbuf)) ){
-          sprintf(buf, "[!] %s: ", url);
-          perror(buf);
-          if (fd != -1) close (fd);
-          return MHD_NO;
-      }
-      response = MHD_create_response_from_fd_at_offset (sbuf.st_size, fd, 0);
-      MHD_add_response_header (response, "Content-Type", "text/css");
-      ret = MHD_queue_response (conn, MHD_HTTP_OK, response);
-      MHD_destroy_response (response);
-      return ret;
-  } else if(!strcmp(url+strlen(url)-3,".js") && !strstr(url,"..") && !strchr(url+1,'/') && !strchr(url,'\\')){
-      sprintf(buf,"dwarf_keeper%s",url);
-      int fd;
-      struct stat sbuf;
-      if ( (-1 == (fd = open (buf, O_RDONLY))) || (0 != fstat (fd, &sbuf)) ){
-          sprintf(buf, "[!] %s: ", url);
-          perror(buf);
-          if (fd != -1) close (fd);
-          return MHD_NO;
-      }
-      response = MHD_create_response_from_fd_at_offset (sbuf.st_size, fd, 0);
-      MHD_add_response_header (response, "Content-Type", "application/x-javascript");
-      ret = MHD_queue_response (conn, MHD_HTTP_OK, response);
-      MHD_destroy_response (response);
-      return ret;
   } else if(!strcmp(url,"/hexdump")){
       struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
       MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &get_hexdump_params, &hp);
@@ -201,7 +167,39 @@ static int ahc_echo(void * cls,
               break;
       }
       html += "</pre>";
-  } else return MHD_NO;
+  } else {
+      // security
+      if(strstr(url, "..") || strstr(url,"//") || strchr(url,'\\')) return MHD_NO;
+
+      int lUrl = strlen(url);
+      for(int i=0; i<sizeof(ALLOWED_CONTENT_TYPES)/sizeof(ALLOWED_CONTENT_TYPES[0]); i++){
+          const char* ext   = ALLOWED_CONTENT_TYPES[i][0];
+          const char* ctype = ALLOWED_CONTENT_TYPES[i][1];
+          int lExt = strlen(ext);
+
+          if(lUrl > lExt && !strcmp(url+lUrl-lExt,ext)){
+              sprintf(buf,"dwarf_keeper%s",url);
+              int fd;
+              struct stat sbuf;
+              if ( (-1 == (fd = open (buf, O_RDONLY))) || (0 != fstat (fd, &sbuf)) ){
+                  sprintf(buf, "[!] %s: ", url);
+                  perror(buf);
+                  if (fd != -1) close (fd);
+                  // file not found or cannot open
+                  return MHD_NO;
+              }
+              response = MHD_create_response_from_fd_at_offset (sbuf.st_size, fd, 0);
+              MHD_add_response_header (response, "Content-Type", ctype);
+              ret = MHD_queue_response (conn, MHD_HTTP_OK, response);
+              MHD_destroy_response (response);
+              return ret;
+          }
+      }
+
+      // not allowed file extension
+      return MHD_NO;
+  }
+      
 
   string html_utf8;
   if(is_json){
