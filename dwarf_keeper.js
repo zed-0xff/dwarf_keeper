@@ -227,10 +227,9 @@ if( $('div#trade').exists() ){
 
     // for checkboxes shift-click
     var last_checkbox = null;
-    var all_checkboxes = $('#trade input');
 
     // checkboxes
-    all_checkboxes.click(function(ev, shift_flag){
+    $('#trade input').click(function(ev, shift_flag){
         var id = $(this).closest('tbody').attr('id').replace("tb","cat")
         var table = $(this).closest('table')
         var tristate = $("#"+id+" .tristate", table)
@@ -242,6 +241,8 @@ if( $('div#trade').exists() ){
 
         if (last_checkbox != null && ev && (ev.shiftKey || ev.metaKey || shift_flag)) {
             // checkboxes shift-click
+            // cannot cache all_checkboxes b/c their order is changed when changing table sort
+            var all_checkboxes = $('#trade input');
             checkboxes = all_checkboxes.slice(
                 Math.min(all_checkboxes.index(last_checkbox), all_checkboxes.index(ev.target)),
                 Math.max(all_checkboxes.index(last_checkbox), all_checkboxes.index(ev.target)) + 1
