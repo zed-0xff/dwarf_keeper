@@ -15,6 +15,8 @@ class ItemsController : Controller {
     map<uint32_t, int> counts_map;
     HTTPRequest* request;
     int want_group;
+    uint32_t want_flags;
+    int want_flat;
 
     public:
     int resp_code;
@@ -22,7 +24,11 @@ class ItemsController : Controller {
     ItemsController(HTTPRequest& req){
         request = &req;
         resp_code = MHD_HTTP_OK;
-        want_group = req.get_int("group", 1);
+        want_group = req.get_int("g", 1);
+        want_flags = req.get_uint("f", 0);
+        want_flat  = req.get_int("flat", 0);
+
+        printf("[d] flags = %x :: %x\n", want_flags, 0x101 & want_flags);
     }
 
     string to_html(){
@@ -39,10 +45,13 @@ class ItemsController : Controller {
         }
 
         html += "<div id=items>\n";
-        html += index();
+
+        if(!want_flat){
+            html += index();
+        }
 
         type_id = request->get_int("t", -1);
-        if(type_id != -1){
+        if(type_id != -1 || want_flat){
             if(want_group)
                 html += grouped_items(type_id);
             else
@@ -131,7 +140,8 @@ class ItemsController : Controller {
             "\n";
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-            if(type_id != (*itr)->getTypeId()) continue;
+            if( type_id != -1 && type_id != (*itr)->getTypeId()) continue;
+            if( want_flags && ((*itr)->getFlags() & want_flags) == 0 ) continue;
 
             add_count = 1; // one item by default
 
@@ -213,10 +223,10 @@ class ItemsController : Controller {
             if(it->second.count == 1) title = link_to_item(it->second.pItem, title);
             html += HTML::Item(title, it->second.total_value / it->second.count);
 
-            sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span> <td class=comment>%s\n",
+            sprintf(buf, "<td class=r>%d <td class=r>%d<span class=currency>&#9788;</span> <td class='r ptr'>%x\n",
                     it->second.count,
                     it->second.total_value,
-                    it->second.pItem->getBaseName(0).c_str()
+                    it->second.pItem->getFlags()
                     );
             html += buf;
         }
@@ -243,17 +253,13 @@ class ItemsController : Controller {
             "\n";
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-            if(type_id != (*itr)->getTypeId()) continue;
+            if(type_id != -1 && type_id != (*itr)->getTypeId()) continue;
+            if( want_flags && ((*itr)->getFlags() & want_flags) == 0 ) continue;
 
             html += HTML::Item(link_to_item(*itr), (*itr)->getValue());
 
 #ifdef DEBUG
-            sprintf(buf,
-                  "<td class=r>"
-                  "<a class=ptr href='/hexdump?offset=%p&size=%d&width=4&title=%s'>"
-                  "%p"
-                  "</a>",
-                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), *itr);
+            sprintf(buf, "<td class='r ptr'>%x", (*itr)->getFlags());
             html += buf;
 #endif
 

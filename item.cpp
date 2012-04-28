@@ -29,11 +29,19 @@ class Item : public MemClass {
     }
 
     // http://dwarffortresswiki.org/index.php/Stocks#Color_Code
-    static const int FLAG_DUMP         =    0x20000;
-    static const int FLAG_FORBID       =    0x80000;
-    static const int FLAG_MELT         =   0x800000;
-    static const int FLAG_HIDE         =  0x1000000;
-    static const int FLAG_NOT_FORT_OWN = 0x20000000; // not belongs to fort
+    static const int FLAG_BUILDING_PART  =       0x20;
+    static const int FLAG_IMPORTED       =     0x4000; // "(birchen bucket)" - round brackets
+    static const int FLAG_NOT_FORT_OWN   =     0x8000; // not belongs to fort
+    static const int FLAG_HAS_OWNER      =    0x10000; // item is owned by some creature
+    static const int FLAG_DUMP           =    0x20000; // item is marked for dumping, but not dumped yet
+    static const int FLAG_ARTIFACT       =    0x40000; // artifact, both local or foreign
+    static const int FLAG_FORBID         =    0x80000;
+    static const int FLAG_MELT           =   0x800000; // designated for melting
+    static const int FLAG_HIDE           =  0x1000000;
+    static const int FLAG_HOSPITAL       =  0x2000000; // hospital property (items are kept in hospital chests)
+    static const int FLAG_LOCAL_ARTIFACT =  0x8000000; // artifact made by fort citizen
+    //static const int FLAG_UNTANNED_HIDE = 0x80000000; // not sure
+
 
     uint32_t getFlags(){
         return dw(FLAGS_OFFSET);
