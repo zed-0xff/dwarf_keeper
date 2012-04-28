@@ -73,6 +73,10 @@ class ItemsController : Controller {
         sprintf(buf, "<tr><th>flags <td class='r comment'>%x\n", 
                 item->getFlags()); html += buf;
 
+        sprintf(buf, "<tr><th>ptr <td class='r ptr'><a href='/hexdump?offset=%p&size=%d&width=4'>%p</a>\n", 
+                item, Item::RECORD_SIZE, item
+                ); html += buf;
+
         html += "</table>\n";
 
         RefsVector* refs = item->getRefs();

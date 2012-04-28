@@ -1,5 +1,38 @@
 #include "common.h"
 
+#ifndef SCREEN_H
+#define SCREEN_H
+
+typedef vector<uint8_t> ChecksVector;
+typedef vector<int32_t> AmountsVector;
+
+struct TradeSideInfo {
+    ItemsVector   *items;
+    ChecksVector  *checks;
+    AmountsVector *amounts;
+
+    void toggle_by_index(int idx, bool state){
+        checks->at(idx) = state ? 1 : 0;
+    }
+
+    Item* toggle_item(int id, bool state){
+        for( int i=0; i < items->size(); i++){
+            Item *item = items->at(i);
+            if(item->getId() == id){
+                if(state){
+                    // toggle ON
+                    checks->at(i) = 1;
+                } else {
+                    // toggle OFF
+                    checks->at(i) = 0;
+                }
+                return item;
+            }
+        }
+        return NULL;
+    }
+};
+
 class Screen {
     void *pvtbl;
     Screen *_next, *_prev; // double-linked list
@@ -19,12 +52,21 @@ class Screen {
         return (char*)*p;
     }
 
-    ItemsVector* getLeftTradeVector(){
-        return (ItemsVector*)((char*)this + LEFT_TRADE_VECTOR_OFFSET);
-    }
+    static const int TRADE_SIDE_LEFT  = 0;
+    static const int TRADE_SIDE_RIGHT = 1;
 
-    ItemsVector* getRightTradeVector(){
-        return (ItemsVector*)((char*)this + RIGHT_TRADE_VECTOR_OFFSET);
+    TradeSideInfo getTradeSideInfo( int side ){
+        TradeSideInfo tsi;
+        if( side == TRADE_SIDE_LEFT){
+            tsi.items  = (ItemsVector*)((char*)this  + LEFT_TRADE_ITEMS_VECTOR_OFFSET);
+            tsi.checks = (ChecksVector*)((char*)this + LEFT_TRADE_CHECKS_VECTOR_OFFSET);
+            tsi.amounts= (AmountsVector*)((char*)this+ LEFT_TRADE_AMOUNTS_VECTOR_OFFSET);
+        } else {
+            tsi.items  = (ItemsVector*)((char*)this  + RIGHT_TRADE_ITEMS_VECTOR_OFFSET);
+            tsi.checks = (ChecksVector*)((char*)this + RIGHT_TRADE_CHECKS_VECTOR_OFFSET);
+            tsi.amounts= (AmountsVector*)((char*)this+ RIGHT_TRADE_AMOUNTS_VECTOR_OFFSET);
+        }
+        return tsi;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -56,6 +98,14 @@ class Screen {
 
     private:
     // !!! only for Trade Screen !!!
-    static const int LEFT_TRADE_VECTOR_OFFSET  = 0x130;
-    static const int RIGHT_TRADE_VECTOR_OFFSET = 0x13c;
+    static const int LEFT_TRADE_ITEMS_VECTOR_OFFSET    = 0x130;
+    static const int RIGHT_TRADE_ITEMS_VECTOR_OFFSET   = 0x13c;
+
+    static const int LEFT_TRADE_CHECKS_VECTOR_OFFSET   = 0x148;
+    static const int RIGHT_TRADE_CHECKS_VECTOR_OFFSET  = 0x154;
+
+    static const int LEFT_TRADE_AMOUNTS_VECTOR_OFFSET  = 0x160;
+    static const int RIGHT_TRADE_AMOUNTS_VECTOR_OFFSET = 0x16c;
 };
+
+#endif

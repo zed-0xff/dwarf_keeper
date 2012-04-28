@@ -1,4 +1,5 @@
 #include "controller.cpp"
+#include "screen.cpp"
 
 class TradeController : Controller {
     HTTPRequest* request;
@@ -27,32 +28,49 @@ class TradeController : Controller {
                    "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";
         }
 
+        int type_id = request->get_int("type_id", -1);
+        int item_id = request->get_int("item_id", -1);
+        int state   = request->get_int("state",   -1);
+
+        if( item_id != -1 && state != -1 ){
+            if( string *ps = toggle_item(item_id, state) ){
+                return *ps;
+            } else {
+                resp_code = MHD_HTTP_NOT_FOUND;
+                return "Not Found";
+            }
+        }
+        if( type_id != -1 && state != -1 ){
+            string side = request->get_string("side","");
+            int side_id;
+
+            if(side == "left") 
+                side_id = Screen::TRADE_SIDE_LEFT;
+            else if(side == "right")
+                side_id = Screen::TRADE_SIDE_RIGHT;
+            else {
+                resp_code = MHD_HTTP_BAD_REQUEST;
+                return "invalid side";
+            }
+
+            if( string *ps = toggle_type(type_id, side_id, state) ){
+                return *ps;
+            } else {
+                resp_code = MHD_HTTP_NOT_FOUND;
+                return "Not Found";
+            }
+        }
+
         string html;
         html.reserve(400*1024);
         html += "<div id=trade>\n";
 
-        switch( request->get_int("m",0) ){
-            case 1:
-                // jQuery.Tree
-                html += "<script src='/jQuery.Tree.js'></script>\n";
-                html += "<link rel=stylesheet type='text/css' href='/css/jQuery.Tree.css' />\n";
-                html += "<script> $(function(){ $('#ltree').Tree() }) </script>\n";
-                html += "<script> $(function(){ $('#rtree').Tree() }) </script>\n";
-                break;
-            case 2:
-                // jstree
-                html += "<script src='/jstree.min.js'></script>\n";
-                html += "<script> $(function(){ $('#ltree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
-                html += "<script> $(function(){ $('#rtree').jstree({plugins: ['themes','html_data','checkbox']}) }) </script>\n";
-                break;
-        }
-
         html += "<div id=ltree>";
-        html += items_treetable(trade_screen->getLeftTradeVector());
+        html += items_treetable(trade_screen->getTradeSideInfo(Screen::TRADE_SIDE_LEFT), "side_left");
         html += "</div>\n";
 
         html += "<div id=rtree>";
-        html += items_treetable(trade_screen->getRightTradeVector());
+        html += items_treetable(trade_screen->getTradeSideInfo(Screen::TRADE_SIDE_RIGHT), "side_right");
         html += "</div>\n";
 
         html += "</div>\n";
@@ -62,26 +80,115 @@ class TradeController : Controller {
 
     private:
 
-    string items_treetable(ItemsVector*v){
+    string* toggle_type(int type_id, int side, int state){
+        static string js;
+        char buf[0x40];
+        set<int> types;
+
+        js = "{\"ids\":[";
+        TradeSideInfo tsi = trade_screen->getTradeSideInfo(side);
+        for( int i=0; i < tsi.items->size(); i++){
+            Item *item = tsi.items->at(i);
+            if(item->getTypeId() != type_id) continue;
+
+            tsi.toggle_by_index(i, state);
+            if(state){
+                // item is CHECKED
+                // now a) uncheck item container, if any
+                //     b) uncheck all item containees, if any
+                RefsVector *rv = item->getRefs();
+                for(int j=0; j<rv->size(); j++){
+                    Reference *ref = rv->at(j);
+                    switch(ref->getType()){
+                        case Reference::REF_CONTAINED_IN_ITEM:
+                        case Reference::REF_CONTAINS_ITEM:
+                            Item* ref_item = ref->getItem();
+                            int ref_id = ref_item->getId();
+
+                            tsi.toggle_item(ref_id, false);
+
+                            types.insert(ref_item->getTypeId());
+                            sprintf(buf, "%d,", ref_id); js += buf;
+                            break;
+                    }
+                }
+            }
+        }
+        if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+        js += "], \"types\":[";
+        for(set<int>::iterator it = types.begin(); it != types.end(); it++){
+            sprintf(buf, "%d,", *it); js += buf;
+        }
+        if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+        js += "]}";
+        return &js;
+    }
+
+    string* toggle_item(int id, int state){
+        static string js;
+        char buf[0x40];
+        set<int> types;
+
+        js = "{\"ids\":[";
+        for( int side = Screen::TRADE_SIDE_LEFT; side <= Screen::TRADE_SIDE_RIGHT; side++ ){
+            TradeSideInfo tsi = trade_screen->getTradeSideInfo(side);
+            if( Item* item = tsi.toggle_item(id, state) ){
+                if(state){
+                    // item is CHECKED
+                    // now a) uncheck item container, if any
+                    //     b) uncheck all item containees, if any
+                    RefsVector *rv = item->getRefs();
+                    for(int j=0; j<rv->size(); j++){
+                        Reference *ref = rv->at(j);
+                        switch(ref->getType()){
+                            case Reference::REF_CONTAINED_IN_ITEM:
+                            case Reference::REF_CONTAINS_ITEM:
+                                Item* ref_item = ref->getItem();
+                                int ref_id = ref_item->getId();
+
+                                tsi.toggle_item(ref_id, false);
+
+                                types.insert(ref_item->getTypeId());
+                                sprintf(buf, "%d,", ref_id); js += buf;
+                                break;
+                        }
+                    }
+                }
+                if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+                js += "], \"types\":[";
+                for(set<int>::iterator it = types.begin(); it != types.end(); it++){
+                    sprintf(buf, "%d,", *it); js += buf;
+                }
+                if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+                js += "]}";
+                return &js;
+            }
+        }
+        return NULL;
+    }
+
+    string items_treetable( TradeSideInfo tsi, const char*side ){
         string html, chunk;
         char buf[0x200];
         int sum_price;
 
-        html += "<table class='sortable items'>\n";
-        html += "<thead>"
-                    "<tr>"
-                        "<th class='sorttable_nosort'>"
-                        "<th class='sorttable_alpha th-item-name' >item"
-                        "<th class='sorttable_numeric'>price"
-                "</thead>\n";
+        sprintf(buf,
+                "<table class='sortable items %s'>\n"
+                    "<thead>"
+                        "<tr>"
+                            "<th class='sorttable_nosort'>"
+                            "<th class='sorttable_alpha th-item-name' >item"
+                            "<th class='sorttable_numeric'>price"
+                    "</thead>\n",
+                side); html += buf;
 
         // TODO: optimize loop
         for( int type_id=0; type_id<100; type_id++){
             chunk.clear();
             sum_price = 0;
 
-            for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
-                Item *item = *it;
+            for( int i=0; i < tsi.items->size(); i++){
+                Item *item = tsi.items->at(i);
                 if(item->getTypeId() != type_id) continue;
 
                 int price = item->getPrice();
@@ -89,14 +196,17 @@ class TradeController : Controller {
 
                 sprintf(buf,
                         "<tr>"
+                            "<td class=info>"
+                                "%s"
                             "<td>"
-                            "<td>"
-                                "<input name=i%d type=checkbox>"
+                                "<input id=i%d type=checkbox%s>"
                                 "%s"
                             "<td class=r>"
                                 "%d<span class=currency>&#9788;</span>"
                         "\n",
+                        link_to_item(item,""," class=info target=_blank"),
                         item->getId(),
+                        tsi.checks->at(i) ? " CHECKED" : "",
                         HTML::colored_item_name(item),
                         price
                        );
@@ -119,41 +229,4 @@ class TradeController : Controller {
         return html;
     }
 
-    string items_tree(ItemsVector*v){
-        string html;
-        char buf[0x200];
-
-        html += "<ul>\n";
-        // TODO: optimize loop
-        for( int type_id=0; type_id<100; type_id++){
-            bool was = false;
-            for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
-                if((*it)->getTypeId() != type_id) continue;
-                if(!was){
-                    was = true;
-                    sprintf(buf, "<li><label>type %d</label>\n\t<ul>\n", type_id); html += buf;
-                }
-                html += "\t<li><label>";
-                html += link_to_item(*it);
-                html += "</label>\n";
-            }
-            if(was) html += "\t</ul>\n";
-        }
-        html += "</ul>";
-        return html;
-    }
-
-    string items_table(ItemsVector*v){
-        string html;
-
-        html += "<table class='items sortable'>\n";
-        html += "<tr><th>item <th class=sorttable_numeric>price\n";
-        //ItemsVector *v = trade_screen->getLeftTradeVector();
-        for( ItemsVector::iterator it = v->begin(); it < v->end(); it++){
-            html += HTML::Item(link_to_item(*it), (*it)->getPrice());
-        }
-        html += "</table>\n";
-
-        return html;
-    }
 };

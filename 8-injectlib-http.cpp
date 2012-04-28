@@ -65,22 +65,6 @@ int get_hexdump_params(void *cls, enum MHD_ValueKind kind, const char *key, cons
     return MHD_YES;
 }
 
-typedef pair<const char*, string> str_param_t;
-int http_str_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
-    str_param_t*p = (str_param_t*)cls;
-    if(!strcmp(p->first, key)){
-        p->second = value;
-        return MHD_NO;
-    } else {
-        return MHD_YES; // continue iteration
-    }
-}
-string http_get_string(struct MHD_Connection* conn, const char*param_name, const char* default_value){
-    str_param_t sp(param_name,default_value);
-    MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_str_param_iter, &sp);
-    return sp.second;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////
 
 static int ahc_echo(void * cls,
@@ -139,7 +123,7 @@ static int ahc_echo(void * cls,
       struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
       MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &get_hexdump_params, &hp);
 
-      string title = http_get_string(conn,"title","");
+      string title = request.get_string("title","");
       if(!title.empty()){
           html += "<title>" + html_escape(title) + "</title>\n";
           html += "<h2>" + html_escape(title) + "</h2>\n";

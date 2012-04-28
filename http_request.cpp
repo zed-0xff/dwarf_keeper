@@ -32,6 +32,12 @@ class HTTPRequest {
         return r;
     }
 
+    string get_string(const char*param_name, const char* default_value){
+        str_param_t sp(param_name,default_value);
+        MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_str_param_iter, &sp);
+        return sp.second;
+    }
+
     bool is_ajax(){
         str_param_t sp("X-Requested-With","");
         MHD_get_connection_values(conn, MHD_HEADER_KIND, &http_str_param_iter, &sp);

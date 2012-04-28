@@ -40,6 +40,9 @@ h2 {
     font-size: 80%;
 }
 
+.ptr, .ptr a { color: #999; font-family: Monospace }
+.ptr { font-size: 80%; }
+
 .r {
     text-align: right !important;
     padding-left: 1em !important;
@@ -227,6 +230,8 @@ table.sortable, table.t1 {
     text-align: center;
     font-weight: bold; }
   table.sortable td.tools, table.t1 td.tools {
+    padding: 0; margin: 0;
+    padding-left: 2px; padding-top: 3px;
     border-right: none;
     border-top: none;
     border-bottom: none;
@@ -290,14 +295,34 @@ table.sortable, table.t1 {
     border-right: none;
 }
 
-#trade tbody.cat_items td:first-child {
+#trade tbody.cat_items td.info {
     border-right: none;
     padding: 0;
 }
 
-#trade tbody.cat_items td:first-child + td {
+#trade tbody.cat_items td.info + td {
     border-left: none;
     padding-left: 0;
+}
+
+#trade table {
+    border: none;
+}
+
+#trade table td.info a {
+    visibility: hidden;
+}
+
+#trade table tr:hover td.info a {
+    visibility: visible;
+    margin-left: 4px;
+    margin-top: 2px;
+}
+
+#trade table a.info {
+    display: block;
+    width: 16px; height: 16px;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEZSURBVBgZdcHNKkQBAIbhd8w4TIpiJPkZLLAiM4oFa1FGopkcJ878fWXhBti4BStbd2CW9kq5Azs7CxsrJalP4fhJnodPXSxSIWaHJbr5I0eEEEKIfYb5Jcsumty9DO/jq2h+BxHTww8FNN94kmVZL1prIJb5FmyiC3ndg8663ys3Sqk9JEWibw9dbznDO7fdrWbUVSdNYi5G1QW+aDql8cZpG4mTPZStEPAh01FCBzWnSTxsTAmxzQS9jFJC6CxyioRnbpWvI0QTIYSCBkMkHLj8qONooByEufJheK5OIaoMkXCPK5b12rQs60KdQlQZIeHAsy654g0XPelaS1nRpMBv5oPHXGvpqP48yn+cd81NF/if8y4aeAOoY2hpbHPEUAAAAABJRU5ErkJggg==);
 }
 
 /*

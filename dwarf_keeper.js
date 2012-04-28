@@ -166,22 +166,38 @@ if( $('div#trade').exists() ){
 
     $('.tristate').click(function(){
         var ts = $(this)
-        var id = ts.closest('tbody').attr('id').replace("cat","tb")
-        var checkboxes = $("#"+id+" input", ts.closest('table'))
+        var type_id = ts.closest('tbody').attr('id').replace("cat","")
+        var table = ts.closest('table')
+        var checkboxes = $("#tb"+type_id+" input", table)
+        var state;
+
         if( ts.is(".checked, .intermediate") ){
+            state = 0;
             ts.removeClass("checked intermediate")
             // remove all checks from children
             checkboxes.attr("checked", false)
         } else {
+            state = 1;
             ts.addClass("checked")
             // check all children
             checkboxes.attr("checked", true)
         }
+
+        $.ajax({ 
+            url:      "/trade?type_id=" + type_id +
+                      "&state=" + state + 
+                      "&side=" + (table.hasClass("side_left") ? "left" : "right"),
+            dataType: 'json',
+            success:  trade_ajax_success,
+            context:  table
+        });
         return false;
     })
 
     function update_tristate_state(ts){
         var ts = $(ts)
+        if( !ts.exists() ) return; // drinks and liquids have separate categories, but are not sold w/o containers
+
         var id = ts.closest('tbody').attr('id').replace("cat","tb")
         var checkboxes = $("#"+id+" input", ts.closest('table'))
         var has_checked = checkboxes.filter(":checked").exists()
@@ -196,11 +212,35 @@ if( $('div#trade').exists() ){
         }
     }
 
+    function trade_ajax_success(data){
+        // uncheck checkboxes
+        $(data.ids.map(function(id){ return "#i" + id }).join(",")).attr('checked',false);
+        // update tristates
+        forEach(data.types, function(cat_id){
+            var tristate = $("#cat" + cat_id + " .tristate", this);
+            update_tristate_state(tristate);
+        }, this);
+    }
+
     // checkboxes
     $('input').change(function(){
         var id = $(this).closest('tbody').attr('id').replace("tb","cat")
-        var tristate = $("#"+id+" .tristate", $(this).closest('table'))
+        var table = $(this).closest('table')
+        var tristate = $("#"+id+" .tristate", table)
+
         update_tristate_state(tristate)
+
+        $.ajax({ 
+            url:      "/trade?item_id=" + $(this).attr('id').replace("i","") + "&state=" + (this.checked ? 1 : 0),
+            dataType: 'json',
+            success:  trade_ajax_success,
+            context:  table
+        });
+    })
+
+    // update tristates on load
+    forEach( $('.tristate'), function(ts){
+        update_tristate_state(ts)
     })
 }
 
