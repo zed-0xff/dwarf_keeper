@@ -4,6 +4,9 @@ $.fn.exists = function () {
     return this.length !== 0;
 }
 
+/******************************************************************************
+ ******************************************************************************/
+
 /*
  * clothes counts
  */
@@ -222,25 +225,59 @@ if( $('div#trade').exists() ){
         }, this);
     }
 
+    // for checkboxes shift-click
+    var last_checkbox = null;
+    var all_checkboxes = $('#trade input');
+
     // checkboxes
-    $('input').change(function(){
+    all_checkboxes.click(function(ev, shift_flag){
         var id = $(this).closest('tbody').attr('id').replace("tb","cat")
         var table = $(this).closest('table')
         var tristate = $("#"+id+" .tristate", table)
+        var from_tr = (shift_flag !== undefined)
+        var checkboxes;
 
-        update_tristate_state(tristate)
+        var state = this.checked
+        if(from_tr) state = !state;
+
+        if (last_checkbox != null && ev && (ev.shiftKey || ev.metaKey || shift_flag)) {
+            // checkboxes shift-click
+            checkboxes = all_checkboxes.slice(
+                Math.min(all_checkboxes.index(last_checkbox), all_checkboxes.index(ev.target)),
+                Math.max(all_checkboxes.index(last_checkbox), all_checkboxes.index(ev.target)) + 1
+            ).attr( "checked", state );
+        } else {
+            checkboxes = $(this);
+        }
+
+        var url = "/trade?state=" + (state ? 1 : 0)
+        url += checkboxes.map(function(){ return "&id=" + this.id.replace('i','') }).get().join('')
+
+        last_checkbox = this;
+
+        // works wrong w/o timeout when called from tr click() handler
+        setTimeout(function(){ update_tristate_state(tristate) }, 100);
 
         $.ajax({ 
-            url:      "/trade?item_id=" + $(this).attr('id').replace("i","") + "&state=" + (this.checked ? 1 : 0),
+            url:      url,
             dataType: 'json',
             success:  trade_ajax_success,
             context:  table
         });
+
+        return !from_tr || !shift_flag;
     })
 
     // update tristates on load
     forEach( $('.tristate'), function(ts){
         update_tristate_state(ts)
+    })
+
+    // click on item row
+    $('td.name').click(function(ev){
+        if( ev.target.tagName == "TD" ){
+            $('input',this).trigger("click", ev.shiftKey || ev.metaKey )
+        }
     })
 }
 

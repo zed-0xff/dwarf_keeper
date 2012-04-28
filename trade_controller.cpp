@@ -28,37 +28,43 @@ class TradeController : Controller {
                    "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";
         }
 
+        vector<int> item_ids = request->get_ints("id"); // item id
         int type_id = request->get_int("type_id", -1);
-        int item_id = request->get_int("item_id", -1);
         int state   = request->get_int("state",   -1);
 
-        if( item_id != -1 && state != -1 ){
-            if( string *ps = toggle_item(item_id, state) ){
-                return *ps;
-            } else {
-                resp_code = MHD_HTTP_NOT_FOUND;
-                return "Not Found";
-            }
-        }
-        if( type_id != -1 && state != -1 ){
-            string side = request->get_string("side","");
-            int side_id;
-
-            if(side == "left") 
-                side_id = Screen::TRADE_SIDE_LEFT;
-            else if(side == "right")
-                side_id = Screen::TRADE_SIDE_RIGHT;
-            else {
-                resp_code = MHD_HTTP_BAD_REQUEST;
-                return "invalid side";
+        if( state != -1 ){
+            if( item_ids.size() > 0 ){
+                if( string *ps = toggle_items(item_ids, state) ){
+                    return *ps;
+                } else {
+                    resp_code = MHD_HTTP_NOT_FOUND;
+                    return "Not Found";
+                }
             }
 
-            if( string *ps = toggle_type(type_id, side_id, state) ){
-                return *ps;
-            } else {
-                resp_code = MHD_HTTP_NOT_FOUND;
-                return "Not Found";
+            if( type_id != -1 ){
+                string side = request->get_string("side","");
+                int side_id;
+
+                if(side == "left") 
+                    side_id = Screen::TRADE_SIDE_LEFT;
+                else if(side == "right")
+                    side_id = Screen::TRADE_SIDE_RIGHT;
+                else {
+                    resp_code = MHD_HTTP_BAD_REQUEST;
+                    return "invalid side";
+                }
+
+                if( string *ps = toggle_type(type_id, side_id, state) ){
+                    return *ps;
+                } else {
+                    resp_code = MHD_HTTP_NOT_FOUND;
+                    return "Not Found";
+                }
             }
+
+            resp_code = MHD_HTTP_BAD_REQUEST;
+            return "invalid args";
         }
 
         string html;
@@ -110,6 +116,51 @@ class TradeController : Controller {
                             types.insert(ref_item->getTypeId());
                             sprintf(buf, "%d,", ref_id); js += buf;
                             break;
+                    }
+                }
+            }
+        }
+        if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+        js += "], \"types\":[";
+        for(set<int>::iterator it = types.begin(); it != types.end(); it++){
+            sprintf(buf, "%d,", *it); js += buf;
+        }
+        if(js.size() > 1 && js[js.size()-1] == ',') js.erase(js.size()-1);
+        js += "]}";
+        return &js;
+    }
+
+    string* toggle_items(vector<int>ids, int state){
+        static string js;
+        char buf[0x40];
+        set<int> types;
+
+        js = "{\"ids\":[";
+        for( int i = 0; i<ids.size(); i++ ){
+            int id = ids[i];
+            for( int side = Screen::TRADE_SIDE_LEFT; side <= Screen::TRADE_SIDE_RIGHT; side++ ){
+                TradeSideInfo tsi = trade_screen->getTradeSideInfo(side);
+                if( Item* item = tsi.toggle_item(id, state) ){
+                    if(state){
+                        // item is CHECKED
+                        // now a) uncheck item container, if any
+                        //     b) uncheck all item containees, if any
+                        RefsVector *rv = item->getRefs();
+                        for(int j=0; j<rv->size(); j++){
+                            Reference *ref = rv->at(j);
+                            switch(ref->getType()){
+                                case Reference::REF_CONTAINED_IN_ITEM:
+                                case Reference::REF_CONTAINS_ITEM:
+                                    Item* ref_item = ref->getItem();
+                                    int ref_id = ref_item->getId();
+
+                                    tsi.toggle_item(ref_id, false);
+
+                                    types.insert(ref_item->getTypeId());
+                                    sprintf(buf, "%d,", ref_id); js += buf;
+                                    break;
+                            }
+                        }
                     }
                 }
             }
@@ -198,7 +249,7 @@ class TradeController : Controller {
                         "<tr>"
                             "<td class=info>"
                                 "%s"
-                            "<td>"
+                            "<td class=name>"
                                 "<input id=i%d type=checkbox%s>"
                                 "%s"
                             "<td class=r>"

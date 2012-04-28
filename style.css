@@ -300,9 +300,13 @@ table.sortable, table.t1 {
     padding: 0;
 }
 
-#trade tbody.cat_items td.info + td {
+#trade tbody.cat_items td.name { /* item name */
     border-left: none;
     padding-left: 0;
+    cursor: pointer;
+}
+#trade tbody tr:hover {
+    background-color: #ffa;
 }
 
 #trade table {
@@ -323,6 +327,10 @@ table.sortable, table.t1 {
     display: block;
     width: 16px; height: 16px;
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEZSURBVBgZdcHNKkQBAIbhd8w4TIpiJPkZLLAiM4oFa1FGopkcJ878fWXhBti4BStbd2CW9kq5Azs7CxsrJalP4fhJnodPXSxSIWaHJbr5I0eEEEKIfYb5Jcsumty9DO/jq2h+BxHTww8FNN94kmVZL1prIJb5FmyiC3ndg8663ys3Sqk9JEWibw9dbznDO7fdrWbUVSdNYi5G1QW+aDql8cZpG4mTPZStEPAh01FCBzWnSTxsTAmxzQS9jFJC6CxyioRnbpWvI0QTIYSCBkMkHLj8qONooByEufJheK5OIaoMkXCPK5b12rQs60KdQlQZIeHAsy654g0XPelaS1nRpMBv5oPHXGvpqP48yn+cd81NF/if8y4aeAOoY2hpbHPEUAAAAABJRU5ErkJggg==);
+}
+
+#trade label {
+    cursor: pointer;
 }
 
 /*

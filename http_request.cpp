@@ -24,6 +24,13 @@ class HTTPRequest {
         return ip.second;
     }
 
+    vector<int> get_ints(const char*param_name){
+        vector<int>r;
+        pair<const char*, vector<int>*> ip(param_name,&r);
+        MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_ints_param_iter, &ip);
+        return r;
+    }
+
     uint32_t get_uint(const char*param_name, uint32_t default_value){
         pair<const char*, uint32_t> ip(param_name,default_value);
         MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_uint_param_iter, &ip);
@@ -31,8 +38,7 @@ class HTTPRequest {
     }
 
     vector<string> get_strings(const char*param_name){
-        static vector<string>r;
-        r.clear();
+        vector<string>r;
         strs_param_t sp(param_name, &r);
         MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &http_strs_param_iter, &sp);
         return r;
@@ -58,6 +64,7 @@ class HTTPRequest {
 
     private:
 
+    // stop on first found
     static int http_int_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
         pair<const char*, int> *p = (pair<const char*, int>*)cls;
         if(!strcmp(p->first, key)){
@@ -66,6 +73,15 @@ class HTTPRequest {
         } else {
             return MHD_YES; // continue iteration
         }
+    }
+
+    // return all params as a vector
+    static int http_ints_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
+        pair<const char*, vector<int>*> *p = (pair<const char*, vector<int>*>*)cls;
+        if(!strcmp(p->first, key)){
+            p->second->push_back(strtol(value,NULL,0));
+        }
+        return MHD_YES; // continue iteration
     }
 
     static int http_uint_param_iter(void *cls, enum MHD_ValueKind kind, const char *key, const char *value){
