@@ -249,16 +249,17 @@ class TradeController : Controller {
                         "<tr>"
                             "<td class=info>"
                                 "%s"
-                            "<td class=name>"
+                            "<td class='name%s'>"
                                 "<input id=i%d type=checkbox%s>"
                                 "%s"
                             "<td class=r>"
                                 "%d<span class=currency>&#9788;</span>"
                         "\n",
                         link_to_item(item,""," class=info target=_blank"),
+                        HTML::item_color_classes(item),
                         item->getId(),
                         tsi.checks->at(i) ? " CHECKED" : "",
-                        HTML::colored_item_name(item),
+                        item->getName().c_str(),
                         price
                        );
                 chunk += buf;

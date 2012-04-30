@@ -1,4 +1,4 @@
-#include "common.h"
+#include "controller.cpp"
 #include <iostream>
 
 #define DEBUG
@@ -69,7 +69,7 @@ static ClothType clothtypes[] = {
 
 // http://dwarffortresswiki.org/index.php/40d:Clothing#Layering_of_clothing
 
-class ClothesController{
+class ClothesController : Controller {
     HTTPRequest* request;
     map<Item*, Dwarf*>  items2dwarves;
     vector<uint32_t>    want_types;
@@ -147,6 +147,9 @@ class ClothesController{
                     (*itr)->getSubTypeId() == subtype &&
                     (*itr)->getSize()      == Item::SIZE_OK
             ){
+                if( (*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
+                if( (*itr)->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
+
                 if(items2dwarves.find(*itr) != items2dwarves.end())
                     (*cnt_owned)++;
                 else if((*itr)->getWear() <= free_max_wear )
@@ -272,6 +275,9 @@ class ClothesController{
       for ( itr = v->begin(); itr < v->end(); ++itr ) {
           if(!is_clothing(*itr)) continue;
 
+          if( (*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
+          if( (*itr)->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
+
           if(want_types.size() > 0){
               bool ok = false;
               uint32_t itfid = (*itr)->getFullId(); // item type full id
@@ -295,18 +301,35 @@ class ClothesController{
               // item belongs to someone
               if(!want_owned) continue;
 
-              html += HTML::Item(*itr);
-              sprintf(buf, "<td class=owner><a href='/dwarves?id=%d'>%s</a>", 
+              sprintf(buf, 
+                      "<tr>"
+                          "<td class='name%s'>%s"
+                          "<td class=r>%d<span class=currency>&#9788;</span>"
+                          "<td class=owner><a href='/dwarves?id=%d'>%s</a>"
+                          "\n",
+                      HTML::item_color_classes(*itr),
+                      link_to_item(*itr),
+                      (*itr)->getValue(),
                       i2d_it->second->getId(),
-                      i2d_it->second->getName().c_str());
+                      i2d_it->second->getName().c_str()
+              );
               html += buf;
           } else {
               // item is free
               if(!want_free) continue;
               if((*itr)->getWear() > free_max_wear ) continue;
 
-              html += HTML::Item(*itr);
-              html += "<td>";
+              sprintf(buf, 
+                      "<tr>"
+                          "<td class='name%s'>%s"
+                          "<td class=r>%d<span class=currency>&#9788;</span>"
+                          "<td class=owner>"
+                          "\n",
+                      HTML::item_color_classes(*itr),
+                      link_to_item(*itr),
+                      (*itr)->getValue()
+              );
+              html += buf;
           }
 
           nItems++;
@@ -315,11 +338,9 @@ class ClothesController{
           sprintf(buf,
                   "<td class=r>"
                   "<a class=ptr href='/hexdump?offset=%p&size=%d&width=4&title=%s'>"
-                  "%p"
-                  "</a>"
-                  "<td class=r>%x:%x",
-                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), *itr,
-                  (*itr)->getTypeId(), (*itr)->getSubTypeId() );
+                  "%x"
+                  "</a>",
+                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), (*itr)->getFlags());
           html += buf;
 #endif
       }

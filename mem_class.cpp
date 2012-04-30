@@ -3,6 +3,9 @@
 class MemClass {
     public:
 
+    int16_t i16(int offset){
+        return *(int16_t*)((char*)this+offset);
+    }
     uint16_t w(int offset){
         return *(uint16_t*)((char*)this+offset);
     }

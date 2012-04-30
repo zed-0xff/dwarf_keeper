@@ -1,4 +1,5 @@
 #include "common.h"
+#include "unicode.cpp"
 
 class HTML{
     public:
@@ -21,9 +22,36 @@ class HTML{
         return buf;
     }
 
-    static char* Item(const char*name, int value, int flags=0){
+    static const char* item_color_classes(::Item*item){
+        const char* name = item->getName().c_str();
+
+        bool is_worn   = (name[0] == 'X' && name[strlen(name)-1] == 'X');
+        bool is_forbid = strchr(name,'{') && strchr(name,'}');
+
+        if(is_forbid)
+            return " forbid";
+        else if(is_worn)
+            return " worn";
+        else
+            return "";
+    }
+
+    static const char* link_to_item(::Item* item, const char*title=NULL, const char*add=""){
         static char buf[0x200];
-        const char* add_class = "";
+        
+        if(!item) return "";
+
+        sprintf(buf, "<a href='/items?id=%d'%s>%s</a>", 
+                item->getId(),
+                add,
+                html_escape(title ? title : item->getName()).c_str()
+                );
+
+        return buf;
+    }
+
+    static char* Item(const char*name, int value, int flags=0, const char*add_class = ""){
+        static char buf[0x200];
 
         bool is_worn   = (name[0] == 'X' && name[strlen(name)-1] == 'X');
         bool is_forbid = strchr(name,'{') && strchr(name,'}');
@@ -45,7 +73,7 @@ class HTML{
         return buf;
     }
 
-    static char* Item(::Item* pItem){
-        return Item(pItem->getName().c_str(), pItem->getValue(), pItem->getFlags());
+    static char* Item(::Item* item){
+        return Item(link_to_item(item), item->getValue(), item->getFlags(), item_color_classes(item));
     }
 };

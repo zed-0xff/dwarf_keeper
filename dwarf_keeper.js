@@ -1,15 +1,25 @@
 
 // http://stackoverflow.com/questions/920236/jquery-detect-if-selector-returns-null
-$.fn.exists = function () {
+$.fn.exists = $.fn.exist = function () {
     return this.length !== 0;
 }
 
-/******************************************************************************
- ******************************************************************************/
+// http://stackoverflow.com/a/2880929/286595
+var $url_params = {};
+(function () {
+    var e,
+        a = /\+/g,  // Regex for replacing addition symbol with a space
+        r = /([^&=]+)=?([^&]*)/g,
+        d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+        q = window.location.search.substring(1);
 
-/*
+    while (e = r.exec(q))
+       $url_params[d(e[1])] = d(e[2]);
+})();
+
+/******************************************************************************
  * clothes counts
- */
+ ******************************************************************************/
 
 var cur_max_wear;
 
@@ -68,9 +78,9 @@ if($('h2.cnt-free')[0]){ // only if element exists
     }
 }
 
-/*
+/******************************************************************************
  * crosshair
- */
+ ******************************************************************************/
 
 $('.crosshair').attr('title', 'Center screen on this unit').click(function(){
     var parent = $(this).closest('tr')
@@ -83,13 +93,12 @@ $('.crosshair').attr('title', 'Center screen on this unit').click(function(){
     id = parseInt(id.replace("unit_",""))
     $(this).parent().effect('highlight')
 
-    $.ajax({ url: "/units?id=" + id + "&center=1" });
+    $.ajax({ url: "/screen?unit_id=" + id });
 })
 
-
-/*
- * dwarf info page
- */
+/******************************************************************************
+ * unit info
+ ******************************************************************************/
 
 if($('.thoughts')[0]){ // only if element exists
     $('.thoughts').html(
@@ -107,9 +116,9 @@ if($('.thoughts')[0]){ // only if element exists
     );
 }
 
-/*
+/******************************************************************************
  * autorefresh
- */
+ ******************************************************************************/
 
 var ar_timeout_id;
 
@@ -128,36 +137,38 @@ function ar_update(nSeconds){
 }
 
 $(function(){
-    $('body').append(
-        "<div class=autorefresh>" +
-        "<label>autorefresh: no</label>" +
-        "<select> <option>no <option>5s <option>10s <option>30s <option>60s </select>" +
-        "</div>"
-    );
-    $('.autorefresh label').click(function(){
-        var select = $('.autorefresh select')
-        if(select.is(":visible")){
-            ar_update();
-        } else {
-            clearTimeout(ar_timeout_id);
-            $('.autorefresh label').text("autorefresh: ");
-            select.show();
-        }
-    });
-    $('.autorefresh select').blur(ar_update).change(ar_update);
+    if( !$("div.error").exists() ){
+        $('body').append(
+            "<div class=autorefresh>" +
+            "<label>autorefresh: no</label>" +
+            "<select> <option>no <option>5s <option>10s <option>30s <option>60s </select>" +
+            "</div>"
+        );
+        $('.autorefresh label').click(function(){
+            var select = $('.autorefresh select')
+            if(select.is(":visible")){
+                ar_update();
+            } else {
+                clearTimeout(ar_timeout_id);
+                $('.autorefresh label').text("autorefresh: ");
+                select.show();
+            }
+        });
+        $('.autorefresh select').blur(ar_update).change(ar_update);
 
-    if(window.location.href.match(/refresh=(\d+)/)){
-        var nSeconds = parseInt(RegExp.$1);
-        if(!isNaN(nSeconds) && nSeconds > 1){
-            $('.autorefresh select').val(nSeconds + "s");
-            ar_update(nSeconds)
+        if(window.location.href.match(/refresh=(\d+)/)){
+            var nSeconds = parseInt(RegExp.$1);
+            if(!isNaN(nSeconds) && nSeconds > 1){
+                $('.autorefresh select').val(nSeconds + "s");
+                ar_update(nSeconds)
+            }
         }
     }
 });
 
-/*
+/******************************************************************************
  * trade
- */
+ ******************************************************************************/
 
 if( $('div#trade').exists() ){
     $('#trade tbody.category').click(function(){
@@ -282,3 +293,33 @@ if( $('div#trade').exists() ){
     })
 }
 
+/******************************************************************************
+ * units list
+ ******************************************************************************/
+
+if( $("#units").exists() ){
+    // highlight grepped string
+    if( $url_params['grep'] ){
+        $("input[name=grep]").val( $url_params['grep'] )
+        var encoded_grep_param = encodeURIComponent( $url_params['grep'] )
+        $('#units table a').each(function(){
+            // only find links to unit info page
+            if( this.href && this.href.match(/[&?]id=\d/) ){
+                this.href += "&hl=" + encoded_grep_param
+            }
+        })
+    }
+}
+
+/******************************************************************************
+ * coords links
+ ******************************************************************************/
+
+$('a.coords').click(function(){
+    $.ajax({ 
+        url: this.href,
+    success: function(){ $(this).effect('highlight', 1000) },
+    context: this
+    });
+    return false;
+})

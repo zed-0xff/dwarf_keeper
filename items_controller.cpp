@@ -27,8 +27,6 @@ class ItemsController : Controller {
         want_group = req.get_int("g", 1);
         want_flags = req.get_uint("f", 0);
         want_flat  = req.get_int("flat", 0);
-
-        printf("[d] flags = %x :: %x\n", want_flags, 0x101 & want_flags);
     }
 
     string to_html(){
@@ -79,8 +77,11 @@ class ItemsController : Controller {
         sprintf(buf, "<tr><th>value <td class=r>%d<span class=currency>&#9788;</span>\n", 
                 item->getValue()); html += buf;
 
-        sprintf(buf, "<tr><th>flags <td class='r comment'>%x\n", 
-                item->getFlags()); html += buf;
+        html += "<tr><th>coords <td class=r>";
+        html += link_to_coords(item->getCoords());
+
+        sprintf(buf, "<tr><th>flags <td class='r comment'>%x <td class=comment>%s\n", 
+                item->getFlags(), item->getFlagsString().c_str()); html += buf;
 
         sprintf(buf, "<tr><th>ptr <td class='r ptr'><a href='/hexdump?offset=%p&size=%d&width=4'>%p</a>\n", 
                 item, Item::RECORD_SIZE, item
@@ -108,7 +109,8 @@ class ItemsController : Controller {
                 }
 
                 if(Building *p = ref->getBuilding()){
-                    html += "<td>" + html_escape(p->getName());
+                    html += "<td>";
+                    html += link_to_building(p);
                 }
 
                 string s = ref->getDescription();
@@ -256,7 +258,7 @@ class ItemsController : Controller {
             if(type_id != -1 && type_id != (*itr)->getTypeId()) continue;
             if( want_flags && ((*itr)->getFlags() & want_flags) == 0 ) continue;
 
-            html += HTML::Item(link_to_item(*itr), (*itr)->getValue());
+            html += HTML::Item(*itr);
 
 #ifdef DEBUG
             sprintf(buf, "<td class='r ptr'>%x", (*itr)->getFlags());
@@ -286,6 +288,8 @@ class ItemsController : Controller {
         html += "<tr> <th>type <th>count\n";
 
         for(map<uint32_t,int>::iterator it = counts_map.begin(); it != counts_map.end(); it++){
+            if( it->first == ItemType::BOOKS ) continue; // prevent spoilers
+
             sprintf(buf, "<tr><td>%s <td class=r><a href='?t=%d'>%d</a>\n", 
                     ItemType::type2string(it->first), 
                     it->first, 

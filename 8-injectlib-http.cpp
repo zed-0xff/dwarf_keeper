@@ -19,6 +19,8 @@
 #include "items_controller.cpp"
 #include "units_controller.cpp"
 #include "trade_controller.cpp"
+#include "buildings_controller.cpp"
+#include "screen_controller.cpp"
 
 static const char* ALLOWED_CONTENT_TYPES[][2] = {
     {".js",  "application/x-javascript"},
@@ -99,7 +101,7 @@ static int ahc_echo(void * cls,
 
   html.reserve(50*1024);
 
-  if(request.url_match("/dwarves") || request.url_match("/units")){
+  if(request.url_starts_with("/dwarves") || request.url_starts_with("/units")){
       UnitsController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
@@ -109,13 +111,23 @@ static int ahc_echo(void * cls,
       html.reserve(100*1024);
       html += c.to_html();
 
-  } else if(!strcmp(url, "/items")){
+  } else if(request.url_match("/items")){
       ItemsController c(request);
+      html += c.to_html();
+      resp_code = c.resp_code;
+
+  } else if(request.url_match("/buildings")){
+      BuildingsController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
 
   } else if(!strcmp(url, "/trade")){
       TradeController c(request);
+      html += c.to_html();
+      resp_code = c.resp_code;
+
+  } else if(!strcmp(url, "/screen")){
+      ScreenController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
 
@@ -180,8 +192,9 @@ static int ahc_echo(void * cls,
           }
       }
 
-      // not allowed file extension
-      return MHD_NO;
+      // not allowed file extension or unknown url
+      resp_code = MHD_HTTP_NOT_FOUND;
+      html += "<div class=error>Unknown URL</div>";
   }
       
 
@@ -219,6 +232,13 @@ static int ahc_echo(void * cls,
                   " no {CONTENT} tag in template.html, or template.html not found. Using built-in default"
               "</font>\n"
               "</body></html>";
+      }
+
+      // highlight text on page, from 'hl' url param
+
+      string hl = request.get_string("hl","");
+      if( !hl.empty() ){
+          str_replace(html_utf8, hl, "<span class=hl>" + hl + "</span>");
       }
   }
 

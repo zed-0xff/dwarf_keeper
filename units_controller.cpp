@@ -1,8 +1,10 @@
-#include "common.h"
 #include "screen.cpp"
+#include "controller.cpp"
 
-class UnitsController {
+class UnitsController : Controller {
     HTTPRequest* request;
+    string want_grep;
+    int race_filter;
 
     public:
 
@@ -11,6 +13,13 @@ class UnitsController {
     UnitsController(HTTPRequest& req){
         request = &req;
         resp_code = MHD_HTTP_OK;
+        want_grep = request->get_string("grep","");
+
+        if( request->url_starts_with("/dwarves") ){
+            race_filter = RACE_DWARF;
+        } else {
+            race_filter = request->get_int("race",-1);
+        }
     }
 
     string to_html(){
@@ -18,34 +27,51 @@ class UnitsController {
         if(id){
             Unit *pc = Unit::find(id);
             if(pc){
-                if( request->get_int("center",0) == 1 ){
-                    int x=0, y=0, z=0;
-                    pc->getCoords(&x,&y,&z);
-
-                    // XXX HACK
-                    *((int*)0x1563A3C) = -30000;
-                    *((int*)0x1563A48) = -30000;
-                    *((uint16_t*)0x156A97C) = 0x17;
-                    *((int*)0x1563B5C) = -1;
-                    *((int*)0x1563B68) = 0;
-                    *((uint8_t*)0x16FEA54) = 1;
-                    *((uint8_t*)0x16FEA55) = 1;
-
-                    Screen::enumerate();
-                    Screen::moveTo(x,y,z);
-                    ((func_t_i)(FOO_FUNC))(pc->getId());
-
-                    return "OK";
-                } else {
-                    return show(pc);
-                }
+                return show(pc);
             } else {
                 resp_code = MHD_HTTP_NOT_FOUND;
                 return "Not Found";
             }
+        } else if( strstr(request->url, "/attr") ){
+            return attributes();
         } else {
             return list();
         }
+    }
+
+    private:
+
+    string attributes(){
+        string html;
+        int idx = 0;
+        char buf[0x1000];
+        bool was_titles = false;
+
+        html += "<table class='units sortable'>\n";
+
+        while(Unit* pc=Unit::getNext(&idx, race_filter)){
+            PhysAttrsVector pav = pc->getPhysAttrs();
+            if( pav.size() > 0 ){
+                if(!was_titles){
+                    html += "\n<tr><th>name";
+                    for(int i=0;i<pav.size();i++){
+                        sprintf(buf, "<th>%s", pav[i].name);
+                        html += buf;
+                    }
+                    was_titles = true;
+                }
+                html += "\n<tr><td>";
+                html += link_to_unit(pc);
+                for(int i=0;i<pav.size();i++){
+                    sprintf(buf, "<td class=r>%d", pav[i].value - pav[i].sub);
+                    html += buf;
+                }
+            }
+        }
+
+        html += "</table>\n";
+
+        return html;
     }
 
     // show one unit
@@ -57,15 +83,38 @@ class UnitsController {
         html += "<h1>" + pc->getName() + "</h1>\n";
 
         //sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
+        Coords c = pc->getCoords();
         sprintf(buf,
                 "<table class=tools>"
                     "<tr id='unit_%d'>"
                         "<td>"
                             "<div class=crosshair></div>"
                         "<td title='Happiness' class=happiness>%d"
+                        "<td title='flags' class=flags>%x"
+                        "<td title='coords' class=flags>(%d,%d,%d)"
                 "</table>\n",
-                pc->getId(), pc->getHappiness()
+                pc->getId(), pc->getHappiness(), pc->getFlags(),
+                c.x, c.y, c.z
         ); html += buf;
+
+        html += "<div class=tables>\n";
+
+        // physical attributes
+
+        PhysAttrsVector pav = pc->getPhysAttrs();
+        if( pav.size() > 0 ){
+            html += "<table class='t1 phys_attrs'>\n";
+            for(int i=0;i<pav.size();i++){
+                sprintf(buf, "<tr title='%s'><td>%s <td class=r>%d <td class=r>%d\n", 
+                        pav[i].name,
+                        pav[i].name,
+                        pav[i].value,
+                        pav[i].sub
+                        );
+                html += buf;
+            }
+            html += "</table>\n";
+        }
 
         // wearings
 
@@ -111,6 +160,9 @@ class UnitsController {
             html += "</table>\n";
         }
 
+        html += "</div>\n";
+
+        // thoughts
 
         html += "<div class=thoughts>" + pc->getThoughts() + "</div>\n";
         html += "</div>\n"; // div id=dwarf
@@ -123,26 +175,33 @@ class UnitsController {
         string html,s;
         char buf[0x1000];
 
-        html += "<table class='dwarves sortable'>";
+        html += "<div id=units>\n";
+
+        html += 
+            "<form>"
+                "<input type=text name=grep>"
+                "<input type=submit value='grep info'>"
+            "</form>\n";
+
+        html += "<table class='dwarves sortable'>\n";
         html += "<tr>"
             "<th>name "
             "<th>profession "
             "<th title='number of items weared'>items "
             "<th class=sorttable_numeric title='total items value'>value "
-            "<th class=sorttable_numeric title='greater is better'>happiness"
+            "<th class=sorttable_numeric title='greater is better'>happiness "
+            "<th class=flags>flags"
             "\n";
-        html += "<th class=flags>flags";
 
-        int idx = 0, nDwarves = 0, race_filter;
-
-        if( request->url_match("/dwarves") ){
-            race_filter = RACE_DWARF;
-        } else {
-            race_filter = request->get_int("race",-1);
-        }
+        int idx = 0, nDwarves = 0;
 
         while(Unit* pc=Unit::getNext(&idx, race_filter)){
             s = pc->getName();
+
+            if( !want_grep.empty() ){
+                // grep unit description for substring
+                if( pc->getThoughts().find(want_grep) == string::npos ) continue;
+            }
 
             nDwarves++;
 
@@ -183,10 +242,12 @@ class UnitsController {
 
             html += "</tr>\n";
         }
-        html += "</table>";
+        html += "</table>\n";
 
         sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Units" ,nDwarves);
         html = buf + html;
+
+        html += "</div>\n";
 
         return html;
     }

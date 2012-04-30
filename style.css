@@ -2,6 +2,10 @@
     font-family: verdana;
 }
 
+.hl {
+    background-color: yellow !important;
+}
+
 pre, .ptr, tt {
     font-family: monospace;
 }
@@ -40,7 +44,11 @@ h2 {
     font-size: 80%;
 }
 
-.ptr, .ptr a { color: #999; font-family: Monospace }
+.error {
+    color: red;
+}
+
+.ptr, .ptr a, .flags { color: #999; font-family: Monospace }
 .ptr { font-size: 80%; }
 
 .r {
@@ -50,9 +58,17 @@ h2 {
     font-size: 90%;
 }
 
-
 .items .owner {
     font-size: 80%;
+}
+
+/*
+ * coords
+ */
+
+a.coords {
+    color: gray;
+    font-family: Monospace;
 }
 
 /*
@@ -105,11 +121,21 @@ table.dwarves .crosshair {
  * dwarf info page
  */
 
-#dwarf table#skills {
-    float: left;
+#dwarf table.sortable, #dwarf table.t1 {
+/*    float: left; */
     margin-right: 1.2em;
     margin-bottom: 0.7em;
     font-size: 11pt;
+}
+
+#dwarf .tables {
+    float: left;
+    margin-right: 1em;
+}
+
+#dwarf .tables table {
+    width: 100%;
+    margin-left: 0;
 }
 
 #dwarf table#skills tr td tt {
@@ -130,21 +156,22 @@ table.dwarves .crosshair {
     color: #090;
 }
 
-#dwarf .crosshair {
-}
-
-#dwarf .happiness {
+#dwarf .tools .happiness {
     color: #ccc;
     font-size: 10pt;
     font-family: monospace;
 }
 
+#dwarf .tools .flags {
+    color: #ddd;
+    font-size: 10pt;
+    font-family: monospace;
+    text-align: right;
+    width: 8em;
+}
+
 #dwarf .items {
-    float: left;
     margin-left: 0.5em;
-    margin-right: 1.2em;
-    margin-bottom: 0.7em;
-    font-size: 11pt;
 }
 
 #dwarf .thoughts {

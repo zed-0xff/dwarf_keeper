@@ -9,11 +9,14 @@
 using namespace std;
 
 class Item;
+typedef vector<Item*> ItemsVector;
+
 class Dwarf;
 class HTTPRequest;
 
 #define UNITS_VECTOR            0x157e5f8
 #define ITEMS_VECTOR            0x157e668
+#define BUILDINGS_VECTOR        0x157ecc8
 
 #define UNIT_FULL_NAME_FUNC     0x96b030
 #define DWARF_THOUGHTS_FUNC     0xa1aa60 // (pDwarf, string*)
@@ -97,6 +100,22 @@ int str_replace(string&s, const char*from,const string&to){
 
     return nreplaces;
 }
+
+int str_replace(string&s, const string&from,const string&to){
+    int i = 0;
+    int lto = to.size();
+    int lfrom = from.size();
+    int nreplaces = 0;
+
+    while( (i=s.find(from, i)) != string::npos ){
+        s.replace(i, lfrom, to);
+        i += lto-lfrom+1;
+        nreplaces++;
+    }
+
+    return nreplaces;
+}
+
 
 
 int diff_ms(timeval t1, timeval t2)

@@ -71,10 +71,10 @@ class Screen {
 
     //////////////////////////////////////////////////////////////////
 
-    static void moveTo(int x, int y, int z, int mode=2){
-        *((int*)SCR_TARGET_CENTER_X) = x;
-        *((int*)SCR_TARGET_CENTER_Y) = y;
-        *((int*)SCR_TARGET_CENTER_Z) = z;
+    static void moveTo(Coords c, int mode=2){
+        *((int*)SCR_TARGET_CENTER_X) = c.x;
+        *((int*)SCR_TARGET_CENTER_Y) = c.y;
+        *((int*)SCR_TARGET_CENTER_Z) = c.z;
 
         // possible argument values are 0,1,2
         //  2  - move screen center exactly on point
@@ -82,18 +82,27 @@ class Screen {
         ((func_t_i)(SET_SCREEN_CENTER_FUNC))(mode);
     }
 
+    // get current screen center
+    static Coords getCenter(){
+        Coords c;
+        c.x = *((int*)SCR_TARGET_CENTER_X);
+        c.y = *((int*)SCR_TARGET_CENTER_Y);
+        c.z = *((int*)SCR_TARGET_CENTER_Z);
+        return c;
+    }
+
     static Screen* root(){
         return (Screen*)ROOT_SCREEN;
     }
 
-    static void enumerate(){
-        Screen *s = root();
-        while(s){
-            printf("[.] screen %10p: vtbl=%10p : %s \n", s, s->pvtbl, s->vtbl2type());
-            s = s->next();
-        }
-    }
-
+//    static void enumerate(){
+//        Screen *s = root();
+//        while(s){
+//            printf("[.] screen %10p: vtbl=%10p : %s \n", s, s->pvtbl, s->vtbl2type());
+//            s = s->next();
+//        }
+//    }
+//
     //////////////////////////////////////////////////////////////////
 
     private:

@@ -2,8 +2,6 @@
 #include "reference.cpp"
 #include "item_type.cpp"
 
-typedef vector<Item*> ItemsVector;
-
 class Item : public MemClass {
     public:
     void *pvtbl;    // pointer to vtable
@@ -42,6 +40,22 @@ class Item : public MemClass {
     static const int FLAG_LOCAL_ARTIFACT =  0x8000000; // artifact made by fort citizen
     //static const int FLAG_UNTANNED_HIDE = 0x80000000; // not sure
 
+    string getFlagsString(){
+        string s;
+        uint32_t f = getFlags();
+        if( f & FLAG_BUILDING_PART  ) s += " BUILDING_PART ";
+        if( f & FLAG_IMPORTED       ) s += " IMPORTED      ";
+        if( f & FLAG_NOT_FORT_OWN   ) s += " NOT_FORT_OWN  ";
+        if( f & FLAG_HAS_OWNER      ) s += " HAS_OWNER     ";
+        if( f & FLAG_DUMP           ) s += " DUMP          ";
+        if( f & FLAG_ARTIFACT       ) s += " ARTIFACT      ";
+        if( f & FLAG_FORBID         ) s += " FORBID        ";
+        if( f & FLAG_MELT           ) s += " MELT          ";
+        if( f & FLAG_HIDE           ) s += " HIDE          ";
+        if( f & FLAG_HOSPITAL       ) s += " HOSPITAL      ";
+        if( f & FLAG_LOCAL_ARTIFACT ) s += " LOCAL_ARTIFACT";
+        return s;
+    }
 
     uint32_t getFlags(){
         return dw(FLAGS_OFFSET);
@@ -114,6 +128,14 @@ class Item : public MemClass {
         return (RefsVector*)((char*)this + REFS_VECTOR_OFFSET);
     }
 
+    Coords getCoords(){
+        Coords c = {0,0,0};
+        c.x = i16(COORD_X_OFFSET);
+        c.y = i16(COORD_Y_OFFSET);
+        c.z = i16(COORD_Z_OFFSET);
+        return c;
+    }
+
     //////////////////////////////////////////////////////////////////
 
     static ItemsVector* getVector(){
@@ -132,6 +154,9 @@ class Item : public MemClass {
 
     private:
     // offset in instance data
+    static const int COORD_X_OFFSET         = 0x04; // word
+    static const int COORD_Y_OFFSET         = 0x06; // word
+    static const int COORD_Z_OFFSET         = 0x08; // word
     static const int FLAGS_OFFSET           = 0x0c;
     static const int ID_OFFSET              = 0x14;
     static const int REFS_VECTOR_OFFSET     = 0x24; // item references vector, 3x4 bytes

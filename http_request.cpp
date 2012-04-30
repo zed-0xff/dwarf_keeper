@@ -6,12 +6,12 @@
 
 class HTTPRequest {
     struct MHD_Connection*conn;
-    const char*url;
 
     typedef pair<const char*, string> str_param_t;
     typedef pair<const char*, vector<string>* > strs_param_t;
 
     public:
+    const char*url;
 
     HTTPRequest(struct MHD_Connection* conn, const char* url){
         this->conn = conn;
@@ -58,6 +58,10 @@ class HTTPRequest {
 
     bool url_match(const char*url){
         return !strcmp(this->url, url);
+    }
+
+    bool url_starts_with(const char*url){
+        return !strncmp(this->url, url, strlen(url));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////

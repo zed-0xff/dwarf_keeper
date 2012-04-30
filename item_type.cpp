@@ -45,6 +45,7 @@ class ItemType {
     static const int LARGE_CUT_GEMS         =  43;
     static const int ANVILS                 =  44;
     static const int BODY_PARTS             =  45;
+    static const int REMAINS                =  46;
     static const int MEAT                   =  47;
     static const int FISH                   =  48;
     static const int SEEDS                  =  52;
@@ -123,6 +124,7 @@ class ItemType {
             case LARGE_CUT_GEMS        : return "large cut gems";
             case ANVILS                : return "anvils";
             case BODY_PARTS            : return "body parts";
+            case REMAINS               : return "remains";
             case MEAT                  : return "meat";
             case FISH                  : return "fish";
             case SEEDS                 : return "seeds";

@@ -1,3 +1,6 @@
+#ifndef UNICODE_H
+#define UNICODE_H
+
 #include <string>
 
 const char* CP850_TO_UTF8[] = {
@@ -111,3 +114,5 @@ string html_escape(string src){
     }
     return dst;
 }
+
+#endif
