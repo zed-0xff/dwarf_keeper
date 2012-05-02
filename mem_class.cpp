@@ -1,5 +1,7 @@
 #include "common.h"
 
+#define FLAG_TO_STRING(FLAG) if( f & FLAG ) s+= ((#FLAG " ")+5)
+
 class MemClass {
     public:
 

@@ -27,13 +27,17 @@ class Item : public MemClass {
     }
 
     // http://dwarffortresswiki.org/index.php/Stocks#Color_Code
+    static const int FLAG_PRESERVED      =          4;
     static const int FLAG_BUILDING_PART  =       0x20;
+    static const int FLAG_ROTTEN         =      0x100; // rotten or withered
+    static const int FLAG_WEB            =      0x200; // set on spiders silk webs
     static const int FLAG_IMPORTED       =     0x4000; // "(birchen bucket)" - round brackets
     static const int FLAG_NOT_FORT_OWN   =     0x8000; // not belongs to fort
     static const int FLAG_HAS_OWNER      =    0x10000; // item is owned by some creature
     static const int FLAG_DUMP           =    0x20000; // item is marked for dumping, but not dumped yet
     static const int FLAG_ARTIFACT       =    0x40000; // artifact, both local or foreign
     static const int FLAG_FORBID         =    0x80000;
+    static const int FLAG_ON_FIRE        =   0x400000; // burning
     static const int FLAG_MELT           =   0x800000; // designated for melting
     static const int FLAG_HIDE           =  0x1000000;
     static const int FLAG_HOSPITAL       =  0x2000000; // hospital property (items are kept in hospital chests)
@@ -43,17 +47,21 @@ class Item : public MemClass {
     string getFlagsString(){
         string s;
         uint32_t f = getFlags();
-        if( f & FLAG_BUILDING_PART  ) s += " BUILDING_PART ";
-        if( f & FLAG_IMPORTED       ) s += " IMPORTED      ";
-        if( f & FLAG_NOT_FORT_OWN   ) s += " NOT_FORT_OWN  ";
-        if( f & FLAG_HAS_OWNER      ) s += " HAS_OWNER     ";
-        if( f & FLAG_DUMP           ) s += " DUMP          ";
-        if( f & FLAG_ARTIFACT       ) s += " ARTIFACT      ";
-        if( f & FLAG_FORBID         ) s += " FORBID        ";
-        if( f & FLAG_MELT           ) s += " MELT          ";
-        if( f & FLAG_HIDE           ) s += " HIDE          ";
-        if( f & FLAG_HOSPITAL       ) s += " HOSPITAL      ";
-        if( f & FLAG_LOCAL_ARTIFACT ) s += " LOCAL_ARTIFACT";
+        FLAG_TO_STRING(FLAG_PRESERVED);
+        FLAG_TO_STRING(FLAG_BUILDING_PART); 
+        FLAG_TO_STRING(FLAG_ROTTEN);        
+        FLAG_TO_STRING(FLAG_WEB);
+        FLAG_TO_STRING(FLAG_IMPORTED);      
+        FLAG_TO_STRING(FLAG_NOT_FORT_OWN);  
+        FLAG_TO_STRING(FLAG_HAS_OWNER);     
+        FLAG_TO_STRING(FLAG_DUMP);          
+        FLAG_TO_STRING(FLAG_ARTIFACT);      
+        FLAG_TO_STRING(FLAG_FORBID);        
+        FLAG_TO_STRING(FLAG_ON_FIRE);        
+        FLAG_TO_STRING(FLAG_MELT);          
+        FLAG_TO_STRING(FLAG_HIDE);          
+        FLAG_TO_STRING(FLAG_HOSPITAL);      
+        FLAG_TO_STRING(FLAG_LOCAL_ARTIFACT);
         return s;
     }
 
