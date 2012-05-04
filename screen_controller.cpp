@@ -2,6 +2,10 @@
 #include "screen.cpp"
 #include "window.cpp"
 
+#include <queue>
+
+static queue<SDL_Event> g_override_keys;
+
 class ScreenController : Controller {
     HTTPRequest* request;
     Coords coords;
@@ -25,8 +29,8 @@ class ScreenController : Controller {
         if( strstr(request->url, "/dump")){
             return dump();
         }
-        if( strstr(request->url, "/draw")){
-            return draw();
+        if( strstr(request->url, "/live")){
+            return live();
         }
 
         if( unit_id != -1 ){
@@ -79,17 +83,100 @@ class ScreenController : Controller {
         return HTML::hexdump(w->vbuf, size*char_size, char_size, title, (w->max_y+1) * char_size);
     }
 
-    string draw(){
+    string live(){
         string html;
         unsigned char c,bg,fg, bg0=0, fg0=0;
         char buf[0x200];
         bool color = true;
+        bool is_ajax = request->is_ajax();
+
+        int key = request->get_int("key",0);
+        if(key){
+            int mod = 0;
+            uint16_t ukey = request->get_int("ukey", key);
+
+            SDL_Event ev;
+            bzero(&ev, sizeof(ev));
+
+            if(request->get_int("alt",0))   mod |= KMOD_LALT;
+            if(request->get_int("ctrl",0))  mod |= KMOD_LCTRL;
+            if(request->get_int("shift",0)) mod |= KMOD_LSHIFT;
+            if(request->get_int("meta",0))  mod |= KMOD_LMETA;
+
+            ev.type                = SDL_KEYDOWN;
+            ev.key.state           = SDL_PRESSED;
+            ev.key.keysym.scancode = 0;
+
+            // hold left alt
+            if( mod & KMOD_LALT ){
+                ev.key.keysym.mod      = (SDLMod)0;
+                ev.key.keysym.sym      = SDLK_LALT;
+                ev.key.keysym.unicode  = 0;
+                g_override_keys.push(ev);
+            }
+
+            // hold left ctrl
+            if( mod & KMOD_LCTRL ){
+                ev.key.keysym.mod      = (SDLMod)0;
+                ev.key.keysym.sym      = SDLK_LCTRL;
+                ev.key.keysym.unicode  = 0;
+                g_override_keys.push(ev);
+            }
+
+            ev.key.keysym.mod      = (SDLMod)mod;
+            ev.key.keysym.sym      = (SDLKey)key;
+            ev.key.keysym.unicode  = ukey;
+
+            g_override_keys.push(ev);
+
+            ev.type                = SDL_KEYUP;
+            ev.key.state           = SDL_RELEASED;
+            // Key release events (SDL_KEYUP) won't necessarily (ever?) contain unicode information. 
+            // http://lists.libsdl.org/pipermail/sdl-libsdl.org/2005-January/048355.html)
+            ev.key.keysym.unicode  = 0;
+            g_override_keys.push(ev);
+
+            // release left ctrl
+            if( mod & KMOD_LCTRL ){
+                ev.key.keysym.mod      = (SDLMod)0;
+                ev.key.keysym.sym      = SDLK_LCTRL;
+                ev.key.keysym.unicode  = 0;
+                g_override_keys.push(ev);
+            }
+
+            // release left alt
+            if( mod & KMOD_LALT ){
+                ev.key.keysym.mod      = (SDLMod)0;
+                ev.key.keysym.sym      = SDLK_LALT;
+                ev.key.keysym.unicode  = 0;
+                g_override_keys.push(ev);
+            }
+
+            return "QUEUED";
+        }
 
         html.reserve( color ? 30000 : 5000);
 
         Window* w = Window::root();
 
-        html += "<pre class=pseudographics>";
+        if(is_ajax){
+            uint32_t hash = 0;
+            for( int y = 0; y<=w->max_y; y++){
+                for( int x = 0; x<=w->max_x; x++){
+                    hash ^= w->vbuf[x*(w->max_y+1)+y];
+                    hash = hash << 1 | hash >> 31;     // circular shift 1 bit left
+                }
+            }
+            sprintf(buf, "%x", hash);
+            if( request->get_string("hash","") == buf){
+                return "NOT_MODIFIED";
+            }
+            sprintf(buf, "<span id='live-hash' style='display:none'>%x</span>", hash);
+            html += buf;
+        } else {
+            html += "<pre id='live' class=pseudographics>";
+        }
+
         for( int y = 0; y<=w->max_y; y++){
             for( int x = 0; x<=w->max_x; x++){
                 c = w->vbuf[x*(w->max_y+1)+y] & 0xff;
@@ -122,7 +209,8 @@ class ScreenController : Controller {
             html += "\n";
         }
         if(bg0 + fg0 > 0) html += "</span>";
-        html += "</pre>";
+
+        if(!is_ajax) html += "</pre>";
 
         return html;
     }

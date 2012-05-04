@@ -325,11 +325,100 @@ $('a.coords').click(function(){
 })
 
 /******************************************************************************
- * skills
+ * live display
  ******************************************************************************/
 
-/*
-$('#skills-checkboxes input').click(function(){
-    var url = "?" + $('#skills-checkboxes input').map(function(){ return this.id + "=" + (this.checked ? 1 : 0) }).get().join("&")
-    window.location = url
-})*/
+if($('pre#live').exist()){
+
+    var key_ts = 0;
+    var last_keypress = null;
+
+    function key_js2sdl(js_key){
+        switch(js_key){
+            case  27: // SDLK_ESCAPE
+                return js_key;
+
+            case  33: return 280; // SDLK_PAGEUP
+            case  34: return 281; // SDLK_PAGEDOWN
+            case  37: return 276; // SDLK_LEFT
+            case  38: return 273; // SDLK_UP
+            case  39: return 275; // SDLK_RIGHT
+            case  40: return 274; // SDLK_DOWN
+
+            // F1-F12
+            case 112: case 113: case 114: case 115: case 116: case 117:
+            case 118: case 119: case 120: case 121: case 122: case 123:
+                return parseInt(js_key)+170;
+        }
+        return 0;
+    }
+
+    function live_key(ev){
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        if( ev.type == 'keypress' ){
+            last_keypress = ev;
+            return;
+        }
+
+        var key, ukey = null;
+
+        // ev.type == 'keyup'
+        if( last_keypress && ev.timeStamp - last_keypress.timeStamp < 250 ){
+            ukey = last_keypress.keyCode
+            if( 
+                (ev.altKey  && last_keypress.altKey  ) ||
+                (ev.ctrlKey && last_keypress.ctrlKey )
+            ){
+                // not sure why
+                key = ev.keyCode;
+                if( key >= 65 && key <= 90 ) key += 32; // A..Z => a..z
+            } else {
+                key = last_keypress.keyCode
+            }
+        } else {
+            key = key_js2sdl(ev.which)
+        }
+        last_keypress = null
+
+        if(!key){
+            // unknown key, ignore single modifier keys
+            if( ev.which != 16 && ev.which !=17 ) console.log(ev.which)
+            return
+        }
+
+        var url = "?key="   + key + 
+                  "&shift=" + (ev.shiftKey?1:0) +
+                  "&alt="   + (ev.altKey?1:0)   +
+                  "&ctrl="  + (ev.ctrlKey?1:0)  +
+                  "&meta="  + (ev.metaKey?1:0);
+
+        if( ukey ) url += "&ukey=" + ukey; // unicode key
+
+        $.ajax(url);
+        console.log(url);
+    }
+
+    $(document.documentElement).keypress(live_key).keyup(live_key)
+
+    $(function(){
+        // Wrap this function in a closure so we don't pollute the namespace
+        (function worker(){
+          $.ajax({
+            url: '?hash='+$('#live-hash').text(), 
+            success: function(data) {
+                if( data == "NOT_MODIFIED" ){
+                    setTimeout(worker, 100);
+                } else {
+                    $('pre#live').html(data);
+                    setTimeout(worker, 50);
+                }
+            },
+            error: function() {
+              setTimeout(worker, 2000)
+            }
+          })
+        })();
+    });
+}

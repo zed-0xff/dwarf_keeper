@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include <microhttpd.h>
+#include <SDL/sdl.h>
 
 //#define DEBUG
 
@@ -38,7 +39,68 @@ void dostuff(int);
 void memserver_start();
 void memserver_accept();
 
+const char* sdl_lib_path = "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL";
+
+int SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
+int SDLCALL SDL_PollEvent(SDL_Event*ev){
+    if(!mhd){
+        //orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
+        void *plib = dlopen(sdl_lib_path, RTLD_LAZY);
+        if(plib){
+            orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) dlsym(plib, "SDL_PollEvent");
+            dlclose(plib);
+        } else {
+            fprintf(stderr, "[!] Error: cannot dlopen %s\n", sdl_lib_path);
+        }
+
+        if(!orig_SDL_PollEvent){
+            fprintf(stderr, "[!] Error: cannot hook SDL_PollEvent!\n");
+            fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
+        }
+        printf("[.] (pid=%d) starting server...\n",getpid());
+        memserver_start();
+    }
+
+    if( !g_override_keys.empty() ){
+        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
+        g_override_keys.pop();
+        return 1;
+    }
+
+    memserver_accept();
+
+    if( !g_override_keys.empty() ){
+        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
+        g_override_keys.pop();
+        return 1;
+    }
+
+    if(orig_SDL_PollEvent){
+        return orig_SDL_PollEvent(ev);
+    } else {
+        return 0;
+    }
+}
+
+/*
 pid_t getpid(){
+    static bool flag = false;
+
+    if(!gptr && !flag){
+        flag = true;
+        void *plib = dlopen("@executable_path/../Frameworks/SDL.framework/Versions/A/SDL", RTLD_LAZY);
+        if(plib){
+            printf("[d] plib at %p\n", plib);
+        }
+        void *p = dlsym(plib, "SDL_PollEvent");
+        if(p){
+            printf("[d] %p\n", p);
+            gptr = p;
+        }
+        dlclose(plib);
+        flag = false;
+    }
+
     if(!mhd){
         orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
         printf("[.] (pid=%d) starting server...\n",orig_getpid());
@@ -46,7 +108,7 @@ pid_t getpid(){
     }
     memserver_accept();
     return orig_getpid();
-}
+}*/
 
 ///////////////////////////////////////////////////////////////////////////////////
 
