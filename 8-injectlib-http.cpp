@@ -26,7 +26,8 @@ static const char* ALLOWED_CONTENT_TYPES[][2] = {
     {".js",  "application/x-javascript"},
     {".css", "text/css"},
     {".gif", "image/gif"},
-    {".png", "image/png"}
+    {".png", "image/png"},
+    {".ico", "image/png"}
 };
 
 static pid_t(*orig_getpid)() = NULL;
@@ -87,7 +88,10 @@ static int ahc_echo(void * cls,
 
   HTTPRequest request(conn, url);
 
-  if (0 != strcmp(method, "GET")) return MHD_NO; /* unexpected method */
+  if (0 != strcmp(method, "GET")){
+      printf("[!] unexpected method: %s %s\n", method, url);
+      return MHD_NO; /* unexpected method */
+  }
 
   if (&dummy != *ptr){
       /* The first time only the headers are valid,
@@ -140,6 +144,8 @@ static int ahc_echo(void * cls,
       // security
       if(strstr(url, "..") || strstr(url,"//") || strchr(url,'\\')) return MHD_NO;
 
+      printf("[.] %s %s\n", method, url);
+
       int lUrl = strlen(url);
       for(int i=0; i<sizeof(ALLOWED_CONTENT_TYPES)/sizeof(ALLOWED_CONTENT_TYPES[0]); i++){
           const char* ext   = ALLOWED_CONTENT_TYPES[i][0];
@@ -158,7 +164,18 @@ static int ahc_echo(void * cls,
                   return MHD_NO;
               }
               response = MHD_create_response_from_fd_at_offset (sbuf.st_size, fd, 0);
-              MHD_add_response_header (response, "Content-Type", ctype);
+              MHD_add_response_header(response, "Content-Type", ctype);
+
+              if( strstr(url, ".min.js") || strstr(ctype, "image/") ){
+                  // support client-side caching
+                  char buf[0x200];
+                  time_t t = time(NULL);
+                  t += 24*60*60; // cache for 24 hours
+                  strftime(buf,sizeof(buf),"%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
+                  MHD_add_response_header (response, "Expires", buf);
+                  MHD_add_response_header (response, "Cache-Control", "public");
+              }
+
               ret = MHD_queue_response (conn, MHD_HTTP_OK, response);
               MHD_destroy_response (response);
               return ret;
