@@ -1,5 +1,6 @@
 #include "controller.cpp"
 #include "screen.cpp"
+#include "window.cpp"
 
 class ScreenController : Controller {
     HTTPRequest* request;
@@ -21,6 +22,13 @@ class ScreenController : Controller {
     }
 
     string to_html(){
+        if( strstr(request->url, "/dump")){
+            return dump();
+        }
+        if( strstr(request->url, "/draw")){
+            return draw();
+        }
+
         if( unit_id != -1 ){
             if(Unit *unit = Unit::find(unit_id)){
                 // XXX HACK
@@ -50,5 +58,54 @@ class ScreenController : Controller {
                 );
 
         return buf;
+    }
+
+    private:
+
+    string dump(){
+        char title[0x200];
+        Window* w = Window::root();
+
+        size_t char_size = sizeof(*w->vbuf);
+        size_t size = (w->max_x+1) * (w->max_y+1);
+
+        sprintf(title, "videobuf (%dx%d)", w->max_x+1, w->max_y+1);
+
+        if( size > 10000 ){
+            strcat(title, " [size too big, limited to 10000]");
+            size = 10000;
+        }
+
+        return HTML::hexdump(w->vbuf, size*char_size, char_size, title, (w->max_y+1) * char_size);
+    }
+
+    string draw(){
+        string html;
+
+        Window* w = Window::root();
+
+        html += "<pre class=pseudographics>";
+        for( int y = 0; y<=w->max_y; y++){
+            for( int x = 0; x<=w->max_x; x++){
+                char c = w->vbuf[x*(w->max_y+1)+y] & 0xff;
+                switch(c){
+                    case 0x00: html += ' '; break;
+                    case 0x09:
+                        html += "&#9675;"; // "○" - well
+                        break;
+                    case 0x0a:
+                        html += "&#9702;"; // "◦" - mined ores: gold nuggets, limonite, garnierite ...
+                        break;
+                    case 0x0d: html += "&#9834;"; break; // "♪"
+                    default:
+                        html += c;
+                        break;
+                }
+            }
+            html += "\n";
+        }
+        html += "</pre>";
+
+        return html;
     }
 };

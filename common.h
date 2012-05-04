@@ -49,7 +49,10 @@ class HTTPRequest;
 #define SCR_TARGET_CENTER_Z     0x1563a38
 
 //#define PSCREENS_LIST            0x17ce5c8 // ptr to double-linked list of active screens
-#define ROOT_SCREEN             0xe27044
+#define ROOT_SCREEN             0x0e27044
+
+//#define PROOT_WINDOW             0x17ce5c0 // ptr to root window, always 0x017c8720
+#define ROOT_WINDOW             0x017c8720
 
 typedef int(*info_func3_t)(void*, string*, int);
 typedef int(*info_func4_t)(void*, string*, int, int);

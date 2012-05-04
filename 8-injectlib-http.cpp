@@ -126,7 +126,7 @@ static int ahc_echo(void * cls,
       html += c.to_html();
       resp_code = c.resp_code;
 
-  } else if(!strcmp(url, "/screen")){
+  } else if(request.url_starts_with("/screen")){
       ScreenController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
@@ -134,35 +134,8 @@ static int ahc_echo(void * cls,
   } else if(!strcmp(url,"/hexdump")){
       struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
       MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &get_hexdump_params, &hp);
+      html += HTML::hexdump((void*)hp.offset, hp.size, hp.width, request.get_string("title",""));
 
-      string title = request.get_string("title","");
-      if(!title.empty()){
-          html += "<title>" + html_escape(title) + "</title>\n";
-          html += "<h2>" + html_escape(title) + "</h2>\n";
-      }
-
-      html += "<pre>";
-      switch(hp.width){
-          case 4:{
-                  uint32_t *p = (uint32_t*)hp.offset;
-                  for(long i=0; i<hp.size; i+=4, p++){
-                      if(i%0x10 == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
-                      sprintf(buf, " %08x", *p); 
-                      html += buf;
-                  }
-                 }
-              break;
-          default:{
-                  unsigned char*p = (unsigned char*)hp.offset;
-                  for(long i=0; i<hp.size; i++, p++){
-                      if(i%0x10 == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
-                      sprintf(buf, " %02x", *p); 
-                      html += buf;
-                  }
-                  }
-              break;
-      }
-      html += "</pre>";
   } else {
       // security
       if(strstr(url, "..") || strstr(url,"//") || strchr(url,'\\')) return MHD_NO;

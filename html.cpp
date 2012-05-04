@@ -76,4 +76,39 @@ class HTML{
     static char* Item(::Item* item){
         return Item(link_to_item(item), item->getValue(), item->getFlags(), item_color_classes(item));
     }
+
+    static string hexdump(void*ptr, size_t size, int width=0, string title = "", int row_width=0x10){
+        string html;
+        char buf[0x200];
+
+        if(!title.empty()){
+            html += "<title>" + html_escape(title) + "</title>\n";
+            html += "<h2>" + html_escape(title) + "</h2>\n";
+        }
+
+        html += "<pre>";
+        switch(width){
+            case 4:{
+                    uint32_t *p = (uint32_t*)ptr;
+                    for(long i=0; i<size; i+=4, p++){
+                        if(i % row_width == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
+                        sprintf(buf, " %08x", *p); 
+                        html += buf;
+                    }
+                   }
+                break;
+            default:{
+                    unsigned char*p = (unsigned char*)ptr;
+                    for(long i=0; i<size; i++, p++){
+                        if(i % row_width == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
+                        sprintf(buf, " %02x", *p); 
+                        html += buf;
+                    }
+                    }
+                break;
+        }
+        html += "</pre>";
+
+    return html;
+    }
 };
