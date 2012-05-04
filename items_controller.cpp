@@ -83,7 +83,7 @@ class ItemsController : Controller {
         sprintf(buf, "<tr><th>flags <td class='r comment'>%x <td class=comment>%s\n", 
                 item->getFlags(), item->getFlagsString().c_str()); html += buf;
 
-        sprintf(buf, "<tr><th>ptr <td class='r ptr'><a href='/hexdump?offset=%p&size=%d&width=4'>%p</a>\n", 
+        sprintf(buf, "<tr><th>ptr <td class='r ptr'><a href='/hexdump?offset=%p&size=0x%x&width=4'>%p</a>\n", 
                 item, Item::RECORD_SIZE, item
                 ); html += buf;
 
@@ -143,7 +143,11 @@ class ItemsController : Controller {
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if( type_id != -1 && type_id != (*itr)->getTypeId()) continue;
-            if( want_flags && ((*itr)->getFlags() & want_flags) == 0 ) continue;
+            if( want_flags ) {
+                if( ((*itr)->getFlags() & want_flags) == 0 ) continue;
+            } else {
+                if( ((*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN) ) continue;
+            }
 
             add_count = 1; // one item by default
 
@@ -256,7 +260,11 @@ class ItemsController : Controller {
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if(type_id != -1 && type_id != (*itr)->getTypeId()) continue;
-            if( want_flags && ((*itr)->getFlags() & want_flags) == 0 ) continue;
+            if( want_flags ) {
+                if( ((*itr)->getFlags() & want_flags) == 0 ) continue;
+            } else {
+                if( ((*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN) ) continue;
+            }
 
             html += HTML::Item(*itr);
 
@@ -307,6 +315,11 @@ class ItemsController : Controller {
         ItemsVector*v = Item::getVector();
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
+            if( want_flags ) {
+                if( ((*itr)->getFlags() & want_flags) == 0 ) continue;
+            } else {
+                if( ((*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN) ) continue;
+            }
             counts_map[(*itr)->getTypeId()]++;
         }
     }

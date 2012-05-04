@@ -127,7 +127,7 @@ function ar_update(nSeconds){
     var select = $('.autorefresh select')
     if(typeof(nSeconds) != "number") nSeconds = parseInt(select.val());
     select.hide()
-    if(!isNaN(nSeconds) && nSeconds > 1){
+    if(!isNaN(nSeconds) && nSeconds > 0){
         $('.autorefresh label').text("autorefresh: " + nSeconds + "s");
         window.location.hash = "refresh=" + nSeconds;
         ar_timeout_id = setTimeout(function(){ window.location.reload() }, nSeconds*1000);
@@ -158,7 +158,7 @@ $(function(){
 
         if(window.location.href.match(/refresh=(\d+)/)){
             var nSeconds = parseInt(RegExp.$1);
-            if(!isNaN(nSeconds) && nSeconds > 1){
+            if(!isNaN(nSeconds) && nSeconds > 0){
                 $('.autorefresh select').val(nSeconds + "s");
                 ar_update(nSeconds)
             }
@@ -323,3 +323,13 @@ $('a.coords').click(function(){
     });
     return false;
 })
+
+/******************************************************************************
+ * skills
+ ******************************************************************************/
+
+/*
+$('#skills-checkboxes input').click(function(){
+    var url = "?" + $('#skills-checkboxes input').map(function(){ return this.id + "=" + (this.checked ? 1 : 0) }).get().join("&")
+    window.location = url
+})*/

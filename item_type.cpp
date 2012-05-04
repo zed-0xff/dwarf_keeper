@@ -70,6 +70,7 @@ class ItemType {
     static const int HATCH_COVERS           =  77;
     static const int GRATES                 =  78;
     static const int QUERNS                 =  79;
+    static const int MILLSTONES             =  80;
     static const int SPLINTS                =  81;
     static const int CRUTCHES               =  82;
     static const int TRACTION_BENCHES       =  83;
@@ -149,6 +150,7 @@ class ItemType {
             case HATCH_COVERS          : return "hatch covers";
             case GRATES                : return "grates";
             case QUERNS                : return "querns";
+            case MILLSTONES            : return "millstones";
             case SPLINTS               : return "splints";
             case CRUTCHES              : return "crutches";
             case TRACTION_BENCHES      : return "traction benches";

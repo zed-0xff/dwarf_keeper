@@ -1,3 +1,6 @@
+#ifndef MEM_CLASS_H
+#define MEM_CLASS_H
+
 #include "common.h"
 
 #define FLAG_TO_STRING(FLAG) if( f & FLAG ) s+= ((#FLAG " ")+5)
@@ -18,3 +21,5 @@ class MemClass {
         return *(int32_t*)((char*)this+offset);
     }
 };
+
+#endif

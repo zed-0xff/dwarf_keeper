@@ -10,6 +10,11 @@ pre, .ptr, tt {
     font-family: monospace;
 }
 
+.pseudographics {
+    font-family: courier new;
+    font-size: 10pt;
+}
+
 a {
     text-decoration: none;
     cursor: pointer;
@@ -17,6 +22,14 @@ a {
 
 h2 {
     font-size: 16pt;
+}
+
+input[type=checkbox], label {
+    cursor: pointer;
+    user-select: none;
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
 }
 
 .name {
@@ -112,7 +125,7 @@ table.dwarves .flags {
     background-repeat: no-repeat;
 }
 
-table.dwarves .crosshair {
+table.dwarves .crosshair, table.skills .crosshair {
     position: relative; left: -2px; top: 7px;
     float: left;
 }
@@ -138,21 +151,21 @@ table.dwarves .crosshair {
     margin-left: 0;
 }
 
-#dwarf table#skills tr td tt {
+table#skills tr td tt {
     white-space: pre;
     color: #ccc;
     font-size: 9pt;
 }
-#dwarf table#skills tr td.skill_level {
+table#skills tr td.skill_level {
     padding-left: 3px;
 }
-#dwarf table#skills tr.st_misc {
+table#skills tr.st_misc {
     color: #aaa;
 }
-#dwarf table#skills tr.st_combat {
+table#skills tr.st_combat {
     color: #a00;
 }
-#dwarf table#skills tr.st_labor {
+table#skills tr.st_labor {
     color: #090;
 }
 

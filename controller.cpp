@@ -20,14 +20,14 @@ class Controller {
         return buf;
     }
 
-    const char* link_to_unit(Unit *unit){
+    const char* link_to_unit(Unit *unit, const char*title = NULL){
         static char buf[0x400];
         
         if(!unit) return "";
 
         sprintf(buf, "<a href='/units?id=%d'>%s</a>", 
                 unit->getId(),
-                html_escape(unit->getName()).c_str()
+                html_escape(title ? title : unit->getName()).c_str()
                 );
 
         return buf;

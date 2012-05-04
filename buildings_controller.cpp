@@ -50,6 +50,9 @@ class BuildingsController : Controller {
         html += "<tr><th>coords <td class=r>";
         html += link_to_coords(b->getCoords());
 
+        sprintf(buf, "<tr><th>flags <td class='r comment'>%x <td class=comment>%s\n", 
+                b->getFlags(), b->getFlagsString().c_str()); html += buf;
+
         if( name.find("Zone") != string::npos){
             sprintf(buf, "<tr><th>zone flags <td class='r comment'>%x <td class=comment>%s\n", 
                     b->zoneFlags(), b->zoneFlagsString().c_str()); html += buf;

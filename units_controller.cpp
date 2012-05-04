@@ -34,12 +34,99 @@ class UnitsController : Controller {
             }
         } else if( strstr(request->url, "/attr") ){
             return attributes();
+        } else if( strstr(request->url, "/skills") ){
+            return skills();
         } else {
             return list();
         }
     }
 
     private:
+
+    string skills(){
+        string html;
+        int idx = 0;
+        char buf[0x1000];
+
+        int want_combat = request->get_string("combat", "") == "on";
+        int want_labor  = request->get_string("labor", "") == "on";
+        int want_misc   = request->get_string("misc", "") == "on";
+        int min_level   = request->get_int("min_level",1);
+
+        if( want_combat + want_labor + want_misc == 0){
+            want_combat = want_labor = 1;
+        }
+
+        sprintf(buf,
+                "<form>"
+                "<div id='skills-checkboxes'>\n"
+                    "<label for='min_level'>min level: </label><input id=min_level name=min_level size=3 value=%d>\n"
+                    "<input type=checkbox id=ch_c name='combat' %s><label for='ch_c'>Combat</label>\n"
+                    "<input type=checkbox id=ch_l name='labor'  %s><label for='ch_l'>Labor </label>\n"
+                    "<input type=checkbox id=ch_m name='misc'   %s><label for='ch_m'>Misc  </label>\n"
+                    "<input type=submit>"
+                "</div>\n"
+                "</form>\n",
+                min_level,
+                want_combat ? "CHECKED" : "",
+                want_labor  ? "CHECKED" : "",
+                want_misc   ? "CHECKED" : ""
+               ); html += buf;
+
+        html += "<table id=skills class='sortable skills'>\n";
+        html += 
+            "<tr>"
+                "<th>unit"
+                "<th class=sorttable_numeric>level"
+                "<th>skill\n";
+
+        while(Unit* pc=Unit::getNext(&idx, race_filter)){
+            SkillsVector* psv = pc->getSoul()->getSkillsVector();
+            if(psv && psv->size() > 0){
+                for(SkillsVector::iterator it=psv->begin(); it<psv->end(); it++){
+                    Skill* skill = *it;
+                    if( skill->getLevel() < min_level ) continue;
+
+                    const char*type = NULL;
+                    switch(skill->getType()){
+                        case Skill::TYPE_COMBAT:
+                            type = "st_combat";
+                            if(!want_combat) continue;
+                            break;
+                        case Skill::TYPE_LABOR:
+                            type = "st_labor";
+                            if(!want_labor) continue;
+                            break;
+                        case Skill::TYPE_MISC:
+                            type = "st_misc";
+                            if(!want_misc) continue;
+                            break;
+                    }
+
+                    string name = pc->getName();
+                    int pos = name.find(", ");
+                    if( pos != string::npos ) name.erase(pos); // don't show unit main profession in unit name
+
+                    sprintf(buf, 
+                            "<tr id='unit_%d' class='%s'>"
+                                "<td><div class=crosshair></div>%s"
+                                "<td class=skill_level><tt>%2d</tt> %s "
+                                "<td class=skill_name>%s \n",
+                            pc->getId(),
+                            type ? type : "",
+                            link_to_unit(pc, name.c_str()),
+                            skill->getLevel(),
+                            skill->levelString().c_str(),
+                            skill->nameString(pc->getRace(), pc->getSex()).c_str()
+                            ); html+=buf;
+                }
+            }
+        }
+
+        html += "</table>\n";
+
+        return html;
+    }
 
     string attributes(){
         string html;
