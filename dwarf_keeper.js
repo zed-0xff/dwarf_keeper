@@ -156,8 +156,8 @@ $(function(){
         });
         $('.autorefresh select').blur(ar_update).change(ar_update);
 
-        if(window.location.href.match(/refresh=(\d+)/)){
-            var nSeconds = parseInt(RegExp.$1);
+        if(window.location.href.match(/refresh=([\d.]+)/)){
+            var nSeconds = parseFloat(RegExp.$1);
             if(!isNaN(nSeconds) && nSeconds > 0){
                 $('.autorefresh select').val(nSeconds + "s");
                 ar_update(nSeconds)
