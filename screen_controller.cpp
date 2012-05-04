@@ -81,13 +81,30 @@ class ScreenController : Controller {
 
     string draw(){
         string html;
+        unsigned char c,bg,fg, bg0=0, fg0=0;
+        char buf[0x200];
+        bool color = true;
+
+        html.reserve( color ? 30000 : 5000);
 
         Window* w = Window::root();
 
         html += "<pre class=pseudographics>";
         for( int y = 0; y<=w->max_y; y++){
             for( int x = 0; x<=w->max_x; x++){
-                char c = w->vbuf[x*(w->max_y+1)+y] & 0xff;
+                c = w->vbuf[x*(w->max_y+1)+y] & 0xff;
+                fg = ( w->vbuf[x*(w->max_y+1)+y] >> 8 ) & 0xff;
+                bg = ( w->vbuf[x*(w->max_y+1)+y] >> 16 ) & 0xff;
+
+                if(bg0 != bg || fg0 != fg){
+                    if(bg0 + fg0 > 0) html += "</span>";
+                    if(bg+fg > 0){
+                        sprintf(buf, "<span class='bg%x fg%x'>", bg, fg);
+                        html += buf;
+                    }
+                    bg0 = bg; fg0 = fg;
+                }
+
                 switch(c){
                     case 0x00: html += ' '; break;
                     case 0x09:
@@ -104,6 +121,7 @@ class ScreenController : Controller {
             }
             html += "\n";
         }
+        if(bg0 + fg0 > 0) html += "</span>";
         html += "</pre>";
 
         return html;

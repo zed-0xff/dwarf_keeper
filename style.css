@@ -10,11 +10,6 @@ pre, .ptr, tt {
     font-family: monospace;
 }
 
-.pseudographics {
-    font-family: courier new;
-    font-size: 10pt;
-}
-
 a {
     text-decoration: none;
     cursor: pointer;
@@ -407,3 +402,31 @@ table.sortable, table.t1 {
     background-image: url(data:image/gif;base64,R0lGODdhDgAOAMQAABxShGS6ZOyqNIzGhITChHS+bGzCbJTSlGy6ZJzKnIzOjGy+ZCRahGS+ZOzGJIzKjHTCdCRWhIzGjHS+dKTWpGy6bJTOlGy+bGS+bKzerAAAAAAAAAAAAAAAAAAAAAAAACwAAAAADgAOAAAFVSAgjuQYAUKqrqkoOHAsC66TEMQjPQ/l0CgHIYBYFBuDX22AuEAKkIVFGWRCrtEp8DVYQK+GA/X1WGCf2uViXTBIxw7KwGI5WBQZuGy/ZfkBJyWCDCEAOw==);
 }
 
+/*
+ * pseudographics
+ */
+
+.pseudographics, .pseudographics span {
+    font-family: courier new;
+    font-size: 10pt;
+    background-color: #000;
+    color: #888;
+}
+
+.pseudographics span.bg0 { background-color: #000; }
+.pseudographics span.bg1 { background-color: #008; }
+.pseudographics span.bg2 { background-color: #080; }
+.pseudographics span.bg3 { background-color: #088; } /* cyan */
+.pseudographics span.bg4 { background-color: #800; }
+.pseudographics span.bg5 { background-color: #808; }
+.pseudographics span.bg6 { background-color: #880; }
+.pseudographics span.bg7 { background-color: #ccc; }
+
+.pseudographics span.fg0 { color: #888; }
+.pseudographics span.fg1 { color: #00f; }
+.pseudographics span.fg2 { color: #0f0; }
+.pseudographics span.fg3 { color: #0ff; } /* cyan */
+.pseudographics span.fg4 { color: #f00; }
+.pseudographics span.fg5 { color: #f0f; }
+.pseudographics span.fg6 { color: #ff0; }
+.pseudographics span.fg7 { color: #fff; }
