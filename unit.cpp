@@ -14,7 +14,8 @@ struct Coords {
     int16_t x,y,z;
 };
 
-static const char* PHYS_ATTR_NAMES[] = {"Strength", "Agility", "Toughness", "Endurance", "Recuperation", "Disease Resistance", "#7", "#8"};
+//static const char* PHYS_ATTR_NAMES[] = {"Strength", "Agility", "Toughness", "Endurance", "Recuperation", "Disease Resistance", "#7", "#8"};
+static const char* PHYS_ATTR_NAMES[] = {"Strength", "Agility", "Toughness", "Endurance", "Recuperation", "Disease Resistance"};
 #define PHYS_ATTR_COUNT (sizeof(PHYS_ATTR_NAMES)/sizeof(PHYS_ATTR_NAMES[0]))
 
 struct PhysAttr {
