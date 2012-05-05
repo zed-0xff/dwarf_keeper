@@ -29,12 +29,14 @@ static const char* ALLOWED_CONTENT_TYPES[][2] = {
     {".css", "text/css"},
     {".gif", "image/gif"},
     {".png", "image/png"},
-    {".ico", "image/png"}
+    {".ico", "image/png"},
+    {".html","text/html"}
 };
 
 static pid_t(*orig_getpid)() = NULL;
 
 static struct MHD_Daemon* mhd = NULL;
+static bool hooks_set_up = false;
 
 void dostuff(int);
 void memserver_start();
@@ -43,22 +45,33 @@ void memserver_accept();
 const char* sdl_lib_path = "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL";
 
 int SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
-int SDLCALL SDL_PollEvent(SDL_Event*ev){
-    if(!mhd){
-        //orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
-        void *plib = dlopen(sdl_lib_path, RTLD_LAZY);
-        if(plib){
-            orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) dlsym(plib, "SDL_PollEvent");
-            dlclose(plib);
-        } else {
-            fprintf(stderr, "[!] Error: cannot dlopen %s\n", sdl_lib_path);
-        }
 
-        if(!orig_SDL_PollEvent){
-            fprintf(stderr, "[!] Error: cannot hook SDL_PollEvent!\n");
-            fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
-        }
-        printf("[.] (pid=%d) starting server...\n",getpid());
+void setup_hooks(){
+    hooks_set_up = true;
+
+    orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
+    if( !orig_getpid ){
+        orig_getpid = NULL;
+        fprintf(stderr, "[!] Error: cannot hook getpid!\n");
+    }
+
+    void *plib = dlopen(sdl_lib_path, RTLD_LAZY);
+    if(plib){
+        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) dlsym(plib, "SDL_PollEvent");
+        dlclose(plib);
+    } else {
+        fprintf(stderr, "[!] Error: cannot dlopen %s\n", sdl_lib_path);
+    }
+
+    if(!orig_SDL_PollEvent){
+        fprintf(stderr, "[!] Error: cannot hook SDL_PollEvent!\n");
+        fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
+    }
+}
+
+int SDLCALL SDL_PollEvent(SDL_Event*ev){
+    if(!hooks_set_up){
+        setup_hooks();
         memserver_start();
     }
 
@@ -83,33 +96,21 @@ int SDLCALL SDL_PollEvent(SDL_Event*ev){
     }
 }
 
-/*
+
 pid_t getpid(){
-    static bool flag = false;
-
-    if(!gptr && !flag){
-        flag = true;
-        void *plib = dlopen("@executable_path/../Frameworks/SDL.framework/Versions/A/SDL", RTLD_LAZY);
-        if(plib){
-            printf("[d] plib at %p\n", plib);
-        }
-        void *p = dlsym(plib, "SDL_PollEvent");
-        if(p){
-            printf("[d] %p\n", p);
-            gptr = p;
-        }
-        dlclose(plib);
-        flag = false;
-    }
-
-    if(!mhd){
-        orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
-        printf("[.] (pid=%d) starting server...\n",orig_getpid());
+    if(!hooks_set_up){
+        setup_hooks();
         memserver_start();
     }
+
     memserver_accept();
-    return orig_getpid();
-}*/
+
+    if( orig_getpid ){
+        return orig_getpid();
+    } else {
+        return -1;
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -213,7 +214,7 @@ static int ahc_echo(void * cls,
       // security
       if(strstr(url, "..") || strstr(url,"//") || strchr(url,'\\')) return MHD_NO;
 
-      printf("[.] %s %s\n", method, url);
+      //printf("[.] %s %s\n", method, url);
 
       int lUrl = strlen(url);
       for(int i=0; i<sizeof(ALLOWED_CONTENT_TYPES)/sizeof(ALLOWED_CONTENT_TYPES[0]); i++){
@@ -316,6 +317,7 @@ static int ahc_echo(void * cls,
 }
 
 void memserver_start(){
+  printf("[.] starting server...\n");
   mhd = MHD_start_daemon(0,
                        4545,
                        NULL, NULL,      // accept policy  callback + argument
@@ -333,6 +335,8 @@ void memserver_accept(){
       struct timeval tv;
       unsigned MHD_LONG_LONG mhd_timeout;
 
+      if(!mhd) return;
+
       FD_ZERO(&sr); FD_ZERO(&sw); FD_ZERO(&sx);
 
       if( MHD_YES != MHD_get_fdset(mhd,&sr,&sw,&sx,&max_fd)){
@@ -341,7 +345,7 @@ void memserver_accept(){
       }
 
       tv.tv_sec = 0;
-      tv.tv_usec = 1000;
+      tv.tv_usec = 100;
 
       select (max_fd + 1, &sr, &sw, &sx, &tv);
       MHD_run(mhd);

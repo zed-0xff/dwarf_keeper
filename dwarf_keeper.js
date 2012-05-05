@@ -412,7 +412,7 @@ if($('pre#live').exist()){
                     setTimeout(worker, 100);
                 } else {
                     $('pre#live').html(data);
-                    setTimeout(worker, 50);
+                    setTimeout(worker, 10);
                 }
             },
             error: function() {
