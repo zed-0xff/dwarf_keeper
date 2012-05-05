@@ -22,6 +22,7 @@
 #include "trade_controller.cpp"
 #include "buildings_controller.cpp"
 #include "screen_controller.cpp"
+#include "live_controller.cpp"
 
 static const char* ALLOWED_CONTENT_TYPES[][2] = {
     {".js",  "application/x-javascript"},
@@ -141,7 +142,7 @@ static int ahc_echo(void * cls,
                     size_t * upload_data_size,
                     void ** ptr) {
   static int dummy;
-  struct MHD_Response * response;
+  struct MHD_Response * response = NULL;
   int ret;
   char buf[0x1000];
   string html,s;
@@ -196,6 +197,12 @@ static int ahc_echo(void * cls,
       ScreenController c(request);
       html += c.to_html();
       resp_code = c.resp_code;
+
+  } else if(request.url_starts_with("/live")){
+      LiveController c(request);
+      html += c.to_html();
+      resp_code = c.resp_code;
+      if( c.response ) response = c.response;
 
   } else if(!strcmp(url,"/hexdump")){
       struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
@@ -294,11 +301,13 @@ static int ahc_echo(void * cls,
       }
   }
 
-  response = MHD_create_response_from_buffer(html_utf8.size(), (void*) html_utf8.data(), MHD_RESPMEM_MUST_COPY);
-  if(is_json){
-      MHD_add_response_header(response, "Content-Type", "application/json");
-  } else {
-      MHD_add_response_header(response, "Content-Type", "text/html; charset=utf-8");
+  if( !response ){
+      response = MHD_create_response_from_buffer(html_utf8.size(), (void*) html_utf8.data(), MHD_RESPMEM_MUST_COPY);
+      if(is_json){
+          MHD_add_response_header(response, "Content-Type", "application/json");
+      } else {
+          MHD_add_response_header(response, "Content-Type", "text/html; charset=utf-8");
+      }
   }
   ret = MHD_queue_response(conn, resp_code, response);
   MHD_destroy_response(response);
