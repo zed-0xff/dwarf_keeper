@@ -1,5 +1,6 @@
 #include "controller.cpp"
 #include "window.cpp"
+#include "offscreen_renderer.cpp"
 
 #include <queue>
 
@@ -27,11 +28,35 @@ class LiveController : Controller {
         if( strstr(request->url, "/ws")){
             return websocket();
         }
+        if( strstr(request->url, ".bmp")){
+            return save();
+        }
 
         return live();
     }
 
     private:
+
+    string save(){
+        int w = request->get_int("w", 20);
+        int h = request->get_int("h", 20);
+        OffscreenRenderer r(w, h);
+        r.render(request->get_int("x",0), request->get_int("y",0));
+
+        int bufsize = w*h*1000 + 90; // rough bmp size
+        char*buf = (char*)malloc(bufsize);
+        if( !buf ) return "ERROR in malloc()";
+        if( r.save(buf, bufsize) ){
+            int size = *(int*)(buf+2); // BITMAPFILEHEADER.bfSize
+            if( size < 1 || size > bufsize){
+                return "ERROR: bmp size";
+            }
+            response = MHD_create_response_from_data(size, buf, 1, 0);
+            return "OK";
+        } else {
+            return "ERROR in r.save()";
+        }
+    }
 
     // TODO: sha1 + base64: http://ru.wikipedia.org/wiki/WebSocket#.D0.9F.D1.80.D0.BE.D1.82.D0.BE.D0.BA.D0.BE.D0.BB_07
     string websocket(){

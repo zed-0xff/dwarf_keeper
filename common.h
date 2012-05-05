@@ -54,6 +54,10 @@ class HTTPRequest;
 //#define PROOT_WINDOW             0x17ce5c0 // ptr to root window, always 0x017c8720
 #define ROOT_WINDOW             0x017c8720
 
+#define OFFSCR_RENDERER_CTOR    0x0cc16a0
+#define OFFSCR_RENDERER_RENDER  0x0cc1990
+#define OFFSCR_RENDERER_DTOR    0x0cc1820
+
 typedef int(*info_func3_t)(void*, string*, int);
 typedef int(*info_func4_t)(void*, string*, int, int);
 typedef int(*value_func_t)(void*, int, int);
@@ -66,7 +70,11 @@ typedef int(*func_t_si)(string*, int);
 typedef int(*func_t_siii)(string*, int, int, int);
 typedef int(*func_t_i)(int);
 typedef int(*func_t_p)(void*);
+typedef int(*func_t_pi)(void*, int);
 typedef int(*func_t_pp)(void*, void*);
+typedef int(*func_t_cc)(const char*, const char*);
+typedef int(*func_t_pii)(void*, int, int);
+typedef int(*func_t_ppi)(void*, void*, int);
 typedef int(*func_t_pppp)(void*, void*, void*, void*);
 
 info_func3_t getUnitFullName     = (info_func3_t)UNIT_FULL_NAME_FUNC;
