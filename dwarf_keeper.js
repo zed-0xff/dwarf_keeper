@@ -397,7 +397,6 @@ if($('pre#live').exist()){
         if( ukey ) url += "&ukey=" + ukey; // unicode key
 
         $.ajax(url);
-        console.log(url);
     }
 
     $(document.documentElement).keypress(live_key).keyup(live_key)

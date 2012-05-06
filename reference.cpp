@@ -83,7 +83,7 @@ class Reference : public MemClass {
     const string getDescription(){
         static string s;
         ((func_t_pp)((void**)pvtbl)[VTBL_FUNC_DESCRIBE])(this, &s);
-        return s;
+        return cp437_to_utf8(s);
     }
 
     const char* getTypeString(){

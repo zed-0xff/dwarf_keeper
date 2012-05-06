@@ -139,11 +139,11 @@ static struct timeval g_t0,g_t1;
 #define BENCH_START      gettimeofday(&g_t0, NULL);
 #define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
 
+#include "unicode.cpp"
 #include "mem_class.cpp"
 #include "dwarf.cpp"
 #include "item.cpp"
 #include "html.cpp"
-#include "unicode.cpp"
 #include "http_request.cpp"
 
 #endif

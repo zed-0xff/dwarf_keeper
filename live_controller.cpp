@@ -196,19 +196,7 @@ class LiveController : Controller {
                     bg0 = bg; fg0 = fg;
                 }
 
-                switch(c){
-                    case 0x00: html += ' '; break;
-                    case 0x09:
-                        html += "&#9675;"; // "○" - well
-                        break;
-                    case 0x0a:
-                        html += "&#9702;"; // "◦" - mined ores: gold nuggets, limonite, garnierite ...
-                        break;
-                    case 0x0d: html += "&#9834;"; break; // "♪"
-                    default:
-                        html += c;
-                        break;
-                }
+                html += CP437_TO_UTF8[c];
             }
             html += "\n";
         }

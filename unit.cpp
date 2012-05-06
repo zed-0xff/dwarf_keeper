@@ -38,7 +38,7 @@ class Unit : public MemClass {
     string getName(){
         string s;
         getUnitFullName(this, &s, 0);
-        return s;
+        return cp437_to_utf8(s);
     }
 
     int getId(){
@@ -65,9 +65,8 @@ class Unit : public MemClass {
 
     string getThoughts(){
         string s;
-
         ((func_t_2_pvoids)(DWARF_THOUGHTS_FUNC))(this, &s);
-        return s;
+        return cp437_to_utf8(s);
     }
 
     // 0 = FEMALE, 1 = MALE

@@ -14,7 +14,7 @@ class Item : public MemClass {
     string getName(){
         string s;
         getItemName(this, &s, 0, -1);
-        return s;
+        return cp437_to_utf8(s);
     }
 
     string getBaseName(int mode){
@@ -23,7 +23,7 @@ class Item : public MemClass {
         // mode 2: dimple cups
         string s;
         getItemBaseName(this, &s, mode);
-        return s;
+        return cp437_to_utf8(s);
     }
 
     // http://dwarffortresswiki.org/index.php/Stocks#Color_Code

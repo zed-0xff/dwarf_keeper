@@ -257,30 +257,26 @@ static int ahc_echo(void * cls,
       html += "<div class=error>Unknown URL</div>";
   }
       
-
-  string html_utf8;
-  if(is_json){
-      html_utf8 = html;
-  } else if(request.is_ajax()){
-      html_utf8 = cp850_to_utf8(html);
+  if(is_json || request.is_ajax()){
+      // no templating
   } else {
       int fd;
       struct stat sbuf;
       size_t size = 0;
+      string tpl;
 
       if ( (-1 == (fd = open ("dwarf_keeper/template.html", O_RDONLY))) || (0 != fstat (fd, &sbuf)) ){
           perror("[!] template.html: ");
           if (fd != -1) close (fd);
       } else {
-          html_utf8.resize(sbuf.st_size); // fills with NULL chars by default
-          read(fd, &html_utf8[0], sbuf.st_size);
+          tpl.resize(sbuf.st_size); // fills with NULL chars by default
+          read(fd, &tpl[0], sbuf.st_size);
           close(fd);
       }
 
-      html = cp850_to_utf8(html);
-
-      if( str_replace(html_utf8, "{CONTENT}", html) == 0 ){
-          html_utf8 =
+      if( str_replace(tpl, "{CONTENT}", html) == 0 ){
+          // assign default template here b/c template read from file might be invalid
+          tpl =
               "<html><head>\n"
               "\t<link href='/style.css' rel='stylesheet' type='text/css' />\n"
               "</head><body>\n" +
@@ -298,12 +294,13 @@ static int ahc_echo(void * cls,
 
       string hl = request.get_string("hl","");
       if( !hl.empty() ){
-          str_replace(html_utf8, hl, "<span class=hl>" + hl + "</span>");
+          str_replace(tpl, hl, "<span class=hl>" + hl + "</span>");
       }
+      html = tpl;
   }
 
   if( !response ){
-      response = MHD_create_response_from_buffer(html_utf8.size(), (void*) html_utf8.data(), MHD_RESPMEM_MUST_COPY);
+      response = MHD_create_response_from_buffer(html.size(), (void*) html.data(), MHD_RESPMEM_MUST_COPY);
       if(is_json){
           MHD_add_response_header(response, "Content-Type", "application/json");
       } else {

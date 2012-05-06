@@ -26,13 +26,13 @@ class Skill : public MemClass {
     string nameString(int race, int sex){
         string s;
         ((func_t_siii)(SKILL_ID_2_S_FUNC))( &s, getId(), race, sex );
-        return s;
+        return cp437_to_utf8(s);
     }
 
     string levelString(){
         string s;
         ((func_t_si)(SKILL_LVL_2_S_FUNC))( &s, getLevel() );
-        return s;
+        return cp437_to_utf8(s);
     }
 
     //////////////////////////////////////////////////////////////////

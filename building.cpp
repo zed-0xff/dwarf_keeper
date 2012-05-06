@@ -19,9 +19,9 @@ class Building : public MemClass {
         if( s == "Zone" ){
             char buf[0x100];
             sprintf(buf, "Activity Zone #%d", dw(ZONE_NUMBER_OFFSET));
-            s = buf;
+            return buf;
         }
-        return s;
+        return cp437_to_utf8(s);
     }
 
     static const int FLAG_FORBIDDEN    =    1; // not passable door
