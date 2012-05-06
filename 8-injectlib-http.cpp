@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #include <microhttpd.h>
-#include <SDL/sdl.h>
+#include <SDL/SDL.h>
 
 //#define DEBUG
 
@@ -45,9 +45,11 @@ void memserver_accept();
 const char* sdl_lib_path = "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL";
 
 int SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
+int SDLCALL SDL_PollEvent(SDL_Event*ev);
 
 void setup_hooks(){
     hooks_set_up = true;
+    void *p;
 
     orig_getpid = (pid_t (*)()) dlsym(RTLD_NEXT, "getpid");
     if( !orig_getpid ){
@@ -55,6 +57,21 @@ void setup_hooks(){
         fprintf(stderr, "[!] Error: cannot hook getpid!\n");
     }
 
+    // try fastest method first
+    p = dlsym(RTLD_NEXT, "SDL_PollEvent");
+    if( p && p != SDL_PollEvent){
+        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) p;
+        return;
+    }
+
+    // a slower one
+    p = dlsym(RTLD_DEFAULT, "SDL_PollEvent");
+    if( p && p != SDL_PollEvent){
+        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) p;
+        return;
+    }
+
+    // OSX
     void *plib = dlopen(sdl_lib_path, RTLD_LAZY);
     if(plib){
         orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) dlsym(plib, "SDL_PollEvent");

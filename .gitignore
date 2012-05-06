@@ -1,8 +1,10 @@
 .*
 *.swp
 a.out
+*.bk
 ?
 *.a
 *.dylib
 *.ini
 target
+libmicrohttpd

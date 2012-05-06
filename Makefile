@@ -1,10 +1,39 @@
-all: injectlib-memserver.dylib
+CC     := g++
+CFLAGS := -m32 -Iinclude -Ilibmicrohttpd/src/include
 
-injectlib-memserver.dylib: 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp
-	g++ -Iinclude -g -arch i386 -flat_namespace -dynamiclib libmicrohttpd.a -o $@ $<
+UNAME = $(shell uname)
+ifeq ($(UNAME), Darwin)
+    CFLAGS := $(CFLAGS) -flat-namespace -dynamiclib
+endif
+
+ifeq ($(UNAME), Linux)
+    CFLAGS := $(CFLAGS) -shared -fPIC -lpthread -ldl
+endif
+
+LIBRARY := injectlib-memserver.dylib
+OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp
+
+LIBMICROHTTPD_A := libmicrohttpd/src/daemon/.libs/libmicrohttpd.a
+
+
+all: $(LIBRARY)
+
+clean:
+	rm *.o target *.dylib a.out
+
+$(LIBRARY): $(OBJS) $(LIBMICROHTTPD_A)
+	$(CC) $(CFLAGS) $< $(LIBMICROHTTPD_A) -o $@
 
 item_type.cpp: item_type.rb
 	./item_type.rb > item_type.cpp
 
-clean:
-	rm *.o target *.dylib a.out
+$(LIBMICROHTTPD_A): libmicrohttpd/Makefile
+	$(MAKE) -C libmicrohttpd
+
+libmicrohttpd/Makefile: libmicrohttpd/configure
+	cd libmicrohttpd && \
+	export CFLAGS="-m32 -fPIC" && \
+	./configure --disable-https --disable-dauth --disable-curl --disable-largefile --disable-postprocessor
+
+libmicrohttpd:
+	svn co https://gnunet.org/svn/libmicrohttpd
