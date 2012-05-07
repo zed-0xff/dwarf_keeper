@@ -110,36 +110,6 @@ void find_item_name_func(char*region_start, char*region_end){
     }
 }
 
-//.text:0865EFA0 55                                      push    ebp
-//.text:0865EFA1 57                                      push    edi
-//.text:0865EFA2 31 FF                                   xor     edi, edi
-//.text:0865EFA4 56                                      push    esi
-//.text:0865EFA5 53                                      push    ebx
-//.text:0865EFA6 83 EC 6C                                sub     esp, 6Ch
-//.text:0865EFA9 8B B4 24 80 00 00 00                    mov     esi, [esp+7Ch+arg_0]
-//.text:0865EFB0 0F B6 9C 24 88 00 00 00                 movzx   ebx, [esp+7Ch+arg_8]
-//.text:0865EFB8 8B 46 24                                mov     eax, [esi+24h]
-//.text:0865EFBB 8B 6E 28                                mov     ebp, [esi+28h]
-//.text:0865EFBE 39 E8                                   cmp     eax, ebp
-//.text:0865EFC0 73 32                                   jnb     short loc_865EFF4
-//.text:0865EFC2 89 C7                                   mov     edi, eax
-//.text:0865EFC4 EB 15                                   jmp     short loc_865EFDB
-
-// XXX: getItemBaseName func may be called via Item vtable
-void find_item_base_name_func(char*region_start, char*region_end){
-    const char tpl[] = "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb";
-
-    BinaryTemplate bt(tpl);
-    if(char*p = bt.find(region_start, region_end)){
-        GAME.item_base_name_func = p;
-        if( char* p1 = bt.find(p+1, region_end) ){
-            printf("[?] more than one occurency of getItemBaseName!: %p, %p\n", p, p1);
-        }
-    } else {
-        printf("[!] getItemBaseName not found!\n");
-    }
-}
-
 // .text:081ED480 55                                      push    ebp
 // .text:081ED481 BA 2D 48 D0 08                          mov     edx, offset aInteractWith ; "Interact with "
 // .text:081ED486 57                                      push    edi
@@ -223,6 +193,18 @@ void find_unit_name_func(char*region_start, char*region_end){
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#define MEM_FIND_SIMPLE(WHAT, TPL) { \
+    BinaryTemplate bt(TPL); \
+    if(char*p = bt.find(region_start, region_end)){ \
+        GAME.WHAT = p; \
+        if( char* p1 = bt.find(p+1, region_end) ){ \
+            printf("[?] more than one occurency of " #WHAT "!: %p, %p\n", p, p1); \
+        } \
+    } else { \
+        printf("[!] " #WHAT " not found!\n"); \
+    } \
+}
+
 void os_init(){
     int fd = open("/proc/self/maps", O_RDONLY);
     if( -1 == fd ){
@@ -255,7 +237,12 @@ void os_init(){
     find_buildings_vector(region_start, region_end);
 
     find_item_name_func(region_start, region_end);
-    find_item_base_name_func(region_start, region_end);
+
+    MEM_FIND_SIMPLE(item_value_func, "55 57 56 53 83 EC 5C 8B  5C 24 70 8B 6C 24 78 8B");
+
+// XXX: getItemBaseName func may be called via Item vtable
+    MEM_FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb");
+    
     find_unit_name_func(region_start, region_end);
     BENCH_END("bin find");
 }
