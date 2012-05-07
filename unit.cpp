@@ -36,9 +36,13 @@ class Unit : public MemClass {
     static const int RECORD_SIZE = 0xa00;
 
     string getName(){
-        string s;
-        getUnitFullName(this, &s, 0);
-        return cp437_to_utf8(s);
+        if(getUnitFullName){
+            string s;
+            getUnitFullName(this, &s, 0);
+            return cp437_to_utf8(s);
+        } else {
+            return "<span class=error>getUnitFullName is NULL</span>";
+        }
     }
 
     int getId(){
@@ -96,7 +100,9 @@ class Unit : public MemClass {
     //////////////////////////////////////////////////////////////////
 
     static Unit* find(int id){
-        UnitsVector* v = (UnitsVector*)UNITS_VECTOR;
+        UnitsVector* v = (UnitsVector*)units_vector;
+        if(!v) return NULL;
+
         for(int i=0; i<v->size(); i++){
             if(v->at(i)->getId() == id){
                 return v->at(i);
@@ -106,9 +112,10 @@ class Unit : public MemClass {
     }
 
     static Unit* getNext(int*idx, int race_filter = -1){
-        UnitsVector* v = (UnitsVector*)UNITS_VECTOR;
-        Unit *pc;
+        UnitsVector* v = (UnitsVector*)units_vector;
+        if(!v) return NULL;
 
+        Unit *pc;
         while((*idx) < v->size()){
             pc = v->at((*idx)++);
 

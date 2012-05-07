@@ -12,18 +12,27 @@ class Item : public MemClass {
     static const int RECORD_SIZE = 0xb0; 
 
     string getName(){
-        string s;
-        getItemName(this, &s, 0, -1);
-        return cp437_to_utf8(s);
+        if( getItemName ){
+            string s;
+            getItemName(this, &s, 0, -1);
+            return cp437_to_utf8(s);
+        } else {
+            return "Error: getItemName is NULL";
+        }
     }
 
     string getBaseName(int mode){
         // mode 0: dimple cups [3]
         // mode 1: dimple cup
         // mode 2: dimple cups
-        string s;
-        getItemBaseName(this, &s, mode);
-        return cp437_to_utf8(s);
+
+        if( getItemBaseName ){
+            string s;
+            getItemBaseName(this, &s, mode);
+            return cp437_to_utf8(s);
+        } else {
+            return "Error: getItemBaseName is NULL";
+        }
     }
 
     // http://dwarffortresswiki.org/index.php/Stocks#Color_Code
@@ -70,7 +79,7 @@ class Item : public MemClass {
     }
 
     int getValue(){
-        return getItemValue(this, 0, 0);
+        return getItemValue ? getItemValue(this, 0, 0) : -1;
     }
 
     // self value + sum of all values of contained items, if any
@@ -147,7 +156,7 @@ class Item : public MemClass {
     //////////////////////////////////////////////////////////////////
 
     static ItemsVector* getVector(){
-        return (ItemsVector*)ITEMS_VECTOR;
+        return (ItemsVector*)items_vector;
     }
 
     static Item* find(int id){

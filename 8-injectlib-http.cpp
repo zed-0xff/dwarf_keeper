@@ -57,6 +57,8 @@ void setup_hooks(){
         fprintf(stderr, "[!] Error: cannot hook getpid!\n");
     }
 
+    os_init();
+
     // try fastest method first
     p = dlsym(RTLD_NEXT, "SDL_PollEvent");
     if( p && p != SDL_PollEvent){
@@ -223,9 +225,15 @@ static int ahc_echo(void * cls,
       if( c.response ) response = c.response;
 
   } else if(!strcmp(url,"/hexdump")){
-      struct hexdump_params hp; hp.size = hp.offset = 0; hp.width = 1;
+      struct hexdump_params hp;
+      hp.offset = (uint32_t)&hp; // stack top
+      hp.size   = 0x100;
+      hp.width  = 4;
+
       MHD_get_connection_values(conn, MHD_GET_ARGUMENT_KIND, &get_hexdump_params, &hp);
-      html += HTML::hexdump((void*)hp.offset, hp.size, hp.width, request.get_string("title",""));
+      html += HTML::hexdump((void*)hp.offset, hp.size, hp.width, 
+              request.get_string("title", (hp.offset == (uint32_t)&hp) ? "(stack top)" : "")
+              );
 
   } else {
       // security

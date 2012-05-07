@@ -88,8 +88,12 @@ class BuildingsController : Controller {
         string html;
         char buf[0x1000];
         BuildingsVector *v = Building::getVector();
+
+        if( !v ){
+            return "<div class=error>NULL buildings_vector</div>";
+        }
     
-        sprintf(buf, "<h1>%ld buildings</h1>\n", v->size()); html += buf;
+        sprintf(buf, "<h1>%d buildings</h1>\n", v->size()); html += buf;
 
         html += 
             "<table class='buildings sortable'>\n"
@@ -104,7 +108,7 @@ class BuildingsController : Controller {
             sprintf(buf, 
                     "<tr>"
                         "<td>%s"
-                        "<td class=r>%ld"
+                        "<td class=r>%d"
                         "\n",
                     link_to_building(v->at(i)),
                     wv ? wv->size() : 0

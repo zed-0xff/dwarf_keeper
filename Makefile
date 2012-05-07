@@ -1,17 +1,20 @@
 CC     := g++
-CFLAGS := -m32 -Iinclude -Ilibmicrohttpd/src/include
+CFLAGS := -g -m32 -Iinclude -Ilibmicrohttpd/src/include
+
+
+LIBRARY := injectlib-memserver.dylib
+OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp binary_template.cpp
 
 UNAME = $(shell uname)
 ifeq ($(UNAME), Darwin)
     CFLAGS := $(CFLAGS) -flat-namespace -dynamiclib
+    OBJS   := $(OBJS) _osx.h
 endif
 
 ifeq ($(UNAME), Linux)
     CFLAGS := $(CFLAGS) -shared -fPIC -lpthread -ldl
+    OBJS   := $(OBJS) _linux.h
 endif
-
-LIBRARY := injectlib-memserver.dylib
-OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp
 
 LIBMICROHTTPD_A := libmicrohttpd/src/daemon/.libs/libmicrohttpd.a
 

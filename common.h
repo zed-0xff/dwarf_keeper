@@ -14,16 +14,38 @@ typedef vector<Item*> ItemsVector;
 class Dwarf;
 class HTTPRequest;
 
-#define UNITS_VECTOR            0x157e5f8
-#define ITEMS_VECTOR            0x157e668
-#define BUILDINGS_VECTOR        0x157ecc8
+int diff_ms(timeval t1, timeval t2)
+{
+    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
+            (t1.tv_usec - t2.tv_usec))/1000;
+}
 
-#define UNIT_FULL_NAME_FUNC     0x96b030
+static struct timeval g_t0,g_t1;
+#define BENCH_START      gettimeofday(&g_t0, NULL);
+#define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
+
+void *units_vector     = NULL;
+void *items_vector     = NULL;
+void *buildings_vector = NULL;
+
+typedef int(*info_func3_t)(void*, string*, int);
+typedef int(*info_func4_t)(void*, string*, int, int);
+typedef int(*value_func_t)(void*, int, int);
+
+info_func4_t     getItemName     = NULL;
+info_func3_t     getItemBaseName = NULL;
+value_func_t     getItemValue    = NULL;
+
+#include "binary_template.cpp"
+
+#ifdef __linux__
+#include "_linux.h"
+#else
+#include "_osx.h"
+#endif
+
+
 #define DWARF_THOUGHTS_FUNC     0xa1aa60 // (pDwarf, string*)
-
-#define ITEM_BASE_NAME_FUNC     0x612c10 // item name w/o any modifiers
-#define ITEM_NAME_FUNC          0x613730 // full item name w/all quality/condition/etc modifiers
-#define ITEM_VALUE_FUNC         0x604580
 
 // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
 #define CMP_ITEMSIZE_FUNC       0x947760 
@@ -58,10 +80,6 @@ class HTTPRequest;
 #define OFFSCR_RENDERER_RENDER  0x0cc1990
 #define OFFSCR_RENDERER_DTOR    0x0cc1820
 
-typedef int(*info_func3_t)(void*, string*, int);
-typedef int(*info_func4_t)(void*, string*, int, int);
-typedef int(*value_func_t)(void*, int, int);
-
 typedef int(*no_arg_func_t)();
 typedef int(*pvoid_arg_func_t)(void*);
 typedef int(*func_t_4_ints)(int,int,int,int);
@@ -76,11 +94,6 @@ typedef int(*func_t_cc)(const char*, const char*);
 typedef int(*func_t_pii)(void*, int, int);
 typedef int(*func_t_ppi)(void*, void*, int);
 typedef int(*func_t_pppp)(void*, void*, void*, void*);
-
-info_func3_t getUnitFullName     = (info_func3_t)UNIT_FULL_NAME_FUNC;
-info_func4_t getItemName         = (info_func4_t)ITEM_NAME_FUNC;
-info_func3_t getItemBaseName     = (info_func3_t)ITEM_BASE_NAME_FUNC;
-value_func_t getItemValue        = (value_func_t)ITEM_VALUE_FUNC;
 
 int str_replace(string&s, const char*from, const char*to){
     int i = 0;
@@ -128,16 +141,6 @@ int str_replace(string&s, const string&from,const string&to){
 }
 
 
-
-int diff_ms(timeval t1, timeval t2)
-{
-    return (((t1.tv_sec - t2.tv_sec) * 1000000) + 
-            (t1.tv_usec - t2.tv_usec))/1000;
-}
-
-static struct timeval g_t0,g_t1;
-#define BENCH_START      gettimeofday(&g_t0, NULL);
-#define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
 
 #include "unicode.cpp"
 #include "mem_class.cpp"

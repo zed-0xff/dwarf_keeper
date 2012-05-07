@@ -91,7 +91,7 @@ class HTML{
             case 4:{
                     uint32_t *p = (uint32_t*)ptr;
                     for(long i=0; i<size; i+=4, p++){
-                        if(i % row_width == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
+                        if(i % row_width == 0){ sprintf(buf, "\n%p: (+%4lx): ", p, i); html += buf; }
                         sprintf(buf, " %08x", *p); 
                         html += buf;
                     }
@@ -100,7 +100,7 @@ class HTML{
             default:{
                     unsigned char*p = (unsigned char*)ptr;
                     for(long i=0; i<size; i++, p++){
-                        if(i % row_width == 0){ sprintf(buf, "\n%08lx: ", i); html += buf; }
+                        if(i % row_width == 0){ sprintf(buf, "\n%p: (+%4lx): ", p, i); html += buf; }
                         sprintf(buf, " %02x", *p); 
                         html += buf;
                     }
