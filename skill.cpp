@@ -24,15 +24,23 @@ class Skill : public MemClass {
     }
 
     string nameString(int race, int sex){
-        string s;
-        ((func_t_siii)(SKILL_ID_2_S_FUNC))( &s, getId(), race, sex );
-        return cp437_to_utf8(s);
+        if( GAME.skill_id_2_string_func ){
+            string s;
+            ((func_t_siii)(GAME.skill_id_2_string_func))( &s, getId(), race, sex );
+            return cp437_to_utf8(s);
+        } else {
+            return "Error: skill_id_2_string_func is NULL";
+        }
     }
 
     string levelString(){
-        string s;
-        ((func_t_si)(SKILL_LVL_2_S_FUNC))( &s, getLevel() );
-        return cp437_to_utf8(s);
+        if( GAME.skill_lvl_2_string_func ){
+            string s;
+            ((func_t_si)(GAME.skill_lvl_2_string_func))( &s, getLevel() );
+            return cp437_to_utf8(s);
+        } else {
+            return "Error: skill_lvl_2_string_func is NULL";
+        }
     }
 
     //////////////////////////////////////////////////////////////////

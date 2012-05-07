@@ -68,9 +68,13 @@ class Unit : public MemClass {
     }
 
     string getThoughts(){
-        string s;
-        ((func_t_2_pvoids)(DWARF_THOUGHTS_FUNC))(this, &s);
-        return cp437_to_utf8(s);
+        if( GAME.unit_info_func ){
+            string s;
+            ((func_t_2_pvoids)(GAME.unit_info_func))(this, &s);
+            return cp437_to_utf8(s);
+        } else {
+            return "Error: unit_info_func is NULL";
+        }
     }
 
     // 0 = FEMALE, 1 = MALE
@@ -79,8 +83,10 @@ class Unit : public MemClass {
     Soul* getSoul(){ return (Soul*)(dw(SOUL_OFFSET)); } // XXX will not work on 64bit
 
     Coords getCoords(){
-        Coords c = {0,0,0};
-        ((func_t_pppp)(UNIT_COORDS_FUNC))(this, &c.x, &c.y, &c.z);
+        Coords c = {-1, -1, -1};
+        if( GAME.unit_coords_func ){
+            ((func_t_pppp)(GAME.unit_coords_func))(this, &c.x, &c.y, &c.z);
+        }
         return c;
     }
 
@@ -100,7 +106,7 @@ class Unit : public MemClass {
     //////////////////////////////////////////////////////////////////
 
     static Unit* find(int id){
-        UnitsVector* v = (UnitsVector*)units_vector;
+        UnitsVector* v = (UnitsVector*)GAME.units_vector;
         if(!v) return NULL;
 
         for(int i=0; i<v->size(); i++){
@@ -112,7 +118,7 @@ class Unit : public MemClass {
     }
 
     static Unit* getNext(int*idx, int race_filter = -1){
-        UnitsVector* v = (UnitsVector*)units_vector;
+        UnitsVector* v = (UnitsVector*)GAME.units_vector;
         if(!v) return NULL;
 
         Unit *pc;

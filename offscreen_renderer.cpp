@@ -7,11 +7,11 @@ class OffscreenRenderer : MemClass {
 
     OffscreenRenderer(int width, int height){
         memset(buf,0,sizeof(buf));
-        ((func_t_pii)OFFSCR_RENDERER_CTOR)(this, width, height);
+        ((func_t_pii)GAME.offscr_renderer_ctor_func)(this, width, height);
     }
 
     void render(int x0, int y0){
-        ((func_t_pii)OFFSCR_RENDERER_RENDER)(this, x0, y0);
+        ((func_t_pii)GAME.offscr_renderer_render_func)(this, x0, y0);
     }
 
     bool save(void*bmp_buf, int bufsize){
@@ -38,7 +38,7 @@ class OffscreenRenderer : MemClass {
     }
 
     ~OffscreenRenderer(){
-        ((func_t_p)OFFSCR_RENDERER_DTOR)(this);
+        ((func_t_p)GAME.offscr_renderer_dtor_func)(this);
     }
 
     //////////////////////////////////////////////////////////////////

@@ -12,9 +12,9 @@ class Item : public MemClass {
     static const int RECORD_SIZE = 0xb0; 
 
     string getName(){
-        if( getItemName ){
+        if( GAME.item_name_func ){
             string s;
-            getItemName(this, &s, 0, -1);
+            ((func_t_ppii)GAME.item_name_func)(this, &s, 0, -1);
             return cp437_to_utf8(s);
         } else {
             return "Error: getItemName is NULL";
@@ -26,9 +26,9 @@ class Item : public MemClass {
         // mode 1: dimple cup
         // mode 2: dimple cups
 
-        if( getItemBaseName ){
+        if( GAME.item_base_name_func ){
             string s;
-            getItemBaseName(this, &s, mode);
+            ((func_t_ppi)GAME.item_base_name_func)(this, &s, mode);
             return cp437_to_utf8(s);
         } else {
             return "Error: getItemBaseName is NULL";
@@ -79,7 +79,11 @@ class Item : public MemClass {
     }
 
     int getValue(){
-        return getItemValue ? getItemValue(this, 0, 0) : -1;
+        if( GAME.item_value_func ){
+            return ((func_t_pii)GAME.item_value_func)(this, 0, 0);
+        } else {
+            return -1;
+        }
     }
 
     // self value + sum of all values of contained items, if any
@@ -132,8 +136,12 @@ class Item : public MemClass {
     static const int SIZE_LARGE = 2;
 
     int getSize(){
+        if(!GAME.cmp_item_size_func){
+            return SIZE_OK;
+        }
+
         // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
-        return ((func_t_4_ints)(CMP_ITEMSIZE_FUNC))(
+        return ((func_t_4_ints)(GAME.cmp_item_size_func))(
                 getTypeId(),
                 getSubTypeId(),
                 getRaceId(),
@@ -156,7 +164,7 @@ class Item : public MemClass {
     //////////////////////////////////////////////////////////////////
 
     static ItemsVector* getVector(){
-        return (ItemsVector*)items_vector;
+        return (ItemsVector*)GAME.items_vector;
     }
 
     static Item* find(int id){

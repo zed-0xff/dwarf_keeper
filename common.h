@@ -24,17 +24,36 @@ static struct timeval g_t0,g_t1;
 #define BENCH_START      gettimeofday(&g_t0, NULL);
 #define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
 
-void *units_vector     = NULL;
-void *items_vector     = NULL;
-void *buildings_vector = NULL;
+// all struct members will be automatically zero-initialized
+//   http://ex-parrot.com/~chris/random/initialise.html
+//   http://bytes.com/topic/c/answers/832184-struct-member-initialization
+static struct {
+    void *units_vector, *items_vector, *buildings_vector;
+    void *item_name_func, *item_base_name_func, *item_value_func;
 
-typedef int(*info_func3_t)(void*, string*, int);
-typedef int(*info_func4_t)(void*, string*, int, int);
-typedef int(*value_func_t)(void*, int, int);
+    void *unit_info_func;   // (pUnit, string*)
+    void *unit_coords_func; // (pUnit, int *px, int *py, int *pz)
 
-info_func4_t     getItemName     = NULL;
-info_func3_t     getItemBaseName = NULL;
-value_func_t     getItemValue    = NULL;
+    // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
+    void *cmp_item_size_func;
+
+    // int skill_lvl_2_string(string*, int level)
+    void *skill_lvl_2_string_func;
+
+    // int skill_id_2_string(string*, int skill_id, int race, int sex)
+    void *skill_id_2_string_func;
+
+    // int setScreenCenter(int center_mode) - actual coords are set via following global variables
+    void *set_screen_center_func;
+    int *scr_target_center_px, *scr_target_center_py, *scr_target_center_pz;
+
+    void* root_screen;
+    void* root_window;
+
+    void* offscr_renderer_ctor_func;
+    void* offscr_renderer_render_func;
+    void* offscr_renderer_dtor_func;
+} GAME = {0};
 
 #include "binary_template.cpp"
 
@@ -44,41 +63,8 @@ value_func_t     getItemValue    = NULL;
 #include "_osx.h"
 #endif
 
-
-#define DWARF_THOUGHTS_FUNC     0xa1aa60 // (pDwarf, string*)
-
-// int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
-#define CMP_ITEMSIZE_FUNC       0x947760 
-
-// int skill_lvl_2_string(string*, int level)
-#define SKILL_LVL_2_S_FUNC      0x209e80
-
-// int skill_id_2_string(string*, int skill_id, int race, int sex)
-#define SKILL_ID_2_S_FUNC       0x20b170
-
 // int foo_func(int unit_id)
 #define FOO_FUNC 0x3021f0 // open unit info right panel?
-
-// int getUnitCoords(Unit *pc, int *px, int *py, int *pz)
-#define UNIT_COORDS_FUNC    0x949af0
-
-// int setScreenCenter(int center_mode) - actual coords are set via following global variables
-#define SET_SCREEN_CENTER_FUNC  0x2d5240
-
-// global variables for SET_SCREEN_CENTER_FUNC
-#define SCR_TARGET_CENTER_X     0x1563a30
-#define SCR_TARGET_CENTER_Y     0x1563a34
-#define SCR_TARGET_CENTER_Z     0x1563a38
-
-//#define PSCREENS_LIST            0x17ce5c8 // ptr to double-linked list of active screens
-#define ROOT_SCREEN             0x0e27044
-
-//#define PROOT_WINDOW             0x17ce5c0 // ptr to root window, always 0x017c8720
-#define ROOT_WINDOW             0x017c8720
-
-#define OFFSCR_RENDERER_CTOR    0x0cc16a0
-#define OFFSCR_RENDERER_RENDER  0x0cc1990
-#define OFFSCR_RENDERER_DTOR    0x0cc1820
 
 typedef int(*no_arg_func_t)();
 typedef int(*pvoid_arg_func_t)(void*);
@@ -90,6 +76,7 @@ typedef int(*func_t_i)(int);
 typedef int(*func_t_p)(void*);
 typedef int(*func_t_pi)(void*, int);
 typedef int(*func_t_pp)(void*, void*);
+typedef int(*func_t_ppii)(void*, void*, int, int);
 typedef int(*func_t_cc)(const char*, const char*);
 typedef int(*func_t_pii)(void*, int, int);
 typedef int(*func_t_ppi)(void*, void*, int);

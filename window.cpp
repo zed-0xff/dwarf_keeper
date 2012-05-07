@@ -15,6 +15,6 @@ class Window : MemClass {
     //////////////////////////////////////////////////////////////////
 
     static Window* root(){
-        return (Window*)ROOT_WINDOW;
+        return (Window*)GAME.root_window;
     }
 };

@@ -31,7 +31,7 @@ void find_units_vector(char*region_start, char*region_end){
         uint32_t v0 = bt.getResult(0);
         uint32_t v1 = bt.getResult(1);
         if( v1 - v0 == 4 ){
-            units_vector = (void*)v0;
+            GAME.units_vector = (void*)v0;
         } else {
             printf("[!] invalid units_vector values: %x, %x\n", v0, v1);
         }
@@ -60,7 +60,7 @@ void find_items_vector(char*region_start, char*region_end){
         uint32_t v0 = bt.getResult(0);
         uint32_t v1 = bt.getResult(1);
         if( v1 - v0 == 4 ){
-            items_vector = (void*)v0;
+            GAME.items_vector = (void*)v0;
         } else {
             printf("[!] invalid items_vector values: %x, %x\n", v0, v1);
         }
@@ -98,7 +98,7 @@ void find_item_name_func(char*region_start, char*region_end){
     if(char*p = bt.find(region_start, region_end)){
         for(char*p1 = p; p1>(p-0x100); p1-=4){
             if( *p1 == 0x55 ){
-                getItemName = (info_func4_t)p1;
+                GAME.item_name_func = p1;
                 if( bt.find(p+1, region_end) ){
                     printf("[?] more than one occurency of getItemName!\n");
                 }
@@ -131,7 +131,7 @@ void find_item_base_name_func(char*region_start, char*region_end){
 
     BinaryTemplate bt(tpl);
     if(char*p = bt.find(region_start, region_end)){
-        getItemBaseName = (info_func3_t)p;
+        GAME.item_base_name_func = p;
         if( char* p1 = bt.find(p+1, region_end) ){
             printf("[?] more than one occurency of getItemBaseName!: %p, %p\n", p, p1);
         }
@@ -177,7 +177,7 @@ void find_buildings_vector(char* region_start, char* region_end){
         uint32_t v0 = bt.getResult(0);
         uint32_t v1 = bt.getResult(1);
         if( v1 - v0 == 4 ){
-            buildings_vector = (void*)v0;
+            GAME.buildings_vector = (void*)v0;
         } else {
             printf("[!] invalid buildings_vector values: %x, %x\n", v0, v1);
         }

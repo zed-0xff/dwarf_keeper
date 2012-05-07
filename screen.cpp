@@ -72,27 +72,33 @@ class Screen {
     //////////////////////////////////////////////////////////////////
 
     static void moveTo(Coords c, int mode=2){
-        *((int*)SCR_TARGET_CENTER_X) = c.x;
-        *((int*)SCR_TARGET_CENTER_Y) = c.y;
-        *((int*)SCR_TARGET_CENTER_Z) = c.z;
+        if( GAME.scr_target_center_px && GAME.scr_target_center_py && GAME.scr_target_center_pz){
+            *((int*)GAME.scr_target_center_px) = c.x;
+            *((int*)GAME.scr_target_center_py) = c.y;
+            *((int*)GAME.scr_target_center_pz) = c.z;
+        }
 
         // possible argument values are 0,1,2
         //  2  - move screen center exactly on point
         // 0,1 - do a minimal possible moves, leaving cursor not exactly in screen center
-        ((func_t_i)(SET_SCREEN_CENTER_FUNC))(mode);
+        if( GAME.set_screen_center_func ){
+            ((func_t_i)(GAME.set_screen_center_func))(mode);
+        }
     }
 
     // get current screen center
     static Coords getCenter(){
-        Coords c;
-        c.x = *((int*)SCR_TARGET_CENTER_X);
-        c.y = *((int*)SCR_TARGET_CENTER_Y);
-        c.z = *((int*)SCR_TARGET_CENTER_Z);
+        Coords c = {-1, -1, -1};
+        if( GAME.scr_target_center_px && GAME.scr_target_center_py && GAME.scr_target_center_pz){
+            c.x = *((int*)GAME.scr_target_center_px);
+            c.y = *((int*)GAME.scr_target_center_py);
+            c.z = *((int*)GAME.scr_target_center_pz);
+        }
         return c;
     }
 
     static Screen* root(){
-        return (Screen*)ROOT_SCREEN;
+        return (Screen*)GAME.root_screen;
     }
 
 //    static void enumerate(){

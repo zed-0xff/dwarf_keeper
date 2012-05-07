@@ -101,7 +101,7 @@ class Building : public MemClass {
     //////////////////////////////////////////////////////////////////
     
     static BuildingsVector* getVector(){
-        return (BuildingsVector*)buildings_vector;
+        return (BuildingsVector*)GAME.buildings_vector;
     }
 
     static Building* find(int id){
