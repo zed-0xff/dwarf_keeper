@@ -25,9 +25,9 @@ class UnitsController : Controller {
     string to_html(){
         int id = request->get_int("id",0);
         if(id){
-            Unit *pc = Unit::find(id);
-            if(pc){
-                return show(pc);
+            Unit *unit = Unit::find(id);
+            if(unit){
+                return show(unit);
             } else {
                 resp_code = MHD_HTTP_NOT_FOUND;
                 return "Not Found";
@@ -80,8 +80,8 @@ class UnitsController : Controller {
                 "<th class=sorttable_numeric>level"
                 "<th>skill\n";
 
-        while(Unit* pc=Unit::getNext(&idx, race_filter)){
-            SkillsVector* psv = pc->getSoul()->getSkillsVector();
+        while(Unit* unit=Unit::getNext(&idx, race_filter)){
+            SkillsVector* psv = unit->getSoul()->getSkillsVector();
             if(psv && psv->size() > 0){
                 for(SkillsVector::iterator it=psv->begin(); it<psv->end(); it++){
                     Skill* skill = *it;
@@ -103,7 +103,7 @@ class UnitsController : Controller {
                             break;
                     }
 
-                    string name = pc->getName();
+                    string name = unit->getName();
                     int pos = name.find(", ");
                     if( pos != string::npos ) name.erase(pos); // don't show unit main profession in unit name
 
@@ -112,12 +112,12 @@ class UnitsController : Controller {
                                 "<td><div class=crosshair></div>%s"
                                 "<td class=skill_level><tt>%2d</tt> %s "
                                 "<td class=skill_name>%s \n",
-                            pc->getId(),
+                            unit->getId(),
                             type ? type : "",
-                            link_to_unit(pc, name.c_str()),
+                            link_to_unit(unit, name.c_str()),
                             skill->getLevel(),
                             skill->levelString().c_str(),
-                            skill->nameString(pc->getRace(), pc->getSex()).c_str()
+                            skill->nameString(unit->getRace(), unit->getSex()).c_str()
                             ); html+=buf;
                 }
             }
@@ -136,8 +136,8 @@ class UnitsController : Controller {
 
         html += "<table class='units sortable'>\n";
 
-        while(Unit* pc=Unit::getNext(&idx, race_filter)){
-            PhysAttrsVector pav = pc->getPhysAttrs();
+        while(Unit* unit=Unit::getNext(&idx, race_filter)){
+            PhysAttrsVector pav = unit->getPhysAttrs();
             if( pav.size() > 0 ){
                 if(!was_titles){
                     html += "\n<tr><th>name";
@@ -148,7 +148,7 @@ class UnitsController : Controller {
                     was_titles = true;
                 }
                 html += "\n<tr><td>";
-                html += link_to_unit(pc);
+                html += link_to_unit(unit);
                 for(int i=0;i<pav.size();i++){
                     sprintf(buf, "<td class=r>%d", pav[i].value - pav[i].sub);
                     html += buf;
@@ -162,15 +162,15 @@ class UnitsController : Controller {
     }
 
     // show one unit
-    string show(Unit *pc){
+    string show(Unit *unit){
         char buf[0x200];
         string html;
         
         html += "<div id=dwarf>\n";
-        html += "<h1>" + pc->getName() + "</h1>\n";
+        html += "<h1>" + unit->getName() + "</h1>\n";
 
-        //sprintf(buf, "<div id=happiness>%d</div>\n", pc->getHappiness()); html += buf;
-        Coords c = pc->getCoords();
+        //sprintf(buf, "<div id=happiness>%d</div>\n", unit->getHappiness()); html += buf;
+        Coords c = unit->getCoords();
         sprintf(buf,
                 "<table class=tools>"
                     "<tr id='unit_%d'>"
@@ -180,7 +180,7 @@ class UnitsController : Controller {
                         "<td title='flags' class=flags>%x"
                         "<td title='coords' class=flags>(%d,%d,%d)"
                 "</table>\n",
-                pc->getId(), pc->getHappiness(), pc->getFlags(),
+                unit->getId(), unit->getHappiness(), unit->getFlags(),
                 c.x, c.y, c.z
         ); html += buf;
 
@@ -188,7 +188,7 @@ class UnitsController : Controller {
 
         // physical attributes
 
-        PhysAttrsVector pav = pc->getPhysAttrs();
+        PhysAttrsVector pav = unit->getPhysAttrs();
         if( pav.size() > 0 ){
             html += "<table class='t1 phys_attrs'>\n";
             for(int i=0;i<pav.size();i++){
@@ -205,7 +205,7 @@ class UnitsController : Controller {
 
         // wearings
 
-        WearingVector*wv = pc->getWear();
+        WearingVector*wv = unit->getWear();
         if(wv && wv->size() > 0){
             html += "<table class='items sortable'>\n";
             html += "<tr><th>item <th class=sorttable_numeric>value\n";
@@ -220,7 +220,7 @@ class UnitsController : Controller {
 
         // skills
 
-        SkillsVector* psv = pc->getSoul()->getSkillsVector();
+        SkillsVector* psv = unit->getSoul()->getSkillsVector();
         if(psv && psv->size() > 0){
             html += "<table id=skills class='sortable skills'>\n";
             html += "<tr><th class=sorttable_numeric>level<th>skill\n";
@@ -241,7 +241,7 @@ class UnitsController : Controller {
                         type ? type : "",
                         (*it)->getLevel(),
                         (*it)->levelString().c_str(),
-                        (*it)->nameString(pc->getRace(), pc->getSex()).c_str()
+                        (*it)->nameString(unit->getRace(), unit->getSex()).c_str()
                         ); html+=buf;
             }
             html += "</table>\n";
@@ -251,7 +251,7 @@ class UnitsController : Controller {
 
         // thoughts
 
-        html += "<div class=thoughts>" + pc->getThoughts() + "</div>\n";
+        html += "<div class=thoughts>" + unit->getThoughts() + "</div>\n";
         html += "</div>\n"; // div id=dwarf
 
         return html;
@@ -280,17 +280,17 @@ class UnitsController : Controller {
             "<th class=flags>flags"
             "\n";
 
-        int idx = 0, nDwarves = 0;
+        int idx = 0, nUnits = 0;
 
-        while(Unit* pc=Unit::getNext(&idx, race_filter)){
-            s = pc->getName();
+        while(Unit* unit=Unit::getNext(&idx, race_filter)){
+            s = unit->getName();
 
             if( !want_grep.empty() ){
                 // grep unit description for substring
-                if( pc->getThoughts().find(want_grep) == string::npos ) continue;
+                if( unit->getThoughts().find(want_grep) == string::npos ) continue;
             }
 
-            nDwarves++;
+            nUnits++;
 
             // dwarven babies have no useful info
             if(s.find(", Dwarven Baby") != string::npos) continue;
@@ -305,13 +305,13 @@ class UnitsController : Controller {
                         "<td>"
                             "<div class=crosshair></div>"
                             "<a href='?id=%d'>%s</a>", 
-                    pc->getId(),
-                    pc->getId(),
+                    unit->getId(),
+                    unit->getId(),
                     s.c_str());
             html += buf;
 
             int nItems = 0, totalValue = 0;
-            WearingVector*wv = pc->getWear();
+            WearingVector*wv = unit->getWear();
             WearingVector::iterator itr;
             for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
                 Item* pItem = (*itr)->item;
@@ -321,17 +321,17 @@ class UnitsController : Controller {
             sprintf(buf, "<td class=r>%d</td><td class=r>%d<span class=currency>&#9788;</span></td>", nItems, totalValue);
             html += buf;
 
-            sprintf(buf, "<td class=r>%d</td>", pc->getHappiness());
+            sprintf(buf, "<td class=r>%d</td>", unit->getHappiness());
             html += buf;
 
-            sprintf(buf, "<td class='flags r'>%x</td>", pc->getFlags());
+            sprintf(buf, "<td class='flags r'>%x</td>", unit->getFlags());
             html += buf;
 
             html += "</tr>\n";
         }
         html += "</table>\n";
 
-        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Units" ,nDwarves);
+        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Units" ,nUnits);
         html = buf + html;
 
         html += "</div>\n";

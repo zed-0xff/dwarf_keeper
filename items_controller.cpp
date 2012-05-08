@@ -133,6 +133,8 @@ class ItemsController : Controller {
         int cnt = 0, pos, add_count;
         map <string, count_chunk> m;
 
+        if(!v) return "<span class=error>Error: items vector is NULL !</span>\n";
+
         html += "<table class='items sortable'>\n"
             "<tr>"
             "<th>item"
@@ -252,6 +254,8 @@ class ItemsController : Controller {
         int cnt = 0, pos, add_count;
         map <string, count_chunk> m;
 
+        if(!v) return "<span class=error>Error: items vector is NULL !</span>\n";
+
         html += "<table class='items sortable'>\n"
             "<tr>"
             "<th>item"
@@ -313,6 +317,7 @@ class ItemsController : Controller {
 
     void count_by_types(){
         ItemsVector*v = Item::getVector();
+        if(!v) return;
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if( want_flags ) {

@@ -131,15 +131,18 @@ class ClothesController : Controller {
         ItemsVector*v = Item::getVector();
         int cnt = 0;
 
-        for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-            if( is_clothing(*itr) && (*itr)->getSize() != Item::SIZE_OK )
-                cnt++;
+        if(v){
+            for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
+                if( is_clothing(*itr) && (*itr)->getSize() != Item::SIZE_OK )
+                    cnt++;
+            }
         }
         return cnt;
     }
 
     void count_by_type( item_type_t type, int subtype, int*cnt_owned, int*cnt_free ){
         ItemsVector*v = Item::getVector();
+        if(!v) return;
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if(
@@ -264,12 +267,14 @@ class ClothesController : Controller {
     string items_tbl(){
       string html; html.reserve(10*1024);
       char buf[0x200];
+      ItemsVector*v = Item::getVector();
+
+      if(!v) return "<span class=error>Error: items vector is NULL !</span>\n";
 
       html += "\n\n<table class='items sortable'>\n";
       html += "<tr><th>item <th class=sorttable_numeric>value <th>owner\n";
 
       // find items of type in vtables set
-      ItemsVector*v = Item::getVector();
       ItemsVector::iterator itr;
       int nItems = 0;
       for ( itr = v->begin(); itr < v->end(); ++itr ) {

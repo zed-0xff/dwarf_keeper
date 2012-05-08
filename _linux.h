@@ -227,7 +227,6 @@ void find_screen_info(char*region_start, char*region_end){
         x86_emu emu(p, 0x100);
         emu.stop_on(insn_jmp, insn_jcc, insn_return, 0);
         emu.start();
-        emu.report();
 
         if(emu.calls.size() == 2){
             GAME.set_screen_center_func     = (void*)emu.calls[0];
@@ -272,6 +271,57 @@ void find_screen_info(char*region_start, char*region_end){
         printf("[!] screen_info not found!\n");
     }
 }
+
+// .text:08571C20 8B 87 04 06 00 00                    mov     eax, [edi+604h]
+// .text:08571C26 85 C0                                test    eax, eax
+// .text:08571C28 0F 84 E2 F8 FF FF                    jz      loc_8571510
+// .text:08571C2E 8B A8 D4 01 00 00                    mov     ebp, [eax+1D4h]
+// .text:08571C34 8B 88 D8 01 00 00                    mov     ecx, [eax+1D8h]
+// .text:08571C3A 8B 5C 24 58                          mov     ebx, [esp+0BCh+var_64]
+// .text:08571C3E 29 E9                                sub     ecx, ebp
+// .text:08571C40 C1 F9 02                             sar     ecx, 2
+// .text:08571C43 49                                   dec     ecx
+// .text:08571C44 0F BF C9                             movsx   ecx, cx
+// .text:08571C47 85 C9                                test    ecx, ecx
+// .text:08571C49 0F 88 E1 F8 FF FF                    js      loc_8571530
+// .text:08571C4F 89 C8                                mov     eax, ecx
+// .text:08571C51 D1 F8                                sar     eax, 1
+// .text:08571C53 8B 7C 85 00                          mov     edi, [ebp+eax*4+0]
+// .text:08571C57 0F BF 17                             movsx   edx, word ptr [edi]
+// .text:08571C5A 83 FA 3C                             cmp     edx, 3Ch
+
+void find_soul_skills(char*region_start, char*region_end){
+    const char tpl[] = 
+        "8b 87 !! !! 00 00 "    // offset of Soul* in Unit
+        "85 c0 "
+        "0f 84 ?? ?? ?? ?? "
+        "8b a8 !! !! 00 00 "    // offset of skills vector in Soul
+        "8b 88 !! !! 00 00 "    // offset of skills vector end in soul
+        "8b 5c 24 58 "
+        "29 e9 "
+        "c1 f9 02 "
+        "49 "
+        "0f bf c9 "
+        "85 c9 ";
+
+    BinaryTemplate bt(tpl);
+    if(char*p = bt.find(region_start, region_end)){
+        GAME.unit_soul_offset = bt.getResult(0);
+        uint32_t v0 = bt.getResult(1);
+        uint32_t v1 = bt.getResult(2);
+        if( v1 - v0 == 4 ){
+            GAME.soul_skills_offset = v0;
+        } else {
+            printf("[!] invalid skills vector values: %x, %x\n", v0, v1);
+        }
+        if( bt.find(p+1, region_end) ){
+            printf("[?] more than one occurency of tpl_soul_skills!\n");
+        }
+    } else {
+            printf("[!] tpl_soul_skills not found!\n");
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -372,6 +422,21 @@ void os_init(){
     FIND_SIMPLE(skill_id_2_string_func, "83 EC 4C 0F BF 54 24 54 89 6C 24 48 0F BF 44 24 5C 89 5C 24 3C 8B 5C 24 50 89 74 24 40 0F BF 74 24 58 0F B7 EA 83 FD 73  89 7C 24 44 77 28 0F BF");
 
     find_screen_info(region_start, region_end);
+    find_soul_skills(region_start, region_end);
 
     BENCH_END("bin find");
+
+    {
+        int n0=0, n1=0;
+        for(void**p = (void**)&GAME; p <= (void**)GAME_INFO_LAST_PTR; p++){
+            if(*p) n1++; else n0++;
+        }
+        printf("[*] GAME_INFO: %d ptrs", n0+n1);
+        if(n0){
+            printf(", \x1b[1;31m%d ptrs are NULL!\x1b[0m\n",n0);
+        } else {
+            // no NULL ptrs! excellent!
+            puts("");
+        }
+    }
 }

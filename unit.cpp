@@ -80,7 +80,13 @@ class Unit : public MemClass {
     // 0 = FEMALE, 1 = MALE
     int getSex(){ return w(SEX_OFFSET); }
 
-    Soul* getSoul(){ return (Soul*)(dw(SOUL_OFFSET)); } // XXX will not work on 64bit
+    Soul* getSoul(){ 
+        if( GAME.unit_soul_offset ){
+            return (Soul*)(dw(GAME.unit_soul_offset)); 
+        } else {
+            return NULL;
+        }
+    } // XXX will not work on 64bit
 
     Coords getCoords(){
         Coords c = {-1, -1, -1};
@@ -95,7 +101,7 @@ class Unit : public MemClass {
     }
 
     PhysAttrsVector getPhysAttrs(){
-        vector <PhysAttr> r;
+        vector<PhysAttr> r;
         r.reserve(PHYS_ATTR_COUNT);
         for(int i=0; i<PHYS_ATTR_COUNT; i++){
             PhysAttr pa;
@@ -154,7 +160,7 @@ class Unit : public MemClass {
     static const int         ID_OFFSET =  0xa8;
     static const int       WEAR_OFFSET = 0x22c;
     static const int PHYS_ATTRS_OFFSET = 0x338; // array of 8 entries of PHYS_ATTR_SIZE each
-    static const int       SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
+    //static const int       SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
     static const int  HAPPINESS_OFFSET = 0x6a4; // dword
 
     static const int PHYS_ATTR_SIZE = 0x1c; // size of one physical attribute record

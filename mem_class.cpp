@@ -20,6 +20,23 @@ class MemClass {
     int32_t i(int offset){
         return *(int32_t*)((char*)this+offset);
     }
+
+    void* checked_vector(int offset){
+        // in-memory storage of vector consists of 3 pointers:
+        //  a) data start
+        //  b) last used entry ptr
+        //  c) last allocated entry ptr
+        //
+        // so, must be: a <= b <= c
+        //
+        void **p = (void**)((char*)this+offset);
+        //printf("[d] checked_vector: %p, %p, %p\n", p[0], p[1], p[2]);
+        if( p[0] && p[1] && p[2] && (p[0] <= p[1]) && (p[1] <= p[2]) ){
+            return p;
+        } else {
+            return NULL;
+        }
+    }
 };
 
 #endif

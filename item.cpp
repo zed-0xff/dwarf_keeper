@@ -168,9 +168,10 @@ class Item : public MemClass {
     }
 
     static Item* find(int id){
-        ItemsVector*v = getVector();
-        for(int i=0; i<v->size(); i++){
-            if( v->at(i)->getId() == id ) return v->at(i);
+        if( ItemsVector*v = getVector() ){
+            for(int i=0; i<v->size(); i++){
+                if( v->at(i)->getId() == id ) return v->at(i);
+            }
         }
         return NULL;
     }

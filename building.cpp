@@ -105,9 +105,10 @@ class Building : public MemClass {
     }
 
     static Building* find(int id){
-        BuildingsVector*v = getVector();
-        for(int i=0; i<v->size(); i++){
-            if( v->at(i)->getId() == id ) return v->at(i);
+        if( BuildingsVector*v = getVector() ){
+            for(int i=0; i<v->size(); i++){
+                if( v->at(i)->getId() == id ) return v->at(i);
+            }
         }
         return NULL;
     }

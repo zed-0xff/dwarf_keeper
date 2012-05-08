@@ -37,6 +37,9 @@ static struct {
     void *unit_info_func;   // (pUnit, string*)
     void *unit_coords_func; // (pUnit, int *px, int *py, int *pz)
 
+    uint32_t unit_soul_offset;      // offset of Soul* in Unit
+    uint32_t soul_skills_offset;    // offset of skills vector in Soul
+
     // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
     void *cmp_item_size_func;
 
@@ -51,7 +54,6 @@ static struct {
     int  *scr_target_center_px, *scr_target_center_py, *scr_target_center_pz;
 
     void *unit_info_right_panel_func;
-    vector <mem_write_t> unit_info_right_panel_mem_writes;
 
     void* root_screen;
     void* root_window;
@@ -59,7 +61,11 @@ static struct {
     void* offscr_renderer_ctor_func;
     void* offscr_renderer_render_func;
     void* offscr_renderer_dtor_func;
+
+    vector <mem_write_t> unit_info_right_panel_mem_writes;
 } GAME = {0};
+
+#define GAME_INFO_LAST_PTR &GAME.offscr_renderer_dtor_func
 
 #include "binary_template.cpp"
 
