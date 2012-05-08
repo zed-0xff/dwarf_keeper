@@ -339,9 +339,16 @@ static int ahc_echo(void * cls,
 }
 
 void memserver_start(){
-  printf("[.] starting server...\n");
+  int port = 4545;
+
+  if(getenv("DWARF_KEEPER_PORT")){
+      port = atoi(getenv("DWARF_KEEPER_PORT"));
+  }
+
+  printf("[.] starting server at port %d...\n", port);
+
   mhd = MHD_start_daemon(0,
-                       4545,
+                       port,
                        NULL, NULL,      // accept policy  callback + argument
                        &ahc_echo, NULL, // access handler callback + argument
                        MHD_OPTION_END);

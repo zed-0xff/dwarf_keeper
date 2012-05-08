@@ -23,17 +23,13 @@ class ScreenController : Controller {
     string to_html(){
         if( unit_id != -1 ){
             if(Unit *unit = Unit::find(unit_id)){
-                // XXX HACK
-                *((int*)0x1563A3C) = -30000;
-                *((int*)0x1563A48) = -30000;
-                *((uint16_t*)0x156A97C) = 0x17;
-                *((int*)0x1563B5C) = -1;
-                *((int*)0x1563B68) = 0;
-                *((uint8_t*)0x16FEA54) = 1;
-                *((uint8_t*)0x16FEA55) = 1;
+                vector<mem_write_t>&v = GAME.unit_info_right_panel_mem_writes;
+                for(int i=0; i<v.size(); i++){
+                    memcpy((void*)v[i].addr, &v[i].value, v[i].size);
+                }
 
                 Screen::moveTo(unit->getCoords());
-                ((func_t_i)(FOO_FUNC))(unit_id);        // open unit info right panel
+                ((func_t_i)(GAME.unit_info_right_panel_func))(unit_id);        // open unit info right panel
             } else {
                 resp_code = MHD_HTTP_NOT_FOUND;
                 return "Unit not found";

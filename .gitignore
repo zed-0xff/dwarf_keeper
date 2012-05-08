@@ -8,3 +8,4 @@ a.out
 *.ini
 target
 libmicrohttpd
+libdisasm-0.23

@@ -24,6 +24,8 @@ static struct timeval g_t0,g_t1;
 #define BENCH_START      gettimeofday(&g_t0, NULL);
 #define BENCH_END(title) gettimeofday(&g_t1, NULL); printf("[t] %3d %s\n", diff_ms(g_t1, g_t0), title);
 
+#include "x86_emu.cpp"
+
 // all struct members will be automatically zero-initialized
 //   http://ex-parrot.com/~chris/random/initialise.html
 //   http://bytes.com/topic/c/answers/832184-struct-member-initialization
@@ -46,7 +48,10 @@ static struct {
 
     // int setScreenCenter(int center_mode) - actual coords are set via following global variables
     void *set_screen_center_func;
-    int *scr_target_center_px, *scr_target_center_py, *scr_target_center_pz;
+    int  *scr_target_center_px, *scr_target_center_py, *scr_target_center_pz;
+
+    void *unit_info_right_panel_func;
+    vector <mem_write_t> unit_info_right_panel_mem_writes;
 
     void* root_screen;
     void* root_window;
@@ -63,9 +68,6 @@ static struct {
 #else
 #include "_osx.h"
 #endif
-
-// int foo_func(int unit_id)
-#define FOO_FUNC 0x3021f0 // open unit info right panel?
 
 typedef int(*no_arg_func_t)();
 typedef int(*pvoid_arg_func_t)(void*);

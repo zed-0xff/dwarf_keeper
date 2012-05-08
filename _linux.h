@@ -182,6 +182,97 @@ void find_unit_info_func(char*region_start, char*region_end){
     printf("[!] unit_info_func not found!\n");
 }
 
+// .text:0855C582 A3 60 58 E4 08                          mov     scr_target_center_x, eax
+// .text:0855C587 0F BF 44 24 7C                          movsx   eax, [esp+9Ch+py]
+// .text:0855C58C B9 FF FF FF FF                          mov     ecx, -1
+// .text:0855C591 31 D2                                   xor     edx, edx
+// .text:0855C593 BD D0 8A FF FF                          mov     ebp, -30000
+// .text:0855C598 BF D0 8A FF FF                          mov     edi, -30000
+// .text:0855C59D BE 17 00 00 00                          mov     esi, 17h
+// .text:0855C5A2 89 0D D0 80 5F 09                       mov     ds:dword_95F80D0, ecx
+// .text:0855C5A8 A3 64 58 E4 08                          mov     scr_target_center_y, eax
+// .text:0855C5AD 0F BF 44 24 7A                          movsx   eax, [esp+9Ch+pUnit]
+// .text:0855C5B2 89 15 DC 80 5F 09                       mov     ds:dword_95F80DC, edx
+// .text:0855C5B8 89 2D 70 58 E4 08                       mov     dword_8E45870, ebp
+// .text:0855C5BE 89 3D 7C 58 E4 08                       mov     dword_8E4587C, edi
+// .text:0855C5C4 A3 68 58 E4 08                          mov     scr_target_center_z, eax
+// .text:0855C5C9 66 89 35 1C EF 5F 09                    mov     word ptr ds:dword_95FEF1C, si
+// .text:0855C5D0 C6 05 F4 2F 79 09 01                    mov     ds:byte_9792FF4, 1
+// .text:0855C5D7 C6 05 F5 2F 79 09 01                    mov     ds:byte_9792FF5, 1
+// .text:0855C5DE C7 04 24 01 00 00 00                    mov     dword ptr [esp+0], 1
+// .text:0855C5E5 E8 96 67 D2 FF                          call    set_screen_center
+// .text:0855C5EA 8B 4C 24 40                             mov     ecx, [esp+9Ch+var_5C]
+// .text:0855C5EE 8B 81 A8 00 00 00                       mov     eax, [ecx+0A8h]
+// .text:0855C5F4 89 04 24                                mov     [esp+0], eax    ; unit id
+// .text:0855C5F7 E8 64 24 D3 FF                          call    unit_info_panel?
+// .text:0855C5FC C6 43 0C 03                             mov     byte ptr [ebx+0Ch], 3
+
+#define NUM_X86_REGS 92 // from libdisasm's ia32_reg.c
+
+void find_screen_info(char*region_start, char*region_end){
+    const char tpl[] = 
+//        "a3 !! !! !! !! "           // scr_target_center_X
+//        "0f bf 44 24 ?? "
+        "b9 ff ff ff ff "
+        "31 d2 "
+        "bd d0 8a ff ff "
+        "bf d0 8a ff ff "
+        "?? 17 00 00 00 "           // mov (reg), 17h
+        "89 ?? !! !! !! !! ";
+
+    BinaryTemplate bt(tpl, 1);
+    if( char*p = bt.find(region_start, region_end) ){
+        int pos = 0, buf_size = bt.size();
+
+        x86_emu emu(p, 0x100);
+        emu.stop_on(insn_jmp, insn_jcc, insn_return, 0);
+        emu.start();
+        emu.report();
+
+        if(emu.calls.size() == 2){
+            GAME.set_screen_center_func     = (void*)emu.calls[0];
+            GAME.unit_info_right_panel_func = (void*)emu.calls[1];
+        } else {
+            printf("[!] screen_info: must have exactly 2 calls, got %d !\n", emu.calls.size());
+            return;
+        }
+
+        int nUnk = 0;
+        uint32_t unks[2];
+        for(int i=0; i<emu.mem_writes.size(); i++){
+            if( emu.mem_writes[i].known ){
+                GAME.unit_info_right_panel_mem_writes.push_back(emu.mem_writes[i]);
+            } else {
+                if(nUnk == 2){
+                    // already have 2 unknown values
+                    printf("[!] screen_info: must have exactly 2 unknown values, got 3rd!\n");
+                    emu.report();
+                    return;
+                }
+                unks[nUnk] = emu.mem_writes[i].addr;
+                nUnk++;
+            }
+        }
+        if(nUnk != 2){
+            // already have 2 unknown values
+            printf("[!] screen_info: must have exactly 2 unknown values, got %d!\n", nUnk);
+            emu.report();
+            return;
+        }
+        if( unks[1] - unks[0] != 4 ){
+            printf("[!] screen_info: unks diff must = 4, got %d!\n", unks[1]-unks[0]);
+            emu.report();
+            return;
+        }
+
+        GAME.scr_target_center_px = (int*)(unks[0]-4);
+        GAME.scr_target_center_py = (int*)(unks[0]);
+        GAME.scr_target_center_pz = (int*)(unks[1]);
+    } else {
+        printf("[!] screen_info not found!\n");
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #define FIND_SIMPLE(WHAT, TPL) { \
@@ -235,6 +326,7 @@ void os_init(){
     printf("[.] found CODE region at %p-%p\n", region_start, region_end);
 
     BENCH_START;
+
     find_units_vector(region_start, region_end);
     find_items_vector(region_start, region_end);
     find_buildings_vector(region_start, region_end);
@@ -278,6 +370,8 @@ void os_init(){
             );
 
     FIND_SIMPLE(skill_id_2_string_func, "83 EC 4C 0F BF 54 24 54 89 6C 24 48 0F BF 44 24 5C 89 5C 24 3C 8B 5C 24 50 89 74 24 40 0F BF 74 24 58 0F B7 EA 83 FD 73  89 7C 24 44 77 28 0F BF");
+
+    find_screen_info(region_start, region_end);
 
     BENCH_END("bin find");
 }
