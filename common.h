@@ -31,6 +31,7 @@ static struct {
     void *units_vector, *items_vector, *buildings_vector;
     void *item_name_func, *item_base_name_func, *item_value_func;
 
+    void *unit_name_func;
     void *unit_info_func;   // (pUnit, string*)
     void *unit_coords_func; // (pUnit, int *px, int *py, int *pz)
 

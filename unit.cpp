@@ -36,12 +36,12 @@ class Unit : public MemClass {
     static const int RECORD_SIZE = 0xa00;
 
     string getName(){
-        if(getUnitFullName){
+        if(GAME.unit_name_func){
             string s;
-            getUnitFullName(this, &s, 0);
+            ((unit_name_func_t)GAME.unit_name_func)(this, &s, 0);
             return cp437_to_utf8(s);
         } else {
-            return "<span class=error>getUnitFullName is NULL</span>";
+            return "Error: unit_name_func is NULL";
         }
     }
 
@@ -86,6 +86,10 @@ class Unit : public MemClass {
         Coords c = {-1, -1, -1};
         if( GAME.unit_coords_func ){
             ((func_t_pppp)(GAME.unit_coords_func))(this, &c.x, &c.y, &c.z);
+        } else {
+            c.x = w(COORD_X_OFFSET);
+            c.y = w(COORD_Y_OFFSET);
+            c.z = w(COORD_Z_OFFSET);
         }
         return c;
     }

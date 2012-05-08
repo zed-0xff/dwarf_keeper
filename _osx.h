@@ -1,7 +1,5 @@
 typedef int(*unit_name_func_t)(void*, string*, int);
 
-unit_name_func_t getUnitFullName = NULL;
-
 #define UNITS_VECTOR            0x157e5f8
 
 #define UNIT_FULL_NAME_FUNC     0x96b030
@@ -27,7 +25,7 @@ unit_name_func_t getUnitFullName = NULL;
 #define SKILL_ID_2_S_FUNC       0x20b170
 
 // int getUnitCoords(Unit *pc, int *px, int *py, int *pz)
-#define UNIT_COORDS_FUNC    0x949af0
+#define UNIT_COORDS_FUNC        0x949af0
 
 // int setScreenCenter(int center_mode) - actual coords are set via following global variables
 #define SET_SCREEN_CENTER_FUNC  0x2d5240
@@ -51,8 +49,4 @@ void os_init(){
     units_vector        = (void*) UNITS_VECTOR;
     items_vector        = (void*) ITEMS_VECTOR;
     buildings_vector    = (void*) BUILDINGS_VECTOR;
-
-    getUnitFullName     = (info_func3_t)UNIT_FULL_NAME_FUNC;
-    getItemName         = (info_func4_t)ITEM_NAME_FUNC;
-    getItemBaseName     = (info_func3_t)ITEM_BASE_NAME_FUNC;
 }

@@ -1,8 +1,4 @@
-#define ITEM_VALUE_FUNC         0x866d3c0
-
 typedef int(*unit_name_func_t)(void*, string*, int) __attribute__((fastcall));
-
-unit_name_func_t getUnitFullName = NULL;
 
 //.text:08091A80 55                                      push    ebp
 //.text:08091A81 57                                      push    edi
@@ -185,10 +181,37 @@ void find_unit_name_func(char*region_start, char*region_end){
 
     BinaryTemplate bt(tpl);
     if(char*p = bt.find(region_start, region_end)){
-        *((void**)&getUnitFullName) = p + bt.getResult(0) + bt.size();
+        GAME.unit_name_func = p + bt.getResult(0) + bt.size();
     } else {
         printf("[!] unit_name_func not found!\n");
     }
+}
+
+void find_unit_info_func(char*region_start, char*region_end){
+    const char very_unhappy[] = "very unhappy";
+    char* p_very_unhappy = (char*)memmem(region_start, region_end-region_start, very_unhappy, strlen(very_unhappy)+1);
+    if( !p_very_unhappy ){
+        printf("[!] cannot find '%s' string\n", very_unhappy);
+        return;
+    }
+    char buf[0x40];
+    memcpy(buf, "\xc7\x44\x24\x04", 4);
+    memcpy(buf+4, &p_very_unhappy, 4);
+
+    for(char* p = region_start; p = (char*)memmem(p, region_end-p, buf, 8); p++){
+        // .text:08AB337C 
+        // C7 44 24 04 C6 A0 D6 08                 
+        // mov     [esp+64Ch+var_648], offset aVeryUnhappy ; "very unhappy"
+        p = (char*)((uint32_t)p | 3) + 1; // dword-align
+
+        for(char*p1 = p; p1>(p-0x200); p1-=4){
+            if( !memcmp(p1, "\x55\x57\x56", 3) ){
+                GAME.unit_info_func = p1;
+                return;
+            }
+        }
+    }
+    printf("[!] unit_info_func not found!\n");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -240,9 +263,13 @@ void os_init(){
 
     MEM_FIND_SIMPLE(item_value_func, "55 57 56 53 83 EC 5C 8B  5C 24 70 8B 6C 24 78 8B");
 
-// XXX: getItemBaseName func may be called via Item vtable
+    // XXX: getItemBaseName func may be called via Item vtable
     MEM_FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb");
+
+    // XXX: unit coords are in pUnit +0x48, +0x4a, +0x4c
+    MEM_FIND_SIMPLE(unit_coords_func, "83 EC 3C 8B 44 24 40 89 7C 24 34 8B 54 24 48 89 6C 24 38 8B 7C 24 44 89 5C 24 2C 8B 6C 24 4C 89 74 24 30 F6 80 8F 00 00 00 02 89 54 24 1C 66 C7");
     
     find_unit_name_func(region_start, region_end);
+    find_unit_info_func(region_start, region_end);
     BENCH_END("bin find");
 }
