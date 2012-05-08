@@ -322,6 +322,24 @@ void find_soul_skills(char*region_start, char*region_end){
     }
 }
 
+void find_happiness(char*region_start, char*region_end){
+    if( !GAME.unit_info_func ){
+        printf("[!] cannot find happiness w/o unit_info_func!\n");
+        return;
+    }
+    // .text:08AB333E 8B 86 A4 06 00 00                    mov     eax, [esi+6A4h]
+    // .text:08AB3344 3D 95 00 00 00                       cmp     eax, 149
+    // .text:08AB3349 0F 8F 8F 01 00 00                    jg      loc_8AB34DE
+    // .text:08AB334F 83 F8 7C                             cmp     eax, 124
+    const char tpl[] = "8b ?? !! !! 00 00 3d 95 00 00 00 0f 8f ?? ?? ?? ?? 83 f8 7c";
+
+    BinaryTemplate bt(tpl, 1);
+    if(char*p = bt.find((char*)GAME.unit_info_func, (char*)GAME.unit_info_func+0x8000)){
+        GAME.unit_happiness_offset = bt.getResult(0);
+    } else {
+        printf("[!] tpl_unit_happiness not found!\n");
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -423,6 +441,7 @@ void os_init(){
 
     find_screen_info(region_start, region_end);
     find_soul_skills(region_start, region_end);
+    find_happiness(region_start, region_end);
 
     BENCH_END("bin find");
 

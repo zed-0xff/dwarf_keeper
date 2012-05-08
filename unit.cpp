@@ -64,7 +64,7 @@ class Unit : public MemClass {
     }
 
     int getHappiness(){
-        return i(HAPPINESS_OFFSET);
+        return GAME.unit_happiness_offset ? i(GAME.unit_happiness_offset) : -1;
     }
 
     string getThoughts(){
@@ -161,7 +161,7 @@ class Unit : public MemClass {
     static const int       WEAR_OFFSET = 0x22c;
     static const int PHYS_ATTRS_OFFSET = 0x338; // array of 8 entries of PHYS_ATTR_SIZE each
     //static const int       SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
-    static const int  HAPPINESS_OFFSET = 0x6a4; // dword
+    //static const int  HAPPINESS_OFFSET = 0x6a4; // dword
 
     static const int PHYS_ATTR_SIZE = 0x1c; // size of one physical attribute record
 };
