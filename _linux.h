@@ -155,38 +155,6 @@ void find_buildings_vector(char* region_start, char* region_end){
     }
 }
 
-// .text:08A66360 8B 83 08 06 00 00                       mov     eax, [ebx+608h]
-// .text:08A66366 8B 04 30                                mov     eax, [eax+esi]
-// .text:08A66369 8B 50 10                                mov     edx, [eax+10h]
-// .text:08A6636C 42                                      inc     edx
-// .text:08A6636D 3B 50 14                                cmp     edx, [eax+14h]
-// .text:08A66370 89 50 10                                mov     [eax+10h], edx
-// .text:08A66373 0F 8E B6 00 00 00                       jle     loc_8A6642F
-// .text:08A66379 B8 FC 59 E4 08                          mov     eax, 8E459FCh
-// .text:08A6637E 89 FA                                   mov     edx, edi
-// .text:08A66380 89 84 24 90 00 00 00                    mov     [esp+0BCh+var_2C], eax
-// .text:08A66387 89 D8                                   mov     eax, ebx
-// .text:08A66389 E8 42 10 F8 FF                          call    dwarf_name_with_prof_2_str
-// .text:08A6638E B9 A5 94 D6 08                          mov     ecx, offset aHasForgottenAD ; " has forgotten a demand."
-
-void find_unit_name_func(char*region_start, char*region_end){
-    const char tpl[] = 
-        "8b 83 ?? ?? 00 00 "
-        "8b 04 30 8b 50 10 42 3b 50 14 89 50 10 0f 8e b6 00 00 00 "
-        "?? ?? ?? ?? ?? "       // mov (eax, edx), 8....FC
-        "89 ?? "                // mov eax, ebx / mov edx, edi
-        "89 ?? 24 90 00 00 00 " // eax / edx
-        "89 ?? "                // mov eax, ebx / mov edx, edi
-        "e8 !! !! !! !!";       // call $+X
-
-    BinaryTemplate bt(tpl);
-    if(char*p = bt.find(region_start, region_end)){
-        GAME.unit_name_func = p + bt.getResult(0) + bt.size();
-    } else {
-        printf("[!] unit_name_func not found!\n");
-    }
-}
-
 void find_unit_info_func(char*region_start, char*region_end){
     const char very_unhappy[] = "very unhappy";
     char* p_very_unhappy = (char*)memmem(region_start, region_end-region_start, very_unhappy, strlen(very_unhappy)+1);
@@ -216,10 +184,22 @@ void find_unit_info_func(char*region_start, char*region_end){
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define MEM_FIND_SIMPLE(WHAT, TPL) { \
+#define FIND_SIMPLE(WHAT, TPL) { \
     BinaryTemplate bt(TPL); \
     if(char*p = bt.find(region_start, region_end)){ \
         GAME.WHAT = p; \
+        if( char* p1 = bt.find(p+1, region_end) ){ \
+            printf("[?] more than one occurency of " #WHAT "!: %p, %p\n", p, p1); \
+        } \
+    } else { \
+        printf("[!] " #WHAT " not found!\n"); \
+    } \
+}
+
+#define FIND_BY_CALL(WHAT, TPL) { \
+    BinaryTemplate bt(TPL); \
+    if(char*p = bt.find(region_start, region_end)){ \
+        GAME.WHAT = p + bt.getResult(0) + bt.size(); \
         if( char* p1 = bt.find(p+1, region_end) ){ \
             printf("[?] more than one occurency of " #WHAT "!: %p, %p\n", p, p1); \
         } \
@@ -261,15 +241,43 @@ void os_init(){
 
     find_item_name_func(region_start, region_end);
 
-    MEM_FIND_SIMPLE(item_value_func, "55 57 56 53 83 EC 5C 8B  5C 24 70 8B 6C 24 78 8B");
+    FIND_SIMPLE(item_value_func, "55 57 56 53 83 EC 5C 8B  5C 24 70 8B 6C 24 78 8B");
 
     // XXX: getItemBaseName func may be called via Item vtable
-    MEM_FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb");
+    FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb");
 
     // XXX: unit coords are in pUnit +0x48, +0x4a, +0x4c
-    MEM_FIND_SIMPLE(unit_coords_func, "83 EC 3C 8B 44 24 40 89 7C 24 34 8B 54 24 48 89 6C 24 38 8B 7C 24 44 89 5C 24 2C 8B 6C 24 4C 89 74 24 30 F6 80 8F 00 00 00 02 89 54 24 1C 66 C7");
+    FIND_SIMPLE(unit_coords_func, "83 EC 3C 8B 44 24 40 89 7C 24 34 8B 54 24 48 89 6C 24 38 8B 7C 24 44 89 5C 24 2C 8B 6C 24 4C 89 74 24 30 F6 80 8F 00 00 00 02 89 54 24 1C 66 C7");
     
-    find_unit_name_func(region_start, region_end);
+    FIND_SIMPLE(cmp_item_size_func, "55 57 56 53 BB 58 1B 00 00 0F BF 4C 24 20 0F BF 74 24 14 0F BF 7C 24 18 0F BF 54 24 1C 85 C9 78 14 8b 2d");
+
+    FIND_BY_CALL(unit_name_func,
+            "8b 83 ?? ?? 00 00 "
+            "8b 04 30 8b 50 10 42 3b 50 14 89 50 10 0f 8e b6 00 00 00 "
+            "?? ?? ?? ?? ?? "       // mov (eax, edx), 8....FC
+            "89 ?? "                // mov eax, ebx / mov edx, edi
+            "89 ?? 24 90 00 00 00 " // eax / edx
+            "89 ?? "                // mov eax, ebx / mov edx, edi
+            "e8 !! !! !! !!"        // call $+X
+            );
+
     find_unit_info_func(region_start, region_end);
+
+    FIND_BY_CALL(skill_lvl_2_string_func,
+            "8b 10 89 04 24 ff 52 1c 39 c5 "
+            "0f 84 ?? ?? ?? ?? "    // jz      loc_84DC7A8
+            "C6 05 08 ?? ?? ?? 07 " // mov     ds:byte_8E45A08, 7
+            "C6 05 09 ?? ?? ?? 00 " // mov     ds:byte_8E45A09, 0
+            "C6 05 0A ?? ?? ?? 01 " // mov     ds:byte_8E45A0A, 1
+            "a1 ?? ?? ?? ?? "
+            "8b 04 a8 85 c0 "
+            "0f 8e ?? ?? ?? ?? "
+            "89 44 24 04 "
+            "89 34 24 "
+            "e8 !! !! !! !!"        // call skill_lvl_2_string
+            );
+
+    FIND_SIMPLE(skill_id_2_string_func, "83 EC 4C 0F BF 54 24 54 89 6C 24 48 0F BF 44 24 5C 89 5C 24 3C 8B 5C 24 50 89 74 24 40 0F BF 74 24 58 0F B7 EA 83 FD 73  89 7C 24 44 77 28 0F BF");
+
     BENCH_END("bin find");
 }
