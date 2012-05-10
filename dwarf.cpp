@@ -5,6 +5,6 @@ class Dwarf : public Unit {
 
     // returns only ALIVE DWARVES
     static Dwarf* getNext(int*idx){
-        return (Dwarf*)Unit::getNext(idx, RACE_DWARF);
+        return (Dwarf*)Unit::getNext(idx, Unit::getDwarfRace());
     }
 };

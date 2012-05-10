@@ -16,7 +16,7 @@ class UnitsController : Controller {
         want_grep = request->get_string("grep","");
 
         if( request->url_starts_with("/dwarves") ){
-            race_filter = RACE_DWARF;
+            race_filter = Unit::getDwarfRace();
         } else {
             race_filter = request->get_int("race",-1);
         }
@@ -331,7 +331,7 @@ class UnitsController : Controller {
         }
         html += "</table>\n";
 
-        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == RACE_DWARF ? "Dwarves" : "Units" ,nUnits);
+        sprintf(buf, "<h1>%s (%d)</h1>\n", race_filter == Unit::getDwarfRace() ? "Dwarves" : "Units" ,nUnits);
         html = buf + html;
 
         html += "</div>\n";

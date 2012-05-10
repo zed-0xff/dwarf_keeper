@@ -1,9 +1,10 @@
 #include "common.h"
 #include "soul.cpp"
 
-static const int RACE_CAT   = 0x09e;
-static const int RACE_DUCK  = 0x0a8;
-static const int RACE_DWARF = 0x1d1;
+// 34.07:
+//static const int RACE_CAT   = 0x09e;
+//static const int RACE_DUCK  = 0x0a8;
+//static const int RACE_DWARF = 0x1d1;
 
 struct Wearing {
     Item*item;
@@ -148,6 +149,45 @@ class Unit : public MemClass {
 
         return NULL;
     }
+
+    static int getDwarfRace(){
+        static int r = 0;
+        if(r) return r;
+
+        int idx = 0;
+        Unit* unit;
+        map<int,int> race2prof;
+        string s;
+
+        // assume that only dwarves have professions
+
+        while( unit = getNext(&idx) ){
+            s = unit->getName();
+            if( s.find(", ") != string::npos ) race2prof[unit->getRace()]++;
+        }
+
+        if( race2prof.size() == 0 ){
+            printf("[?] getDwarfRace: no units?\n");
+            return -1;
+        }
+
+        if( race2prof.size() == 1 ){
+            r = race2prof.begin()->first;
+            return r;
+        }
+
+        // 2+ races in race2prof, select one with maximal number of units having profession
+        int nmax=0;
+        printf("[.] getDwarfRace:");
+        for( map<int,int>::iterator it=race2prof.begin(); it != race2prof.end(); it++){
+            if( it->second > nmax ){ r = it->first; nmax = it->second; }
+            printf(" r%x:%d", it->first, it->second);
+        }
+        printf(" => r%d\n", r);
+
+        return r;
+    }
+
     //////////////////////////////////////////////////////////////////
 
     private:

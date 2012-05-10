@@ -145,7 +145,7 @@ class Item : public MemClass {
                 getTypeId(),
                 getSubTypeId(),
                 getRaceId(),
-                RACE_DWARF
+                Unit::getDwarfRace()
                 );
     }
 
