@@ -7,18 +7,26 @@ class OffscreenRenderer : MemClass {
 
     OffscreenRenderer(int width, int height){
         memset(buf,0,sizeof(buf));
-        ((func_t_pii)GAME.offscr_renderer_ctor_func)(this, width, height);
+        if(GAME.offscr_renderer_ctor_func){
+            ((func_t_pii)GAME.offscr_renderer_ctor_func)(this, width, height);
+        }
     }
 
     void render(int x0, int y0){
-        ((func_t_pii)GAME.offscr_renderer_render_func)(this, x0, y0);
+        if(GAME.offscr_renderer_render_func){
+            ((func_t_pii)GAME.offscr_renderer_render_func)(this, x0, y0);
+        }
     }
 
     bool save(void*bmp_buf, int bufsize){
+        static void*p1 = NULL; 
+        static void*p2 = NULL; 
+
         if(!bmp_buf) return false;
-//       SDL_SaveBMP(getSurface(), "surface.bmp");
-        void*p1 = dlsym(RTLD_DEFAULT, "SDL_RWFromMem");
-        void*p2 = dlsym(RTLD_DEFAULT, "SDL_SaveBMP_RW");
+
+        if(!p1) p1 = dlsym(RTLD_DEFAULT, "SDL_RWFromMem");
+        if(!p2) p2 = dlsym(RTLD_DEFAULT, "SDL_SaveBMP_RW");
+
         if( p1 && p2 ){
             // create in-memory RW
             void *rw = (void*)((func_t_pi)p1)(bmp_buf, bufsize);
@@ -38,7 +46,9 @@ class OffscreenRenderer : MemClass {
     }
 
     ~OffscreenRenderer(){
-        ((func_t_p)GAME.offscr_renderer_dtor_func)(this);
+        if(GAME.offscr_renderer_dtor_func){
+            ((func_t_p)GAME.offscr_renderer_dtor_func)(this);
+        }
     }
 
     //////////////////////////////////////////////////////////////////

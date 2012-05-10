@@ -23,6 +23,10 @@ class TradeController : Controller {
     }
 
     string to_html(){
+        if(!Screen::root()){
+            return "<span class=error>Error: Screen::root() is NULL</span>\n";
+        }
+
         if(!trade_screen){
             return "Please open Trade screen first."
                    "<div class=comment>(highlight your Trade Depot and press 't' key)</div>";

@@ -98,7 +98,11 @@ class Screen {
     }
 
     static Screen* root(){
-        return (Screen*)GAME.root_screen;
+        if( GAME.root_screen_ptr ){
+            return *(Screen**)GAME.root_screen_ptr;
+        } else {
+            return NULL;
+        }
     }
 
 //    static void enumerate(){

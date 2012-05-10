@@ -344,9 +344,22 @@ void find_happiness(char*region_start, char*region_end){
 void find_root_screen(){
     void*p = dlsym(RTLD_DEFAULT, "gview");
     if(p){
-        GAME.root_screen = *(void**)p;
+        GAME.root_screen_ptr = p;
     } else {
         printf("[!] dlsym(\"gview\") returned NULL!\n");
+    }
+}
+
+void find_offscreen_renderer(){
+    void *p0 = dlsym(RTLD_DEFAULT, "_ZN18renderer_offscreenC2Eii");
+    void *p1 = dlsym(RTLD_DEFAULT, "_ZN18renderer_offscreen10update_allEii");
+    void *p2 = dlsym(RTLD_DEFAULT, "_ZN18renderer_offscreenD2Ev");
+    if( p0 && p1 && p2 ){
+        GAME.offscr_renderer_ctor_func   = p0;
+        GAME.offscr_renderer_render_func = p1;
+        GAME.offscr_renderer_dtor_func   = p2;
+    } else {
+        printf("[!] offscreen renderer dlsym() fail: %p %p %p\n", p0, p1, p2);
     }
 }
 
@@ -453,20 +466,34 @@ void os_init(){
     find_happiness(region_start, region_end);
 
     find_root_screen();
+    find_offscreen_renderer();
 
     BENCH_END("bin find");
 
     {
-        int n0=0, n1=0;
-        for(void**p = (void**)&GAME; p <= (void**)GAME_INFO_LAST_PTR; p++){
-            if(*p) n1++; else n0++;
+        int i=0;
+        vector<int> indexes;
+        for(void**p = (void**)&GAME; p <= (void**)GAME_INFO_LAST_PTR; p++, i++){
+            if(!*p) { indexes.push_back(i); }
         }
-        printf("[*] GAME_INFO: %d ptrs", n0+n1);
-        if(n0){
-            printf(", \x1b[1;31m%d ptrs are NULL!\x1b[0m\n",n0);
-        } else {
-            // no NULL ptrs! excellent!
-            puts("");
+        printf("[*] GAME_INFO: %d ptrs", (int*)GAME_INFO_LAST_PTR-(int*)&GAME+1);
+        switch(indexes.size()){
+            case 0:
+                // no NULL ptrs! excellent!
+                puts("");
+                break;
+            case 1:
+                // one ptr is NULL
+                printf(", \x1b[1;31mone ptr is NULL: #%d\x1b[0m\n", indexes[0]);
+                break;
+            default:
+                // 2+ ptrs are NULL
+                printf(", \x1b[1;31m%d ptrs are NULL:", indexes.size());
+                for(i=0; i<indexes.size(); i++){
+                    printf(" #%d", indexes[i]);
+                }
+                printf("\x1b[0m\n");
+                break;
         }
     }
 }

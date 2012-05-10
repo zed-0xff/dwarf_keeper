@@ -29,7 +29,7 @@ class LiveController : Controller {
             return websocket();
         }
         if( strstr(request->url, ".bmp")){
-            return save();
+            return bmp();
         }
 
         return live();
@@ -37,9 +37,9 @@ class LiveController : Controller {
 
     private:
 
-    string save(){
-        int w = request->get_int("w", 20);
-        int h = request->get_int("h", 20);
+    string bmp(){
+        int w = request->get_int("w", gps.dimx);
+        int h = request->get_int("h", gps.dimy);
         OffscreenRenderer r(w, h);
         r.render(request->get_int("x",0), request->get_int("y",0));
 
@@ -73,14 +73,14 @@ class LiveController : Controller {
     string dump(){
         char title[0x200];
 
-        size_t char_size = sizeof(*gps.screen);
+        size_t char_size = 4;
         size_t size = gps.dimx * gps.dimy;
 
         sprintf(title, "videobuf (%dx%d)", gps.dimx, gps.dimy);
 
-        if( size > 10000 ){
-            strcat(title, " [size too big, limited to 10000]");
-            size = 10000;
+        if( size > 40000 ){
+            strcat(title, " [size too big, limited to 40000]");
+            size = 40000;
         }
 
         return HTML::hexdump(gps.screen, size*char_size, char_size, title, gps.dimy * char_size);
