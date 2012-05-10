@@ -72,19 +72,18 @@ class LiveController : Controller {
 
     string dump(){
         char title[0x200];
-        Window* w = Window::root();
 
-        size_t char_size = sizeof(*w->vbuf);
-        size_t size = (w->max_x+1) * (w->max_y+1);
+        size_t char_size = sizeof(*gps.screen);
+        size_t size = gps.dimx * gps.dimy;
 
-        sprintf(title, "videobuf (%dx%d)", w->max_x+1, w->max_y+1);
+        sprintf(title, "videobuf (%dx%d)", gps.dimx, gps.dimy);
 
         if( size > 10000 ){
             strcat(title, " [size too big, limited to 10000]");
             size = 10000;
         }
 
-        return HTML::hexdump(w->vbuf, size*char_size, char_size, title, (w->max_y+1) * char_size);
+        return HTML::hexdump(gps.screen, size*char_size, char_size, title, gps.dimy * char_size);
     }
 
     string live(){
@@ -161,13 +160,11 @@ class LiveController : Controller {
 
         html.reserve( color ? 30000 : 5000);
 
-        Window* w = Window::root();
-
         if(is_ajax){
             uint32_t hash = 0;
-            for( int y = 0; y<=w->max_y; y++){
-                for( int x = 0; x<=w->max_x; x++){
-                    hash ^= w->vbuf[x*(w->max_y+1)+y];
+            for( int y = 0; y<gps.dimy; y++){
+                for( int x = 0; x<gps.dimx; x++){
+                    hash ^= ((uint32_t*)gps.screen)[x*gps.dimy+y];
                     hash = hash << 1 | hash >> 31;     // circular shift 1 bit left
                 }
             }
@@ -181,11 +178,12 @@ class LiveController : Controller {
             html += "<pre id='live' class=pseudographics>";
         }
 
-        for( int y = 0; y<=w->max_y; y++){
-            for( int x = 0; x<=w->max_x; x++){
-                c = w->vbuf[x*(w->max_y+1)+y] & 0xff;
-                fg = ( w->vbuf[x*(w->max_y+1)+y] >> 8 ) & 0xff;
-                bg = ( w->vbuf[x*(w->max_y+1)+y] >> 16 ) & 0xff;
+        for( int y = 0; y<gps.dimy; y++){
+            for( int x = 0; x<gps.dimx; x++){
+                int idx = (x*gps.dimy+y)*4;
+                c  = gps.screen[idx];
+                fg = gps.screen[idx+1];
+                bg = gps.screen[idx+2];
 
                 if(bg0 != bg || fg0 != fg){
                     if(bg0 + fg0 > 0) html += "</span>";

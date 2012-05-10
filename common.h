@@ -6,6 +6,12 @@
 #include <map>
 #include <set>
 
+// a tricky includes to include platform.h from both microhttpd and g_src
+#include <microhttpd.h>
+#include "g_src/platform.h"
+#include "g_src/graphics.h"
+
+
 using namespace std;
 
 class Item;
@@ -57,7 +63,6 @@ static struct {
     void *unit_info_right_panel_func;
 
     void* root_screen;
-    void* root_window;
 
     void* offscr_renderer_ctor_func;
     void* offscr_renderer_render_func;

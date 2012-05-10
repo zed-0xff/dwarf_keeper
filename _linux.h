@@ -341,6 +341,15 @@ void find_happiness(char*region_start, char*region_end){
     }
 }
 
+void find_root_screen(){
+    void*p = dlsym(RTLD_DEFAULT, "gview");
+    if(p){
+        GAME.root_screen = *(void**)p;
+    } else {
+        printf("[!] dlsym(\"gview\") returned NULL!\n");
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 #define FIND_SIMPLE(WHAT, TPL) { \
@@ -442,6 +451,8 @@ void os_init(){
     find_screen_info(region_start, region_end);
     find_soul_skills(region_start, region_end);
     find_happiness(region_start, region_end);
+
+    find_root_screen();
 
     BENCH_END("bin find");
 

@@ -1,5 +1,5 @@
 #include "mem_class.cpp"
-
+/*
 class Window : MemClass {
     public:
     uint32_t some_id;
@@ -17,4 +17,4 @@ class Window : MemClass {
     static Window* root(){
         return (Window*)GAME.root_window;
     }
-};
+};*/

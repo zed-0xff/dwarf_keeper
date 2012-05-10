@@ -12,7 +12,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 ifeq ($(UNAME), Linux)
-    CFLAGS := $(CFLAGS) -shared -fPIC -lpthread -ldl
+    CFLAGS := $(CFLAGS) -shared -fPIC -lpthread -ldl -std=c++0x
     OBJS   := $(OBJS) _linux.h
 endif
 

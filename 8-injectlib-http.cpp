@@ -153,7 +153,7 @@ int get_hexdump_params(void *cls, enum MHD_ValueKind kind, const char *key, cons
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-static int ahc_echo(void * cls,
+static int process_request(void * cls,
                     struct MHD_Connection * conn,
                     const char * url,
                     const char * method,
@@ -350,7 +350,7 @@ void memserver_start(){
   mhd = MHD_start_daemon(0,
                        port,
                        NULL, NULL,      // accept policy  callback + argument
-                       &ahc_echo, NULL, // access handler callback + argument
+                       &process_request, NULL, // access handler callback + argument
                        MHD_OPTION_END);
   if (mhd == NULL){
     perror("[!] failed to start HTTP server: ");
