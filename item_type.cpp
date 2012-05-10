@@ -48,6 +48,7 @@ class ItemType {
     static const int REMAINS                =  46;
     static const int MEAT                   =  47;
     static const int FISH                   =  48;
+    static const int RAW_FISH               =  49;
     static const int SEEDS                  =  52;
     static const int PLANTS                 =  53;
     static const int LEATHER                =  54;
@@ -128,6 +129,7 @@ class ItemType {
             case REMAINS               : return "remains";
             case MEAT                  : return "meat";
             case FISH                  : return "fish";
+            case RAW_FISH              : return "raw fish";
             case SEEDS                 : return "seeds";
             case PLANTS                : return "plants";
             case LEATHER               : return "leather";
