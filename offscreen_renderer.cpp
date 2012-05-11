@@ -7,6 +7,15 @@ class OffscreenRenderer : MemClass {
 
     OffscreenRenderer(int width, int height){
         memset(buf,0,sizeof(buf));
+
+        const int max_dim = 1000;
+
+        if(width < 0) width = 1;
+        if(width > max_dim) width = max_dim;
+
+        if(height < 0) height = 1;
+        if(height > max_dim) height = max_dim;
+
         if(GAME.offscr_renderer_ctor_func){
             ((func_t_pii)GAME.offscr_renderer_ctor_func)(this, width, height);
         }
