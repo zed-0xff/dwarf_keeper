@@ -40,7 +40,7 @@ $(LIBMICROHTTPD_A): libmicrohttpd/Makefile
 
 libmicrohttpd/Makefile: libmicrohttpd/configure
 	cd libmicrohttpd && \
-	export CFLAGS="-m32 -fPIC" && \
+	export CFLAGS="-g -m32 -fPIC" && \
 	./configure --disable-https --disable-dauth --disable-curl --disable-largefile --disable-postprocessor
 
 libmicrohttpd:

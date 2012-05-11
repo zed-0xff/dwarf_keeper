@@ -42,10 +42,46 @@ void dostuff(int);
 void memserver_start();
 void memserver_accept();
 
-const char* sdl_lib_path = "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL";
+int  SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
+int  SDLCALL SDL_PollEvent(SDL_Event*ev);
 
-int SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
-int SDLCALL SDL_PollEvent(SDL_Event*ev);
+void SDLCALL (*orig_SDL_Delay)(Uint32) = NULL;
+void SDLCALL SDL_Delay(Uint32);
+
+static int n_getpid=0, n_delay=0, n_poll_event=0;
+
+void* _hook_sdl_func(const char*func_name, void*local_func){
+    // try fastest method first
+    void *p = dlsym(RTLD_NEXT, func_name);
+    if( p && p != local_func){
+        return p;
+    }
+
+    // a slower one
+    p = dlsym(RTLD_DEFAULT, func_name);
+    if( p && p != local_func){
+        return p;
+    }
+
+    // OSX
+    const char* sdl_lib_path = "@executable_path/../Frameworks/SDL.framework/Versions/A/SDL";
+
+    void *plib  = dlopen(sdl_lib_path, RTLD_LAZY);
+    void *pfunc = NULL;
+
+    if(plib){
+        pfunc = dlsym(plib, func_name);
+        dlclose(plib);
+    } else {
+        fprintf(stderr, "[!] Error: cannot dlopen %s\n", sdl_lib_path);
+    }
+
+    if(!pfunc){
+        fprintf(stderr, "[!] Error: cannot hook %s!\n", func_name);
+    }
+
+    return pfunc;
+}
 
 void setup_hooks(){
     hooks_set_up = true;
@@ -55,40 +91,47 @@ void setup_hooks(){
     if( !orig_getpid ){
         orig_getpid = NULL;
         fprintf(stderr, "[!] Error: cannot hook getpid!\n");
+    } else {
+        printf("[.] pid=%d\n", orig_getpid());
     }
 
     os_init();
 
-    // try fastest method first
-    p = dlsym(RTLD_NEXT, "SDL_PollEvent");
-    if( p && p != SDL_PollEvent){
-        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) p;
-        return;
-    }
+    *(void**)&orig_SDL_PollEvent = _hook_sdl_func("SDL_PollEvent", (void*)SDL_PollEvent);
+    *(void**)&orig_SDL_Delay     = _hook_sdl_func("SDL_Delay",     (void*)SDL_Delay);
 
-    // a slower one
-    p = dlsym(RTLD_DEFAULT, "SDL_PollEvent");
-    if( p && p != SDL_PollEvent){
-        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) p;
-        return;
-    }
-
-    // OSX
-    void *plib = dlopen(sdl_lib_path, RTLD_LAZY);
-    if(plib){
-        orig_SDL_PollEvent = (int SDLCALL (*)(SDL_Event*)) dlsym(plib, "SDL_PollEvent");
-        dlclose(plib);
-    } else {
-        fprintf(stderr, "[!] Error: cannot dlopen %s\n", sdl_lib_path);
-    }
-
-    if(!orig_SDL_PollEvent){
-        fprintf(stderr, "[!] Error: cannot hook SDL_PollEvent!\n");
+    if( !orig_SDL_PollEvent ){
         fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
     }
 }
 
+void SDLCALL SDL_Delay(Uint32 ms){
+    struct timeval t0, t1;
+    gettimeofday(&t0, NULL);
+
+    n_delay++;
+
+    if(!hooks_set_up){
+        setup_hooks();
+        memserver_start();
+    }
+
+    memserver_accept();
+
+    if(orig_SDL_Delay){
+        gettimeofday(&t1, NULL);
+        Uint32 ms1 = ms-diff_ms(t1,t0);
+        // use min() to avoid overflow on signed/unsigned conversion
+        orig_SDL_Delay(min(ms1,ms)); 
+    } else {
+        fprintf(stderr, "[!] orig_SDL_Delay = NULL, cannot continue!\n");
+        exit(1);
+    }
+}
+
 int SDLCALL SDL_PollEvent(SDL_Event*ev){
+    n_poll_event++;
+
     if(!hooks_set_up){
         setup_hooks();
         memserver_start();
@@ -117,6 +160,8 @@ int SDLCALL SDL_PollEvent(SDL_Event*ev){
 
 
 pid_t getpid(){
+    n_getpid++;
+
     if(!hooks_set_up){
         setup_hooks();
         memserver_start();
@@ -234,6 +279,24 @@ static int process_request(void * cls,
       html += HTML::hexdump((void*)hp.offset, hp.size, hp.width, 
               request.get_string("title", (hp.offset == (uint32_t)&hp) ? "(stack top)" : "")
               );
+  } else if(request.url_starts_with("/stat")){
+      sprintf(buf, 
+              "<table class=t1>\n"
+                "<tr>"
+                    "<th> n_getpid"
+                    "<td class=r> %d\n"
+                "<tr>"
+                    "<th> n_poll_event"
+                    "<td class=r> %d\n"
+                "<tr>"
+                    "<th> n_delay"
+                    "<td class=r> %d\n"
+              "</table>\n",
+              n_getpid,
+              n_poll_event,
+              n_delay
+             );
+      html += buf;
 
   } else {
       // security
@@ -366,6 +429,11 @@ void memserver_accept(){
 
       if(!mhd) return;
 
+#ifdef __linux__
+      static pthread_mutex_t foo_mutex = PTHREAD_MUTEX_INITIALIZER;
+      pthread_mutex_lock(&foo_mutex);
+#endif
+
       FD_ZERO(&sr); FD_ZERO(&sw); FD_ZERO(&sx);
 
       if( MHD_YES != MHD_get_fdset(mhd,&sr,&sw,&sx,&max_fd)){
@@ -378,4 +446,8 @@ void memserver_accept(){
 
       select (max_fd + 1, &sr, &sw, &sx, &tv);
       MHD_run(mhd);
+
+#ifdef __linux__
+      pthread_mutex_unlock(&foo_mutex);
+#endif
 }
