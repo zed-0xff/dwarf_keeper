@@ -183,7 +183,7 @@ class Unit : public MemClass {
             if( it->second > nmax ){ r = it->first; nmax = it->second; }
             printf(" r%x:%d", it->first, it->second);
         }
-        printf(" => r%d\n", r);
+        printf(" => r%x\n", r);
 
         return r;
     }

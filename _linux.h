@@ -344,7 +344,8 @@ void find_happiness(char*region_start, char*region_end){
 void find_root_screen(){
     void*p = dlsym(RTLD_DEFAULT, "gview");
     if(p){
-        GAME.root_screen_ptr = p;
+        // gview.view
+        GAME.root_screen = (void*)((char*)p+4);
     } else {
         printf("[!] dlsym(\"gview\") returned NULL!\n");
     }

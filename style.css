@@ -224,7 +224,7 @@ h2 .important {
 /*    border-bottom: solid 2px #ccc; */
 }
 .clothes-counts .unusable {
-    text-align: center;
+    text-align: center !important;
     padding-top: 5px;
 }
 .clothes-counts .shortage {

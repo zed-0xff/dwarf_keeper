@@ -8,7 +8,8 @@ static const char* GEM_CUTS[] = {
 
 static const char* TREE_NAMES[] = {
     "black-cap", "blood thorn", "tower-cap", "alder", "spore tree", "ashen", "tunnel tube",
-    "cedar", "fungiwood"
+    "cedar", "fungiwood", "goblin-cap", "oaken", "maple", "chestnut", "birchen", "willow",
+    "glumprong", "pine"
 };
 
 class ItemsController : Controller {
@@ -199,18 +200,49 @@ class ItemsController : Controller {
                         name += "s";
                     }
 
-                    // "ashen bolts" => "wood bolts"
-                    for(int i=0; i<sizeof(TREE_NAMES)/sizeof(TREE_NAMES[0]); i++){
-                        if( name.substr(0, strlen(TREE_NAMES[i])) == TREE_NAMES[i] ){
-                            name.replace(0,strlen(TREE_NAMES[i]), "wood");
-                            break;
-                        }
-                    }   
+                    // "ashen bolts" => "wooden bolts"
+                    _strip_tree_names(name);
+
                     break;
 
                 case ItemType::CLOTH:
                     // ignore quality modifiers
                     name = (*itr)->getBaseName(0);
+                    break;
+
+                case ItemType::BARRELS:
+                case ItemType::BINS:
+                    name = (*itr)->getName();
+
+                    // "+Fish Barrel (birchen) <#1>+" => "Fish Barrel (birchen) <#1>+"
+                    pos = name.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                    if( pos != string::npos && pos > 0 ) name.erase(0,pos);
+
+                    // "Fish Barrel (birchen) <#1>+" => "Fish Barrel"
+                    pos = name.find(" (");
+                    if( pos != string::npos) name.erase(pos);
+
+                    // "alder bin <#1>" => "alder bin"
+                    if(      (pos = name.find(" bin"))    != string::npos) name.erase(pos+4);
+                    else if( (pos = name.find(" barrel")) != string::npos) name.erase(pos+7);
+
+                    if(_strip_tree_names(name)) name += " (empty)";
+                    break;
+
+                case ItemType::CAGES:
+                    name = (*itr)->getName();
+
+                    // "(-zinc cage-)"                 => "zinc cage-)"
+                    // "+goblin (♂) cage (tower-cap)+" => "goblin (♂) cage (tower-cap)+
+                    pos = name.find_first_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                    if( pos != string::npos && pos > 0 ) name.erase(0,pos);
+
+                    // "zinc cage-)"                  => "zinc cage"
+                    // "goblin (♂) cage (tower-cap)+" => "goblin (♂) cage"
+                    pos = name.find(" cage");
+                    if( pos != string::npos) name.erase(pos+5);
+
+                    if(_strip_tree_names(name)) name += " (empty)";
                     break;
 
                 default:
@@ -245,6 +277,16 @@ class ItemsController : Controller {
         html = buf + html;
 
         return html;
+    }
+
+    bool _strip_tree_names(string& name){
+        for(int i=0; i<sizeof(TREE_NAMES)/sizeof(TREE_NAMES[0]); i++){
+            if( name.substr(0, strlen(TREE_NAMES[i])) == TREE_NAMES[i] ){
+                name.replace(0,strlen(TREE_NAMES[i]), "wooden");
+                return true;
+            }
+        }
+        return false;
     }
 
     string ungrouped_items(int type_id){
@@ -292,9 +334,9 @@ class ItemsController : Controller {
         string html;
         char buf[0x200];
 
-        BENCH_START;
+        //BENCH_START;
         count_by_types();
-        BENCH_END("ItemsController::count_by_types");
+        //BENCH_END("ItemsController::count_by_types");
 
         html += "<table class='counts-by-type sortable'>\n";
         html += "<tr> <th>type <th>count\n";

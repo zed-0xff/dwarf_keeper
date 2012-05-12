@@ -62,7 +62,7 @@ static struct {
 
     void *unit_info_right_panel_func;
 
-    void* root_screen_ptr;
+    void* root_screen;
 
     void* offscr_renderer_ctor_func;
     void* offscr_renderer_render_func;

@@ -98,8 +98,8 @@ class Screen {
     }
 
     static Screen* root(){
-        if( GAME.root_screen_ptr ){
-            return *(Screen**)GAME.root_screen_ptr;
+        if( GAME.root_screen ){
+            return (Screen*)GAME.root_screen;
         } else {
             return NULL;
         }

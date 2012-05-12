@@ -133,8 +133,14 @@ class ClothesController : Controller {
 
         if(v){
             for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
-                if( is_clothing(*itr) && (*itr)->getSize() != Item::SIZE_OK )
+                if( 
+                        is_clothing(*itr) && 
+                        ((*itr)->getSize() != Item::SIZE_OK ) &&
+                        (((*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN) == 0) &&
+                        (((*itr)->getFlags() & Item::FLAG_FORBID) == 0)
+                ){
                     cnt++;
+                }
             }
         }
         return cnt;
