@@ -109,7 +109,7 @@ class Item : public MemClass {
 
     int getSubTypeId(){
         if(pvtbl == NULL || ((int)pvtbl) == -1) return -1;
-        return ((pvoid_arg_func_t)(((void**)pvtbl)[VTBL_FUNC_SUBTYPE_ID]))(this);
+        return 0xffff & ((pvoid_arg_func_t)(((void**)pvtbl)[VTBL_FUNC_SUBTYPE_ID]))(this);
     }
 
     uint32_t inline getFullId(){

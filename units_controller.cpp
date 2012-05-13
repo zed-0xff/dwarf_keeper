@@ -177,11 +177,13 @@ class UnitsController : Controller {
                         "<td>"
                             "<div class=crosshair></div>"
                         "<td title='Happiness' class=happiness>%d"
-                        "<td title='flags' class=flags>%x"
+                        "<td title='flags'  class=flags>%x"
                         "<td title='coords' class=flags>(%d,%d,%d)"
+                        "<td title='race'   class=flags><a href='?race=0x%x'>%x</a>"
                 "</table>\n",
                 unit->getId(), unit->getHappiness(), unit->getFlags(),
-                c.x, c.y, c.z
+                c.x, c.y, c.z,
+                unit->getRace(), unit->getRace()
         ); html += buf;
 
         html += "<div class=tables>\n";

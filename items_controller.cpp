@@ -81,6 +81,9 @@ class ItemsController : Controller {
         html += "<tr><th>coords <td class=r>";
         html += link_to_coords(item->getCoords());
 
+        sprintf(buf, "<tr><th>type <td class='r comment' title='%x'>%x:%x\n", 
+                item->getFullId(), item->getTypeId(), item->getSubTypeId()); html += buf;
+
         sprintf(buf, "<tr><th>flags <td class='r comment'>%x <td class=comment>%s\n", 
                 item->getFlags(), item->getFlagsString().c_str()); html += buf;
 

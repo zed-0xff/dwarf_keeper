@@ -71,15 +71,17 @@ static ClothType clothtypes[] = {
 
 class ClothesController : Controller {
     HTTPRequest* request;
-    map<Item*, Dwarf*>  items2dwarves;
+    map<Item*, Dwarf*>  items2units;
     vector<uint32_t>    want_types;
 
     public:
     int want_free, want_owned, want_stats, want_unusable, free_max_wear;
+    int debug;
 
     ClothesController(HTTPRequest&req){
       request = &req;
 
+      debug         = request->get_int("debug", 0);
       want_owned    = request->get_int("owned", 1);
       want_free     = request->get_int("free", 1);
       want_unusable = request->get_int("unusable", 0);
@@ -89,16 +91,16 @@ class ClothesController : Controller {
       setWantTypes(request->get_strings("t"));
 
       // fill a pItem->pDwarf map
-      BENCH_START;
+      //BENCH_START;
       int idx=0;
       while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
               WearingVector*wv = pDwarf->getWear();
               WearingVector::iterator itr;
               for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                  items2dwarves.insert(pair<Item*,Dwarf*>((*itr)->item, pDwarf));
+                  items2units.insert(pair<Item*,Dwarf*>((*itr)->item, pDwarf));
               }
       }
-      BENCH_END("filling items2dwarves");
+      //BENCH_END("filling items2units");
     }
 
     void setWantTypes(vector<string> typeNames){
@@ -110,6 +112,14 @@ class ClothesController : Controller {
                     break;
                 }
             }
+        }
+        if(debug){
+            vector<uint32_t>::iterator it;
+            printf("[d] want_types:");
+            for(it = want_types.begin(); it != want_types.end(); it++){
+                printf(" %x", *it);
+            }
+            puts("");
         }
     }
 
@@ -148,7 +158,7 @@ class ClothesController : Controller {
 
     void count_by_type( item_type_t type, int subtype, int*cnt_owned, int*cnt_free ){
         ItemsVector*v = Item::getVector();
-        if(!v) return;
+        if(!v || !cnt_owned || !cnt_free) return;
 
         for( ItemsVector::iterator itr = v->begin(); itr < v->end(); ++itr) {
             if(
@@ -159,7 +169,7 @@ class ClothesController : Controller {
                 if( (*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
                 if( (*itr)->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
 
-                if(items2dwarves.find(*itr) != items2dwarves.end())
+                if(items2units.find(*itr) != items2units.end())
                     (*cnt_owned)++;
                 else if((*itr)->getWear() <= free_max_wear )
                     (*cnt_free)++;
@@ -307,8 +317,8 @@ class ClothesController : Controller {
               if((*itr)->getSize() != Item::SIZE_OK) continue;
           }
 
-          map<Item*,Dwarf*>::iterator i2d_it = items2dwarves.find(*itr);
-          if(i2d_it != items2dwarves.end()){
+          map<Item*,Dwarf*>::iterator i2u_it = items2units.find(*itr);
+          if(i2u_it != items2units.end()){
               // item belongs to someone
               if(!want_owned) continue;
 
@@ -321,8 +331,8 @@ class ClothesController : Controller {
                       HTML::item_color_classes(*itr),
                       link_to_item(*itr),
                       (*itr)->getValue(),
-                      i2d_it->second->getId(),
-                      i2d_it->second->getName().c_str()
+                      i2u_it->second->getId(),
+                      i2u_it->second->getName().c_str()
               );
               html += buf;
           } else {
@@ -391,17 +401,17 @@ class ClothesController : Controller {
       if(want_stats){
           html += "<h1>Clothes</h1>\n";
 
-          BENCH_START;
+          //BENCH_START;
           html += counts_table();
-          BENCH_END("counts_table()");
+          //BENCH_END("counts_table()");
 
           html += "<div id='clothes-tbl-place'>\n";
       }
 
       if(want_types.size() > 0 || want_unusable){
-          BENCH_START;
+          //BENCH_START;
           html += items_tbl();
-          BENCH_END("items tbl");
+          //BENCH_END("items tbl");
       }
 
       if(want_stats){

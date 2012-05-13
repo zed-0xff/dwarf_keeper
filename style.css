@@ -170,7 +170,8 @@ table#skills tr.st_labor {
     font-family: monospace;
 }
 
-#dwarf .tools .flags {
+#dwarf .tools .flags,
+#dwarf .tools .flags a {
     color: #ddd;
     font-size: 10pt;
     font-family: monospace;
