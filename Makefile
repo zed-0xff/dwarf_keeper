@@ -27,6 +27,7 @@ clean:
 	rm *.o target *.dylib a.out
 
 $(LIBRARY): $(OBJS) $(STATIC_LIBS) Makefile
+	@echo -e '\E[47;35m'"\033[1m=================>\033[0m"
 	$(CC) $(CFLAGS) $< $(STATIC_LIBS) -o $@
 
 item_type.cpp: item_type.rb
