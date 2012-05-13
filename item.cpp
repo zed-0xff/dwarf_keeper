@@ -89,13 +89,25 @@ class Item : public MemClass {
     // self value + sum of all values of contained items, if any
     int getPrice(){
         int price = getValue();
-        RefsVector* rv = getRefs();
-        for(int i=0; i<rv->size(); i++){
-            if(rv->at(i)->getType() == Reference::REF_CONTAINS_ITEM){
-                price += rv->at(i)->getItem()->getValue();
+        if( RefsVector* rv = getRefs() ){
+            for(int i=0; i<rv->size(); i++){
+                if(rv->at(i)->getType() == Reference::REF_CONTAINS_ITEM){
+                    price += rv->at(i)->getItem()->getValue();
+                }
             }
         }
         return price;
+    }
+
+    Unit* getOwner(){
+        if( RefsVector* rv = getRefs() ){
+            for(int i=0; i<rv->size(); i++){
+                if(rv->at(i)->getType() == Reference::REF_UNIT_ITEMOWNER){
+                    return rv->at(i)->getUnit();
+                }
+            }
+        }
+        return NULL;
     }
 
     int getId(){

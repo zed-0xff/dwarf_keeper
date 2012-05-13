@@ -71,7 +71,6 @@ static ClothType clothtypes[] = {
 
 class ClothesController : Controller {
     HTTPRequest* request;
-    map<Item*, Dwarf*>  items2units;
     vector<uint32_t>    want_types;
 
     public:
@@ -89,18 +88,6 @@ class ClothesController : Controller {
       want_stats    = !request->is_ajax();
 
       setWantTypes(request->get_strings("t"));
-
-      // fill a pItem->pDwarf map
-      //BENCH_START;
-      int idx=0;
-      while(Dwarf* pDwarf=Dwarf::getNext(&idx)){
-              WearingVector*wv = pDwarf->getWear();
-              WearingVector::iterator itr;
-              for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                  items2units.insert(pair<Item*,Dwarf*>((*itr)->item, pDwarf));
-              }
-      }
-      //BENCH_END("filling items2units");
     }
 
     void setWantTypes(vector<string> typeNames){
@@ -166,10 +153,11 @@ class ClothesController : Controller {
                     (*itr)->getSubTypeId() == subtype &&
                     (*itr)->getSize()      == Item::SIZE_OK
             ){
-                if( (*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
-                if( (*itr)->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
+                uint32_t flags = (*itr)->getFlags();
+                if( flags & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
+                if( flags & Item::FLAG_FORBID ) continue; // forbidden item
 
-                if(items2units.find(*itr) != items2units.end())
+                if( flags & Item::FLAG_HAS_OWNER )
                     (*cnt_owned)++;
                 else if((*itr)->getWear() <= free_max_wear )
                     (*cnt_free)++;
@@ -294,14 +282,15 @@ class ClothesController : Controller {
       ItemsVector::iterator itr;
       int nItems = 0;
       for ( itr = v->begin(); itr < v->end(); ++itr ) {
-          if(!is_clothing(*itr)) continue;
+          Item *item = *itr;
+          if(!is_clothing(item)) continue;
 
-          if( (*itr)->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
-          if( (*itr)->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
+          if( item->getFlags() & Item::FLAG_NOT_FORT_OWN ) continue; // item not belongs to fort
+          if( item->getFlags() & Item::FLAG_FORBID ) continue; // forbidden item
 
           if(want_types.size() > 0){
               bool ok = false;
-              uint32_t itfid = (*itr)->getFullId(); // item type full id
+              uint32_t itfid = item->getFullId(); // item type full id
               for(int i=0; i<want_types.size(); i++){
                 if(want_types[i] == itfid){
                     ok = true;
@@ -312,15 +301,16 @@ class ClothesController : Controller {
           }
 
           if(want_unusable){
-              if((*itr)->getSize() == Item::SIZE_OK) continue;
+              if(item->getSize() == Item::SIZE_OK) continue;
           } else {
-              if((*itr)->getSize() != Item::SIZE_OK) continue;
+              if(item->getSize() != Item::SIZE_OK) continue;
           }
 
-          map<Item*,Dwarf*>::iterator i2u_it = items2units.find(*itr);
-          if(i2u_it != items2units.end()){
+          if( item->getFlags() & Item::FLAG_HAS_OWNER ){
               // item belongs to someone
               if(!want_owned) continue;
+
+              Unit *unit = item->getOwner();
 
               sprintf(buf, 
                       "<tr>"
@@ -328,17 +318,17 @@ class ClothesController : Controller {
                           "<td class=r>%d<span class=currency>&#9788;</span>"
                           "<td class=owner><a href='/dwarves?id=%d'>%s</a>"
                           "\n",
-                      HTML::item_color_classes(*itr),
-                      link_to_item(*itr),
-                      (*itr)->getValue(),
-                      i2u_it->second->getId(),
-                      i2u_it->second->getName().c_str()
+                      HTML::item_color_classes(item),
+                      link_to_item(item),
+                      item->getValue(),
+                      (unit ? unit->getId() : -1),
+                      (unit ? unit->getName().c_str() : "???")
               );
               html += buf;
           } else {
               // item is free
               if(!want_free) continue;
-              if((*itr)->getWear() > free_max_wear ) continue;
+              if(item->getWear() > free_max_wear ) continue;
 
               sprintf(buf, 
                       "<tr>"
@@ -346,9 +336,9 @@ class ClothesController : Controller {
                           "<td class=r>%d<span class=currency>&#9788;</span>"
                           "<td class=owner>"
                           "\n",
-                      HTML::item_color_classes(*itr),
-                      link_to_item(*itr),
-                      (*itr)->getValue()
+                      HTML::item_color_classes(item),
+                      link_to_item(item),
+                      item->getValue()
               );
               html += buf;
           }
@@ -361,7 +351,7 @@ class ClothesController : Controller {
                   "<a class=ptr href='/hexdump?offset=%p&size=%d&width=4&title=%s'>"
                   "%x"
                   "</a>",
-                  *itr, Item::RECORD_SIZE, url_escape((*itr)->getName()).c_str(), (*itr)->getFlags());
+                  item, Item::RECORD_SIZE, url_escape(item->getName()).c_str(), item->getFlags());
           html += buf;
 #endif
       }
