@@ -9,7 +9,7 @@ static const char* GEM_CUTS[] = {
 static const char* TREE_NAMES[] = {
     "black-cap", "blood thorn", "tower-cap", "alder", "spore tree", "ashen", "tunnel tube",
     "cedar", "fungiwood", "goblin-cap", "oaken", "maple", "chestnut", "birchen", "willow",
-    "glumprong", "pine"
+    "glumprong", "pine", "larch", "saguaro rib"
 };
 
 class ItemsController : Controller {
@@ -246,6 +246,13 @@ class ItemsController : Controller {
                     if( pos != string::npos) name.erase(pos+5);
 
                     if(_strip_tree_names(name)) name += " (empty)";
+                    break;
+
+                case ItemType::BARS:
+                    name = (*itr)->getName();
+                    if( name.find(" soap") != string::npos ){
+                        name = "soap";
+                    }
                     break;
 
                 default:
