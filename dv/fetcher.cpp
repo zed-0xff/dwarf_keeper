@@ -1,0 +1,140 @@
+#ifndef FETCHER_CPP
+#define FETCHER_CPP
+
+#include <stdlib.h>
+#include <curl/curl.h>
+#include <string.h>
+#include <string>
+#include <stdint.h>
+#include <SDL/SDL.h>
+
+using namespace std;
+
+class Fetcher {
+    private:
+
+    CURL *curl_handle;
+
+    public:
+
+    string data;
+    int debug;
+
+    Fetcher(){
+        debug = 0;
+
+        curl_handle = curl_easy_init();
+
+        curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+
+        curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_func);
+        curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, this);
+
+        curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, header_func);
+        curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, this);
+    }
+
+    void fetch_url(const char* url){
+        data.clear();
+
+        if( debug ) curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L); 
+
+        curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1L);
+        curl_easy_setopt(curl_handle, CURLOPT_URL,     url);
+        curl_easy_perform(curl_handle);
+
+        if( debug ) printf("[d] %s: got %ld bytes\n", __func__, data.size() );
+    }
+
+    bool fetch_screen(Screen& scr){
+        fetch_url("http://localhost:4545/live.bin");
+        if( data.size() > 8 ){
+            scr.width  = *(int*)data.data();
+            scr.height = *(int*)(data.data()+4);
+            scr.setData((uint32_t*)(data.data()+8));
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    string* fetch_tile(uint32_t tile_id){
+        char url[0x100];
+        sprintf(url, "http://localhost:4545/live/tiles.bin?id=0x%x", tile_id);
+        fetch_url(url);
+        return &data;
+    }
+
+//    void post_sdl_event(uint32_t*pev, int size){
+//        char url[0x200], buf[0x40], *p;
+//        strcpy(url, "http://localhost:4545/live/sdl_event");
+//        p = url+strlen(url);
+//        for(int i=0; i<size; i++){
+//            sprintf(buf, "%cd=0x%x", i==0 ? '?' : '&', pev[i]);
+//            strcpy(p, buf);
+//            p += strlen(p);
+//        }
+//        fetch_url(url);
+//    }
+
+    void post_events(vector<SDL_Event> &v){
+        string url = "http://localhost:4545/live/sdl_events";
+        char buf[0x200];
+        uint32_t *p;
+        int i,j,n;
+
+        sprintf(buf, "?n=%ld", v.size()); url += buf;
+
+        for(i=0; i<v.size(); i++){
+            p = (uint32_t*)&v[i];
+            n = sizeof(SDL_Event)/4;
+
+            while(n>0 && p[n-1] == 0) n--; // do not send tail zero dwords
+
+            for(j=0; j<n; j++){
+                if( p[j] < 10 ){
+                    // decimal
+                    sprintf(buf, "&e%d=%d", i, p[j]);
+                } else {
+                    sprintf(buf, "&e%d=0x%x", i, p[j]);
+                }
+                url += buf;
+            }
+        }
+        fetch_url(url.c_str());
+    }
+
+    ~Fetcher(){
+        curl_easy_cleanup(curl_handle);
+    }
+
+    private:
+
+    static size_t write_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
+        Fetcher* fetcher = (Fetcher*)userdata;
+        size_t chunk_size = size*nmemb;
+
+        if( fetcher->debug > 1 ) printf("[d] %s: got %ld bytes\n", __func__, chunk_size );
+
+        fetcher->data.append((const char*)ptr, chunk_size);
+
+        return chunk_size;
+    }
+
+    static size_t header_func(void *ptr, size_t size, size_t nmemb, void *userdata) {
+        Fetcher* fetcher = (Fetcher*)userdata;
+        size_t chunk_size = size*nmemb;
+
+        if( fetcher->debug > 1 ) printf("[d] %s: got %ld bytes\n", __func__, chunk_size );
+
+        static const char len_hdr[] = "Content-Length: ";
+        if( !strncmp((char*)ptr, len_hdr, strlen(len_hdr))){
+            size_t data_size = strtoul((char*)ptr + strlen(len_hdr), NULL, 10);
+            fetcher->data.reserve( data_size );
+        }
+
+        return chunk_size;
+    }
+};
+
+#endif
