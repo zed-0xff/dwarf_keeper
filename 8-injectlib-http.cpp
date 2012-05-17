@@ -48,7 +48,10 @@ int  SDLCALL SDL_PollEvent(SDL_Event*ev);
 void SDLCALL (*orig_SDL_Delay)(Uint32) = NULL;
 void SDLCALL SDL_Delay(Uint32);
 
-static int n_getpid=0, n_delay=0, n_poll_event=0;
+int  SDLCALL (*orig_SDL_NumJoysticks)() = NULL;
+int  SDLCALL SDL_NumJoysticks();
+
+static int n_getpid=0, n_delay=0, n_poll_event=0, n_num_joy=0;
 
 void* _hook_sdl_func(const char*func_name, void*local_func){
     // try fastest method first
@@ -97,11 +100,30 @@ void setup_hooks(){
 
     os_init();
 
-    *(void**)&orig_SDL_PollEvent = _hook_sdl_func("SDL_PollEvent", (void*)SDL_PollEvent);
-    *(void**)&orig_SDL_Delay     = _hook_sdl_func("SDL_Delay",     (void*)SDL_Delay);
+    *(void**)&orig_SDL_PollEvent    = _hook_sdl_func("SDL_PollEvent",    (void*)SDL_PollEvent);
+    *(void**)&orig_SDL_Delay        = _hook_sdl_func("SDL_Delay",        (void*)SDL_Delay);
+    *(void**)&orig_SDL_NumJoysticks = _hook_sdl_func("SDL_NumJoysticks", (void*)SDL_NumJoysticks);
 
     if( !orig_SDL_PollEvent ){
         fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
+    }
+}
+
+int SDLCALL SDL_NumJoysticks(){
+    n_num_joy++;
+
+    if(!hooks_set_up){
+        setup_hooks();
+        memserver_start();
+    }
+
+    LiveController::copy_screen();
+    memserver_accept();
+
+    if(orig_SDL_NumJoysticks){
+        return orig_SDL_NumJoysticks();
+    } else {
+        return 0;
     }
 }
 
@@ -291,10 +313,14 @@ static int process_request(void * cls,
                 "<tr>"
                     "<th> n_delay"
                     "<td class=r> %d\n"
+                "<tr>"
+                    "<th> n_num_joy"
+                    "<td class=r> %d\n"
               "</table>\n",
               n_getpid,
               n_poll_event,
-              n_delay
+              n_delay,
+              n_num_joy
              );
       html += buf;
 
@@ -345,7 +371,7 @@ static int process_request(void * cls,
       html += "<div class=error>Unknown URL</div>";
   }
       
-  if(is_json || request.is_ajax()){
+  if(is_json || request.is_ajax() || html == "OK"){
       // no templating
   } else {
       int fd;
@@ -442,7 +468,7 @@ void memserver_accept(){
       }
 
       tv.tv_sec = 0;
-      tv.tv_usec = 100;
+      tv.tv_usec = 10;
 
       select (max_fd + 1, &sr, &sw, &sx, &tv);
       MHD_run(mhd);

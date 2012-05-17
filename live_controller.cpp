@@ -8,6 +8,46 @@ static char NULL_DATA[] = "";
 
 static queue<SDL_Event> g_override_keys;
 
+struct CopiedScreen {
+    size_t allocated_size, actual_size;
+    char*buf;
+
+    CopiedScreen(){
+        allocated_size = actual_size = 0;
+        buf = NULL;
+    }
+
+    ~CopiedScreen(){
+        if(buf) free(buf);
+        buf = NULL;
+        allocated_size = actual_size = 0;
+    }
+
+    void copy(){
+        if( gps.screen && gps.dimx > 0 && gps.dimx < 1000 && gps.dimy > 0 && gps.dimy < 1000 ){
+            actual_size = gps.dimx * gps.dimy * 4 + 8;
+            if( buf && allocated_size < actual_size ){
+                free(buf); buf = NULL; allocated_size = 0;
+            }
+            if(!buf){
+                buf = (char*) malloc(actual_size);
+                allocated_size = actual_size;
+            }
+            if( buf ){
+                *(int*)buf     = gps.dimx;
+                *(int*)(buf+4) = gps.dimy;
+                memcpy(buf+8, gps.screen, actual_size-8);
+            }
+        }
+    }
+
+    bool valid(){
+        return buf && (actual_size > 0) && (actual_size <= allocated_size);
+    }
+};
+
+static CopiedScreen copied_screen;
+
 class LiveController : Controller {
     HTTPRequest* request;
 
@@ -28,14 +68,108 @@ class LiveController : Controller {
         if( strstr(request->url, "/ws")){
             return websocket();
         }
-        if( strstr(request->url, ".bmp")){
+        if( strstr(request->url, "live.bmp")){
             return bmp();
         }
+        if( strstr(request->url, "live.bin")){
+            return bin();
+        }
+        if( strstr(request->url, "tiles.bin")){
+            return tiles();
+        }
+        if( strstr(request->url, "sprite.bmp")){
+            return sprite();
+        }
+        if( request->url_match("/live") ){
+            return live();
+        }
+        if( request->url_match("/live/sdl_events") ){
+            return sdl_events();
+        }
 
-        return live();
+        resp_code = MHD_HTTP_NOT_FOUND;
+        return "Unknown url";
+    }
+
+
+    static void copy_screen(){
+        copied_screen.copy();
     }
 
     private:
+
+    string sdl_events(){
+        char buf[0x200];
+        int n = request->get_int("n", 0);
+        for(int i=0; i<n; i++){
+            sprintf(buf, "e%d", i);
+
+            vector<uint32_t> v = request->get_uints(buf);
+            if( v.size() == 0) break; // NULL event?
+
+            SDL_Event ev;
+            bzero(&ev, sizeof(ev));
+            uint32_t*p = (uint32_t*)&ev;
+
+            for(int i=0; i<min(sizeof(ev)/4, v.size()); i++, p++){
+                *p = v[i];
+            }
+
+            g_override_keys.push(ev);
+        }
+
+        return "OK";
+    }
+
+    string sprite(){
+        // TODO: check width/height
+        uint32_t*p = (uint32_t*)gps.screen;
+
+        if(!p){
+            return "ERROR: gps.screen is NULL";
+        }
+
+        if(gps.screentexpos) memset(gps.screentexpos, 0, gps.dimx*gps.dimy*sizeof(long));
+
+        for(int i=0; i<=0x2ff; i++) p[i] = i;
+
+        return bmp();
+    }
+
+    string tiles(){
+        vector<string> ids = request->get_strings("id");
+        if( ids.size() <= 0 ){
+            resp_code = MHD_HTTP_NOT_FOUND;
+            return "ERROR: no tile ids";
+        }
+
+        int size = ids.size()*4000; // TODO: size
+        void *p = malloc(size);
+
+        if(gps.screentexpos) memset(gps.screentexpos, 0, 4);
+
+        *(uint32_t*)gps.screen = strtoul(ids[0].c_str(), NULL, 0);
+        OffscreenRenderer r(1, 1);
+        r.render(0,0);
+        r.save(p, size);
+
+        response = MHD_create_response_from_data(size, p, 1, 0);
+        return "OK";
+    }
+
+    string bin(){
+        if( copied_screen.valid() ){
+            response = MHD_create_response_from_data(
+                    copied_screen.actual_size, 
+                    copied_screen.buf, 
+                    0, 0 // don't free, don't copy
+                    );
+        } else {
+            resp_code = MHD_HTTP_INTERNAL_SERVER_ERROR;
+            return "Error: no screen";
+        }
+        return "OK";
+    }
 
     string bmp(){
         int w = request->get_int("w", gps.dimx);
