@@ -1,3 +1,6 @@
+#ifndef EVENT_SENDER_H
+#define EVENT_SENDER_H
+
 #include <pthread.h>
 #include <vector>
 #include "fetcher.cpp"
@@ -71,3 +74,5 @@ class EventSender {
 };
 
 pthread_t EventSender::thread_id;
+
+#endif

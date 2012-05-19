@@ -77,7 +77,7 @@ class Fetcher {
         total_dl += dh;
     }
 
-    bool fetch_screen(Screen& scr){
+    bool fetch_screen(RemoteScreen& scr){
         char url[0x40];
         sprintf(url,"/live.bin?h=0x%x", scr.hash);
         fetch_url(url);

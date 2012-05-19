@@ -1,11 +1,12 @@
 #include <SDL/SDL.h>
+#include <SDL_picofont.h>
 #ifdef __osx__
 #include <tr1/unordered_map>
 #else
 #include <unordered_map>
 #endif
 #include "fetcher.cpp"
-#include <SDL_picofont.h>
+#include "event_sender.cpp"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ using namespace tr1;
 class Drawer {
 
     unordered_map <uint16_t, SDL_Surface*> tilecache;
-    Screen remote_screen;
+    RemoteScreen remote_screen;
 
     int tile_width, tile_height;
     SDL_Rect tileRect;
@@ -26,8 +27,9 @@ class Drawer {
     int steps;
     struct timeval t_start;
 
+    Fetcher fetcher;
+    EventSender event_sender;
     public:
-    Fetcher scr_fetcher;
 
     Drawer(){
         default_tile = g_screen.surface = NULL;
@@ -114,8 +116,8 @@ class Drawer {
                 tilecache.size(),
                 ping_time[0], ping_time[1], ping_time[2],
                 draw_time[0], draw_time[1], draw_time[2],
-                scr_fetcher.total_dl / 1024,
-                scr_fetcher.total_dl / ms * 8 * 1000 / 1024
+                fetcher.total_dl / 1024,
+                fetcher.total_dl / ms * 8 * 1000 / 1024
                 );
         SDL_Surface* text = FNT_Render(buf, (SDL_Color){0xff,0xff,0xff});
         SDL_Rect r = {0, 0, (Uint16)text->w, (Uint16)text->h};
@@ -124,12 +126,15 @@ class Drawer {
         SDL_FreeSurface(text);
     }
 
-    void draw(){
+    void loop(){
         SDL_Event event;
         vector<SDL_Event> events_queue;
         struct timeval t0,t1;
+        int gameover = 0;
+        uint32_t remote_last_hash = 0;
+        bool remote_screen_ready = false;
 
-        scr_fetcher.fetch_screen(remote_screen);
+        fetcher.fetch_screen(remote_screen);
         resize_tile(remote_screen.tile_width, remote_screen.tile_height);
 
         g_screen.resize( remote_screen.pixelWidth(), remote_screen.pixelHeight() );
@@ -138,65 +143,106 @@ class Drawer {
             error("SDL_SetVideoMode fail");
         }
 
-        while(1){
-          g_screen.resize_if_needed();
+        while(!gameover){
+            SDL_Event event;
+            vector <SDL_Event> events_queue;
 
-          gettimeofday(&t0, NULL);
-          remote_screen.save();
-          if( scr_fetcher.fetch_screen(remote_screen) && remote_screen.changed() ){
-              gettimeofday(&t1, NULL);
-              ping_time[0] = diff_ms(t1,t0);
+            while (SDL_PollEvent(&event)) {
+              switch (event.type) {
+                /* close button clicked */
+                case SDL_QUIT:
+                  gameover = 1;
+                  events_queue.push_back(event);
+                  break;
 
-              gettimeofday(&t0, NULL);
-              check_sizes();
+                case SDL_VIDEORESIZE:
+                  g_screen.resize( event.resize.w, event.resize.h );
+                  events_queue.push_back(event);
+                  break;
 
-              for(int y=0; y<remote_screen.height; y++){
-                  for(int x=0; x<remote_screen.width; x++){
-                      uint32_t tile_id = remote_screen.at(x,y);
-                      SDL_Surface*tile = tilecache[tile_id];
+                case SDL_USEREVENT:
+                  printf("[d] user event\n");
+                  remote_screen_ready = true;
+                  break;
 
-                      if( !tile ){
-                          if(string *ps = scr_fetcher.fetch_tile(tile_id)){
-                              SDL_RWops* rw    = SDL_RWFromConstMem(ps->data(), ps->size());
-                              SDL_Surface* tmp = SDL_LoadBMP_RW(rw, 1); // auto frees rw
-                              tile             = SDL_DisplayFormat(tmp);
-                              SDL_FreeSurface(tmp);
-
-                              tilecache[tile_id] = tile;
-                              //printf("[d] tilecache: %ld tiles\n", tilecache.size());
-                          }
-                      }
-
-                      if( !tile ){
-                          // fetch failed, use default tile
-                          tile = default_tile;
-                          tilecache[tile_id] = tile;
-                      }
-                      
-                      tileRect.x = x*tile_width;
-                      tileRect.y = y*tile_height;
-                      SDL_BlitSurface(tile, NULL, g_screen.surface, &tileRect);
-                  }
+                default:
+                  events_queue.push_back(event);
+                  break;
               }
 
-              gettimeofday(&t1, NULL);
-              draw_time[0] = diff_ms(t1,t0);
+            }
 
-              draw_info();
+            if( !events_queue.empty() ){
+                gettimeofday(&t0, NULL);
 
-              /* update the g_screen.surface */
-              //SDL_UpdateRect(g_screen.surface, 0, 0, 0, 0);
-              SDL_Flip(g_screen.surface);
-          } else {
-              draw_info();
-              SDL_Flip(g_screen.surface);
-          }
+                fetcher.post_events(events_queue);
 
-          SDL_Delay(10);
+                gettimeofday(&t1, NULL);
+                ping_time[0] = diff_ms(t1,t0);
+            }
+
+            if(gameover) break;
+
+            if( remote_screen_ready ){
+                pthread_mutex_lock(&g_remote_screen_mutex);
+                if( g_remote_screen.hash != remote_last_hash ){
+                    gettimeofday(&t0, NULL);
+
+                    printf("[d] calling draw %x %x\n", g_remote_screen.hash, remote_last_hash);
+                    draw();
+
+                    gettimeofday(&t1, NULL);
+                    draw_time[0] = diff_ms(t1,t0);
+
+                    remote_last_hash = g_remote_screen.hash;
+                }
+                remote_screen_ready = false;
+                pthread_mutex_unlock(&g_remote_screen_mutex);
+            }
+
+            draw_info();
+            SDL_Flip(g_screen.surface);
+            SDL_Delay(10);
         }
 
         /* clean up */
         //SDL_FreeSurface(sprite);
         SDL_Quit();
+    }
+
+    private:
+
+    void draw(){
+        check_sizes();
+
+        for(int y=0; y<remote_screen.height; y++){
+            for(int x=0; x<remote_screen.width; x++){
+                uint16_t tile_id = remote_screen.at(x,y);
+                SDL_Surface*tile = tilecache[tile_id];
+
+                if( !tile ){
+                    if(string *ps = fetcher.fetch_tile(tile_id)){
+                        SDL_RWops* rw    = SDL_RWFromConstMem(ps->data(), ps->size());
+                        SDL_Surface* tmp = SDL_LoadBMP_RW(rw, 1); // auto frees rw
+                        tile             = SDL_DisplayFormat(tmp);
+                        SDL_FreeSurface(tmp);
+
+                        tilecache[tile_id] = tile;
+                        //printf("[d] tilecache: %ld tiles\n", tilecache.size());
+                    }
+                }
+
+                if( !tile ){
+                    // fetch failed, use default tile
+                    tile = default_tile;
+                    tilecache[tile_id] = tile;
+                }
+                
+                tileRect.x = x*tile_width;
+                tileRect.y = y*tile_height;
+                printf("[d] blit %x at (%d, %d)\n", tile_id, x,y);
+                SDL_BlitSurface(tile, NULL, g_screen.surface, &tileRect);
+            }
+        }
     }
 };

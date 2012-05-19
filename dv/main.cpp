@@ -15,10 +15,12 @@ int diff_ms(timeval t1, timeval t2)
 }
 
 #include "local_screen.cpp"
+#include "remote_screen.cpp"
 
-LocalScreen g_screen;
+LocalScreen     g_screen;
+RemoteScreen    g_remote_screen;
+pthread_mutex_t g_remote_screen_mutex;
 
-#include "screen.cpp"
 #include "fetcher.cpp"
 #include "drawer.cpp"
 #include "event_sender.cpp"
@@ -33,6 +35,8 @@ int main ( int argc, char *argv[] ){
         printf("[.] no address given, using localhost...\n");
     }
 
+    pthread_mutex_init(&g_remote_screen_mutex, NULL);
+
     SDL_Init(SDL_INIT_VIDEO);
     SDL_EnableUNICODE(1);
     SDL_WM_SetCaption("SDL", "SDL");
@@ -43,7 +47,7 @@ int main ( int argc, char *argv[] ){
     ScreenFetcher::start_thread();
 
     Drawer d;
-    d.draw();
+    d.loop();
 
     return 0;
 }

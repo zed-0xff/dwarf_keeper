@@ -5,19 +5,27 @@ using namespace std;
 
 #define DEFAULT_TILE_SIZE      18
 
-class Screen {
+class RemoteScreen {
     vector <uint16_t> data;
-    vector <uint16_t> prev_data;
 
     public:
     int width, height;
     int tile_width, tile_height;
     uint32_t hash;
 
-    Screen(){
+    RemoteScreen(){
         tile_width = tile_height = DEFAULT_TILE_SIZE;
         width = height = 0;
     }
+
+//    void operator = (RemoteScreen&scr){
+//        data = scr.data;
+//        width = scr.width;
+//        height = scr.height;
+//        tile_width = scr.tile_width;
+//        tile_height = scr.tile_height;
+//        hash = scr.hash;
+//    }
 
     int pixelWidth(){
         return tile_width * width;
@@ -47,11 +55,4 @@ class Screen {
         }
     }
 
-    void save(){
-        prev_data = data;
-    }
-
-    bool changed(){
-        return(prev_data != data);
-    }
 };
