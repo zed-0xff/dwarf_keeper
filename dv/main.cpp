@@ -22,6 +22,7 @@ LocalScreen g_screen;
 #include "fetcher.cpp"
 #include "drawer.cpp"
 #include "event_sender.cpp"
+#include "screen_fetcher.cpp"
 
 int main ( int argc, char *argv[] ){
     if( argc > 1 ){
@@ -38,7 +39,8 @@ int main ( int argc, char *argv[] ){
 
     g_screen.resize(640, 480);
 
-    EventSender::start_thread();
+    //EventSender::start_thread();
+    ScreenFetcher::start_thread();
 
     Drawer d;
     d.draw();

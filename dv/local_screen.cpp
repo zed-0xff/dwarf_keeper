@@ -14,7 +14,7 @@ class LocalScreen {
         w = qw = 0;
         h = qh = 0;
         flags = SDL_RESIZABLE|SDL_DOUBLEBUF;
-        resize_mutex = PTHREAD_MUTEX_INITIALIZER;
+        pthread_mutex_init(&resize_mutex, NULL);
         surface = NULL;
     }
 

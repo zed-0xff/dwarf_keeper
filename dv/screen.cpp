@@ -6,8 +6,8 @@ using namespace std;
 #define DEFAULT_TILE_SIZE      18
 
 class Screen {
-    vector <uint32_t> data;
-    vector <uint32_t> prev_data;
+    vector <uint16_t> data;
+    vector <uint16_t> prev_data;
 
     public:
     int width, height;
@@ -27,7 +27,7 @@ class Screen {
         return tile_height * height;
     }
 
-    void setData(uint32_t*src, int count = -1){
+    void setData(uint16_t*src, int count = -1){
         if( !src ) return;
         if( count == -1 ) count = width*height;
         data.assign(src, src+count);
@@ -38,7 +38,7 @@ class Screen {
         }
     }
 
-    uint32_t at(int x, int y){
+    uint16_t at(int x, int y){
         try{
             return data.at(x*height+y);
         } catch(...){

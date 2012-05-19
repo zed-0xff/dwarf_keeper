@@ -83,9 +83,10 @@ class Fetcher {
         fetch_url(url);
 
         if( data.size() > 8 ){
-            scr.width  = *(int*)data.data();
-            scr.height = *(int*)(data.data()+4);
-            scr.setData((uint32_t*)(data.data()+8));
+            uint16_t*p = (uint16_t*)data.data();
+            scr.width  = p[0];
+            scr.height = p[1];
+            scr.setData(&p[2]);
             return true;
         } else {
             return false;
@@ -94,7 +95,7 @@ class Fetcher {
 
     string* fetch_tile(uint32_t tile_id){
         char url[0x100];
-        sprintf(url, "/live/tiles.bin?id=0x%x", tile_id);
+        sprintf(url, "/live/tile.bmp?id=0x%x", tile_id);
         fetch_url(url);
         return &data;
     }

@@ -1,13 +1,21 @@
 #include <SDL/SDL.h>
-#include <map>
+#ifdef __osx__
+#include <tr1/unordered_map>
+#else
+#include <unordered_map>
+#endif
 #include "fetcher.cpp"
 #include <SDL_picofont.h>
 
 using namespace std;
 
+#ifdef __osx__
+using namespace tr1;
+#endif
+
 class Drawer {
 
-    map <uint32_t, SDL_Surface*> tilecache;
+    unordered_map <uint16_t, SDL_Surface*> tilecache;
     Screen remote_screen;
 
     int tile_width, tile_height;
@@ -98,7 +106,11 @@ class Drawer {
                 "tiles: %ld\n"
                 "ping:  %4dms %4dms %4dms\n"
                 "draw:  %4dms %4dms %4dms\n"
+#ifdef __osx__
+                "dl:   %5lldk %5lldKbit/s",
+#else
                 "dl:   %5ldk %5ldKbit/s",
+#endif
                 tilecache.size(),
                 ping_time[0], ping_time[1], ping_time[2],
                 draw_time[0], draw_time[1], draw_time[2],
