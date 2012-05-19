@@ -1,7 +1,6 @@
 #include <SDL/SDL.h>
 #include <map>
 #include "fetcher.cpp"
-#include "async_fetcher.cpp"
 #include <SDL_picofont.h>
 
 using namespace std;
@@ -13,26 +12,21 @@ class Drawer {
 
     int tile_width, tile_height;
     SDL_Rect tileRect;
-    SDL_Surface *local_screen, *default_tile;
-    Uint32 local_flags;
+    SDL_Surface *default_tile;
 
     int ping_time[4], draw_time[4];
     int steps;
     struct timeval t_start;
 
     public:
-    Fetcher scr_fetcher, key_fetcher;
+    Fetcher scr_fetcher;
 
     Drawer(){
-        default_tile = local_screen = NULL;
-        local_flags = SDL_RESIZABLE|SDL_DOUBLEBUF;
+        default_tile = g_screen.surface = NULL;
         memset(ping_time, 0, sizeof(ping_time));
         memset(draw_time, 0, sizeof(draw_time));
         steps = 0;
         gettimeofday(&t_start, NULL);
-    }
-
-    void resize_window(int w, int h){
     }
 
     void resize_tile(int w, int h){
@@ -53,14 +47,14 @@ class Drawer {
         tileRect.w = w; tileRect.h = h;
         tile_width = w; tile_height = h;
 
-        if( local_screen ) SDL_FillRect(local_screen, NULL, 0);
+        if( g_screen.surface ) SDL_FillRect(g_screen.surface, NULL, 0);
     }
 
     void check_sizes(){
         int rpxw = remote_screen.width*tile_width;
-        int lpxw = local_screen->w;
+        int lpxw = g_screen.surface->w;
         int rpxh = remote_screen.height*tile_height;
-        int lpxh = local_screen->h;
+        int lpxh = g_screen.surface->h;
 
         // remote screen width is bigger than local at least for tile_width/2 pixels
         if( rpxw - lpxw >= tile_width/2 ){
@@ -104,7 +98,7 @@ class Drawer {
                 "tiles: %ld\n"
                 "ping:  %4dms %4dms %4dms\n"
                 "draw:  %4dms %4dms %4dms\n"
-                "dl:   %5lldk %5lldKbit/s",
+                "dl:   %5ldk %5ldKbit/s",
                 tilecache.size(),
                 ping_time[0], ping_time[1], ping_time[2],
                 draw_time[0], draw_time[1], draw_time[2],
@@ -112,9 +106,9 @@ class Drawer {
                 scr_fetcher.total_dl / ms * 8 * 1000 / 1024
                 );
         SDL_Surface* text = FNT_Render(buf, (SDL_Color){0xff,0xff,0xff});
-        SDL_Rect r = {0,0,text->w,text->h};
-        SDL_FillRect(local_screen, &r, 0);
-        SDL_BlitSurface(text, NULL, local_screen, NULL);
+        SDL_Rect r = {0, 0, (Uint16)text->w, (Uint16)text->h};
+        SDL_FillRect(g_screen.surface, &r, 0);
+        SDL_BlitSurface(text, NULL, g_screen.surface, NULL);
         SDL_FreeSurface(text);
     }
 
@@ -123,86 +117,17 @@ class Drawer {
         vector<SDL_Event> events_queue;
         struct timeval t0,t1;
 
-        int colorkey, gameover;
-
-        /* initialize SDL */
-        SDL_Init(SDL_INIT_VIDEO);
-
-        /* set the title bar */
-        SDL_WM_SetCaption("SDL", "SDL");
-
         scr_fetcher.fetch_screen(remote_screen);
         resize_tile(remote_screen.tile_width, remote_screen.tile_height);
 
-        /* create window */
-        local_screen = SDL_SetVideoMode(
-                remote_screen.pixelWidth(), 
-                remote_screen.pixelHeight(), 
-                0, local_flags);
+        g_screen.resize( remote_screen.pixelWidth(), remote_screen.pixelHeight() );
 
-        if(!local_screen){
+        if(!g_screen.surface){
             error("SDL_SetVideoMode fail");
         }
 
-        /* setup sprite colorkey and turn on RLE */
-//        colorkey = SDL_MapRGB(local_screen->format, 255, 0, 255);
-//        SDL_SetColorKey(sprite, SDL_SRCCOLORKEY | SDL_RLEACCEL, colorkey);
-
-        gameover = 0;
-
-        SDL_EnableUNICODE(1);
-
-        /* message pump */
-        while (!gameover)
-        {
-          events_queue.clear();
-          while (SDL_PollEvent(&event)) {
-
-
-//            printf("[.] %8x %8x %8x %8x %8x %8x\n", 
-//                    ((int*)&event)[0], ((int*)&event)[1], ((int*)&event)[2],
-//                    ((int*)&event)[3], ((int*)&event)[4], ((int*)&event)[5] 
-//                    );
-
-            /* an event was found */
-            switch (event.type) {
-              /* close button clicked */
-              case SDL_QUIT:
-                gameover = 1;
-                events_queue.push_back(event);
-                break;
-
-              case SDL_VIDEORESIZE:
-                printf("[d] resize %dx%d\n", event.resize.w, event.resize.h);
-                local_screen = SDL_SetVideoMode( event.resize.w, event.resize.h, 0, local_flags);
-                events_queue.push_back(event);
-                break;
-
-//              case SDL_MOUSEBUTTONDOWN:
-//              case SDL_MOUSEBUTTONUP:
-//                // don't support mouse wheel events (game screen zoom) for now
-//                break;
-
-              default:
-                events_queue.push_back(event);
-                break;
-
-              /* handle the keyboard */
-//              case SDL_KEYDOWN:
-//                switch (event.key.keysym.sym) {
-//                  case SDLK_ESCAPE:
-//                  case SDLK_q:
-//                    gameover = 1;
-//                    break;
-//                }
-//                break;
-            }
-
-          }
-
-          if( !events_queue.empty() ){
-            key_fetcher.post_events(events_queue);
-          }
+        while(1){
+          g_screen.resize_if_needed();
 
           gettimeofday(&t0, NULL);
           remote_screen.save();
@@ -238,7 +163,7 @@ class Drawer {
                       
                       tileRect.x = x*tile_width;
                       tileRect.y = y*tile_height;
-                      SDL_BlitSurface(tile, NULL, local_screen, &tileRect);
+                      SDL_BlitSurface(tile, NULL, g_screen.surface, &tileRect);
                   }
               }
 
@@ -247,12 +172,12 @@ class Drawer {
 
               draw_info();
 
-              /* update the local_screen */
-              //SDL_UpdateRect(local_screen, 0, 0, 0, 0);
-              SDL_Flip(local_screen);
+              /* update the g_screen.surface */
+              //SDL_UpdateRect(g_screen.surface, 0, 0, 0, 0);
+              SDL_Flip(g_screen.surface);
           } else {
               draw_info();
-              SDL_Flip(local_screen);
+              SDL_Flip(g_screen.surface);
           }
 
           SDL_Delay(10);

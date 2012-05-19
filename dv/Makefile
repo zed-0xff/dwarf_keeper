@@ -1,9 +1,14 @@
 CC     := g++
 CFLAGS := -g -I/usr/include -lcurl `sdl-config --cflags --libs`
 #OBJS   := main.o fetcher.o drawer.o
-OBJS   := main.cpp fetcher.cpp drawer.cpp screen.cpp async_fetcher.cpp
+OBJS   := main.cpp fetcher.cpp drawer.cpp screen.cpp event_sender.cpp local_screen.cpp
 
 CFLAGS := $(CFLAGS) -I sdl_picofont-1.2/include
+
+UNAME = $(shell uname)
+ifeq ($(UNAME), Linux)
+    CFLAGS := $(CFLAGS) -std=c++0x
+endif
 
 PICOFONT_SRCS := sdl_picofont-1.2/src/font.c sdl_picofont-1.2/src/spf.c
 
