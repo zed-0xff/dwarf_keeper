@@ -6,11 +6,14 @@
 #include <map>
 #include <set>
 
-// a tricky includes to include platform.h from both microhttpd and g_src
+// tricky includes to include platform.h from both microhttpd and g_src
 #include <microhttpd.h>
 #include "g_src/platform.h"
 #include "g_src/graphics.h"
 
+// HACK: need microhttpd internals to be able to extract socket_fd from MHD_Connection
+#define MHD_PLATFORM_H
+#include "libmicrohttpd/src/daemon/internal.h"
 
 using namespace std;
 

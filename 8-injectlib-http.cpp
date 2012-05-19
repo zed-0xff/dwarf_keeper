@@ -436,7 +436,9 @@ void memserver_start(){
 
   printf("[.] starting server at port %d...\n", port);
 
-  mhd = MHD_start_daemon(0,
+  mhd = MHD_start_daemon(
+                       //MHD_USE_SELECT_INTERNALLY,
+                       MHD_USE_THREAD_PER_CONNECTION,
                        port,
                        NULL, NULL,      // accept policy  callback + argument
                        &process_request, NULL, // access handler callback + argument
@@ -453,6 +455,8 @@ void memserver_accept(){
       struct timeval tv;
       unsigned MHD_LONG_LONG mhd_timeout;
 
+      return;
+
       if(!mhd) return;
 
 #ifdef __linux__
@@ -463,7 +467,7 @@ void memserver_accept(){
       FD_ZERO(&sr); FD_ZERO(&sw); FD_ZERO(&sx);
 
       if( MHD_YES != MHD_get_fdset(mhd,&sr,&sw,&sx,&max_fd)){
-          perror("[!] MHD_fet_fdset failed: ");
+          perror("[!] MHD_get_fdset failed: ");
           exit(1);
       }
 

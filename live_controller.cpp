@@ -1,50 +1,13 @@
 #include "controller.cpp"
 #include "window.cpp"
 #include "offscreen_renderer.cpp"
+#include "copied_screen.cpp"
 
 #include <queue>
 
 static char NULL_DATA[] = "";
 
 static queue<SDL_Event> g_override_keys;
-
-struct CopiedScreen {
-    size_t allocated_size, actual_size;
-    char*buf;
-
-    CopiedScreen(){
-        allocated_size = actual_size = 0;
-        buf = NULL;
-    }
-
-    ~CopiedScreen(){
-        if(buf) free(buf);
-        buf = NULL;
-        allocated_size = actual_size = 0;
-    }
-
-    void copy(){
-        if( gps.screen && gps.dimx > 0 && gps.dimx < 1000 && gps.dimy > 0 && gps.dimy < 1000 ){
-            actual_size = gps.dimx * gps.dimy * 4 + 8;
-            if( buf && allocated_size < actual_size ){
-                free(buf); buf = NULL; allocated_size = 0;
-            }
-            if(!buf){
-                buf = (char*) malloc(actual_size);
-                allocated_size = actual_size;
-            }
-            if( buf ){
-                *(int*)buf     = gps.dimx;
-                *(int*)(buf+4) = gps.dimy;
-                memcpy(buf+8, gps.screen, actual_size-8);
-            }
-        }
-    }
-
-    bool valid(){
-        return buf && (actual_size > 0) && (actual_size <= allocated_size);
-    }
-};
 
 static CopiedScreen copied_screen;
 
@@ -77,6 +40,9 @@ class LiveController : Controller {
         if( strstr(request->url, "tiles.bin")){
             return tiles();
         }
+        if( request->url_match("/live/tile.bmp")){
+            return tile();
+        }
         if( strstr(request->url, "sprite.bmp")){
             return sprite();
         }
@@ -86,17 +52,29 @@ class LiveController : Controller {
         if( request->url_match("/live/sdl_events") ){
             return sdl_events();
         }
+        if( request->url_match("/live/detach") ){
+            return detach();
+        }
 
         resp_code = MHD_HTTP_NOT_FOUND;
         return "Unknown url";
     }
-
 
     static void copy_screen(){
         copied_screen.copy();
     }
 
     private:
+
+    string detach(){
+        int fd = request->getConnection()->socket_fd;
+        printf("[d] fd=%d\n", fd);
+        for(int i=0;i<100;i++){
+            send(fd, "foo", 3, 0);
+        }
+        request->getConnection()->socket_fd = -1;
+        return "OK";
+    }
 
     string sdl_events(){
         char buf[0x200];
@@ -136,8 +114,38 @@ class LiveController : Controller {
         return bmp();
     }
 
-    string tiles(){
-        vector<string> ids = request->get_strings("id");
+    const char* tile(){
+        uint32_t id = request->get_uint("id", 0);
+        if( !id ){
+            resp_code = MHD_HTTP_NOT_FOUND;
+            return "ERROR: no tile id";
+        }
+
+        bool found;
+        uint32_t tile = copied_screen.tileno2tile(id, &found);
+
+        if( !found ){
+            resp_code = MHD_HTTP_NOT_FOUND;
+            return "ERROR: tile not found";
+        }
+
+        int size = 4000; // TODO: size
+        void *p = malloc(size);
+
+        if(gps.screentexpos) gps.screentexpos[0] = 0;
+
+        *(uint32_t*)gps.screen = tile;
+        OffscreenRenderer r(1, 1);
+        r.render(0,0);
+        r.save(p, size);
+
+        response = MHD_create_response_from_data(size, p, 1, 0);
+
+        return "OK";
+    }
+
+    const char* tiles(){
+        vector<uint32_t> ids = request->get_uints("id");
         if( ids.size() <= 0 ){
             resp_code = MHD_HTTP_NOT_FOUND;
             return "ERROR: no tile ids";
@@ -146,9 +154,9 @@ class LiveController : Controller {
         int size = ids.size()*4000; // TODO: size
         void *p = malloc(size);
 
-        if(gps.screentexpos) memset(gps.screentexpos, 0, 4);
+        if(gps.screentexpos) gps.screentexpos[0] = 0;
 
-        *(uint32_t*)gps.screen = strtoul(ids[0].c_str(), NULL, 0);
+        *(uint32_t*)gps.screen = ids[0];
         OffscreenRenderer r(1, 1);
         r.render(0,0);
         r.save(p, size);
@@ -158,17 +166,34 @@ class LiveController : Controller {
     }
 
     string bin(){
+        const char* r = "OK";
+
+        copied_screen.lock();
         if( copied_screen.valid() ){
-            response = MHD_create_response_from_data(
-                    copied_screen.actual_size, 
-                    copied_screen.buf, 
-                    0, 0 // don't free, don't copy
-                    );
+            size_t size;
+            char* data;
+            uint32_t hash = request->get_uint("h", 0);
+
+            if( copied_screen.changed(hash) ){
+                // screen changed or no hash
+                data = copied_screen.prepare_data(&size);
+                response = MHD_create_response_from_data( size, data, 0, 1); // don't free, copy
+            } else {
+                // screen NOT changed
+                // should wait for semaphore/spinlock/whatever
+                copied_screen.wait();
+                if( copied_screen.changed(hash) ){
+                    // changed after wait
+                    data = copied_screen.prepare_data(&size);
+                    response = MHD_create_response_from_data( size, data, 0, 1); // don't free, copy
+                }
+            }
         } else {
             resp_code = MHD_HTTP_INTERNAL_SERVER_ERROR;
-            return "Error: no screen";
+            r = "Error: no screen";
         }
-        return "OK";
+        copied_screen.unlock();
+        return r;
     }
 
     string bmp(){

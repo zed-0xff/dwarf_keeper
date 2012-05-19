@@ -3,7 +3,7 @@ CFLAGS := -g -m32 -Iinclude -Ilibmicrohttpd/src/include -Ilibdisasm-0.23/libdisa
 
 
 LIBRARY := injectlib-memserver.dylib
-OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp binary_template.cpp x86_emu.cpp
+OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp binary_template.cpp x86_emu.cpp copied_screen.cpp
 
 UNAME = $(shell uname)
 ifeq ($(UNAME), Darwin)

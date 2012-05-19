@@ -5,7 +5,7 @@
 
 
 class HTTPRequest {
-    struct MHD_Connection*conn;
+    MHD_Connection* conn;
 
     typedef pair<const char*, string> str_param_t;
     typedef pair<const char*, vector<string>* > strs_param_t;
@@ -16,6 +16,10 @@ class HTTPRequest {
     HTTPRequest(struct MHD_Connection* conn, const char* url){
         this->conn = conn;
         this->url  = url;
+    }
+
+    MHD_Connection* getConnection(){
+        return conn;
     }
 
     int get_int(const char*param_name, int default_value){
