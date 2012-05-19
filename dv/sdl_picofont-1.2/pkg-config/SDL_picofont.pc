@@ -1,0 +1,13 @@
+# SDL_picofont pkg-config file
+
+prefix=${pcfiledir}/../..
+libdir=${prefix}/lib
+includedir=${prefix}/include/SDL
+
+Name: SDL_oglblit
+Description: SDL_picofont is a minimalistic font library for SDL
+Version: 1.2.0
+Requires: sdl
+Conflicts:
+Libs: -L${libdir} -lSDL_picofont
+Cflags: -I${includedir}

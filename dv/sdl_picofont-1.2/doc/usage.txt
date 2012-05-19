@@ -1,0 +1,53 @@
+sdl_picofont - usage
+
+Code says more than a thousand words, so take a look at the example (example/example.c).
+
+Functions:
+
+	The sdl_picofont library only has two functions, FNT_Render and FNT_RenderMax. The functions work like this:
+
+	SDL_Surface* FNT_Render(const char* text, SDL_Color color);
+	SDL_Surface* FNT_RenderMax(const char* text, unsigned int len, SDL_Color color);
+
+	text -	A pointer to the text you want to display
+	len -	The number of characters in the text you want to display
+	color -	The color you want the output to be
+
+	FNT_Render (and FNT_RenderMax) creates a new 8 bit SDL-surface with the exact width and height of the output text. The surface has the flag SDL_SWSURFACE set. The text will have the color specified by "color" and have palette index 1. The background color will be color key transparent and have the palette index 0. The color key of the returned surface is the user specified text color but:
+	
+	color key red = (given red + 0x7f) % 0xff
+	color key blue = (given blue + 0x7f) % 0xff
+	color key green = (given green + 0x7f) % 0xff
+
+Behaviour:
+
+	FNT_RenderMax stops parsing the string when it hits a NULL termination or when "len" is reached, whichever comes first.
+	Giving FNT_RenderMax an unterminated string and a "len" value higher than the length of the string results in undefined behaviour. It will probably cause garbeled output on the screen and a segmentation fault.	
+	Giving FNT_Render an unterminated string results in undefined behaviour. It will probably cause garbeled output, segmentation faults and global warming.
+	Giving any of the render functions a 0 byte string will generate a 0x0 surface.
+	If FNT_Render or FNT_RenderMax returns a NULL pointer, then SDL_CreateRGBSurface failed and returned NULL for some reason. So probably something related to SDL rather than sdl_picofont.
+
+Compiling and installing:
+
+	To build the project you could either build it as a library using the provided cmake project file, or embed SDL_picofont into your project. SDL_picofont has no external dependencies part from SDL.
+	
+	To compile the library using the provided cmake project file, create a directory anywhere on your system where you want to build SDL_oglblit, eg. /tmp/build. 
+
+	mkdir /tmp/build
+	cd /tmp/build
+
+Run cmake with the path you downloaded and extracted SDL_oglblit to.
+
+	cmake ~/downloads/sdl_picofont-XX
+
+Then run make while still in the temporary build directory you created. 
+
+	make
+
+Once the compilation finishes (which it will in about 2 seconds if your system isn't painfully slow), run make install as root to install the library.
+
+	sudo make install
+
+Portability:
+
+	sdl_picofont has only been tested under GNU/Linux/X11 and on GP2X, but should work fine with other systems that SDL supports.

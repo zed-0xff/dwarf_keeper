@@ -1,0 +1,4 @@
+# This is a project file for the spank build system, see http://nurd.se/~noname/spank for more information
+# There's also a normal makefile if you don't like spank
+target		ex
+lib		sdl SDL_picofont

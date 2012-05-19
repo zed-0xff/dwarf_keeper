@@ -1,12 +1,16 @@
 CC     := g++
-CFLAGS := -g -I/usr/include -lSDL -lcurl
+CFLAGS := -g -I/usr/include -lcurl `sdl-config --cflags --libs`
 #OBJS   := main.o fetcher.o drawer.o
-OBJS   := main.cpp fetcher.cpp drawer.cpp screen.cpp
+OBJS   := main.cpp fetcher.cpp drawer.cpp screen.cpp async_fetcher.cpp
+
+CFLAGS := $(CFLAGS) -I sdl_picofont-1.2/include
+
+PICOFONT_SRCS := sdl_picofont-1.2/src/font.c sdl_picofont-1.2/src/spf.c
 
 all: dv
 
-dv: $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $<
+dv: $(OBJS) $(PICOFONT_SRCS)
+	$(CC) $(CFLAGS) -o $@ $< $(PICOFONT_SRCS)
 
 #%.o: %.cpp
 #	$(CC) $(CFLAGS) -c $< -o $@

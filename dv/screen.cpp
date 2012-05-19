@@ -12,6 +12,7 @@ class Screen {
     public:
     int width, height;
     int tile_width, tile_height;
+    uint32_t hash;
 
     Screen(){
         tile_width = tile_height = DEFAULT_TILE_SIZE;
@@ -27,8 +28,14 @@ class Screen {
     }
 
     void setData(uint32_t*src, int count = -1){
+        if( !src ) return;
         if( count == -1 ) count = width*height;
         data.assign(src, src+count);
+        hash = 0;
+        for( int i=0; i<data.size(); i++){
+            hash ^= data[i];
+            hash = hash << 1 | hash >> 31;     // circular shift 1 bit left
+        }
     }
 
     uint32_t at(int x, int y){

@@ -20,34 +20,68 @@ class Fetcher {
     string data;
     int debug;
 
+    const char*host;
+    int port;
+
+    uint64_t total_dl;
+
+    char errbuf[CURL_ERROR_SIZE];
+
+    static const char* g_host;
+
     Fetcher(){
         debug = 0;
+        host = g_host ? g_host : "localhost";
+        port = 4545;
+
+        total_dl = 0;
+
+        memset(errbuf,0,sizeof(errbuf));
 
         curl_handle = curl_easy_init();
 
         curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
+        curl_easy_setopt(curl_handle, CURLOPT_TCP_NODELAY, 1L);
 
         curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_func);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, this);
 
         curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, header_func);
         curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, this);
+
+        curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf);
     }
 
-    void fetch_url(const char* url){
+    void fetch_url(const char* url_tail){
+        char url[0x1000];
+        sprintf(url, "http://%s:%d%s", host, port, url_tail);
+
         data.clear();
 
         if( debug ) curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L); 
 
         curl_easy_setopt(curl_handle, CURLOPT_HTTPGET, 1L);
         curl_easy_setopt(curl_handle, CURLOPT_URL,     url);
-        curl_easy_perform(curl_handle);
+
+        if( 0 != curl_easy_perform(curl_handle)){
+            printf("[!] %s\n", errbuf);
+            sleep(1);
+        }
 
         if( debug ) printf("[d] %s: got %ld bytes\n", __func__, data.size() );
+
+        double dd = 0; long dh = 0;
+        curl_easy_getinfo(curl_handle, CURLINFO_SIZE_DOWNLOAD, &dd);
+        curl_easy_getinfo(curl_handle, CURLINFO_HEADER_SIZE, &dh);
+        dh += dd;
+        total_dl += dh;
     }
 
     bool fetch_screen(Screen& scr){
-        fetch_url("http://localhost:4545/live.bin");
+        char url[0x40];
+        sprintf(url,"/live.bin?h=0x%x", scr.hash);
+        fetch_url(url);
+
         if( data.size() > 8 ){
             scr.width  = *(int*)data.data();
             scr.height = *(int*)(data.data()+4);
@@ -60,25 +94,13 @@ class Fetcher {
 
     string* fetch_tile(uint32_t tile_id){
         char url[0x100];
-        sprintf(url, "http://localhost:4545/live/tiles.bin?id=0x%x", tile_id);
+        sprintf(url, "/live/tiles.bin?id=0x%x", tile_id);
         fetch_url(url);
         return &data;
     }
 
-//    void post_sdl_event(uint32_t*pev, int size){
-//        char url[0x200], buf[0x40], *p;
-//        strcpy(url, "http://localhost:4545/live/sdl_event");
-//        p = url+strlen(url);
-//        for(int i=0; i<size; i++){
-//            sprintf(buf, "%cd=0x%x", i==0 ? '?' : '&', pev[i]);
-//            strcpy(p, buf);
-//            p += strlen(p);
-//        }
-//        fetch_url(url);
-//    }
-
     void post_events(vector<SDL_Event> &v){
-        string url = "http://localhost:4545/live/sdl_events";
+        string url = "/live/sdl_events";
         char buf[0x200];
         uint32_t *p;
         int i,j,n;
@@ -136,5 +158,7 @@ class Fetcher {
         return chunk_size;
     }
 };
+
+const char* Fetcher::g_host = NULL;
 
 #endif
