@@ -9,11 +9,14 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdint.h>
+#include <queue>
 
 #include <microhttpd.h>
 #include <SDL/SDL.h>
 
 //#define DEBUG
+
+using namespace std;
 
 #include "common.h"
 #include "clothes_controller.cpp"
@@ -42,8 +45,8 @@ void dostuff(int);
 void memserver_start();
 void memserver_accept();
 
-int  SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
-int  SDLCALL SDL_PollEvent(SDL_Event*ev);
+//int  SDLCALL (*orig_SDL_PollEvent)(SDL_Event *event) = NULL;
+//int  SDLCALL SDL_PollEvent(SDL_Event*ev);
 
 void SDLCALL (*orig_SDL_Delay)(Uint32) = NULL;
 void SDLCALL SDL_Delay(Uint32);
@@ -100,13 +103,13 @@ void setup_hooks(){
 
     os_init();
 
-    *(void**)&orig_SDL_PollEvent    = _hook_sdl_func("SDL_PollEvent",    (void*)SDL_PollEvent);
+    //*(void**)&orig_SDL_PollEvent    = _hook_sdl_func("SDL_PollEvent",    (void*)SDL_PollEvent);
     *(void**)&orig_SDL_Delay        = _hook_sdl_func("SDL_Delay",        (void*)SDL_Delay);
     *(void**)&orig_SDL_NumJoysticks = _hook_sdl_func("SDL_NumJoysticks", (void*)SDL_NumJoysticks);
 
-    if( !orig_SDL_PollEvent ){
-        fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
-    }
+//    if( !orig_SDL_PollEvent ){
+//        fprintf(stderr, "[!] Continuing without keyboard and mouse access... :(\n");
+//    }
 }
 
 int SDLCALL SDL_NumJoysticks(){
@@ -151,34 +154,34 @@ void SDLCALL SDL_Delay(Uint32 ms){
     }
 }
 
-int SDLCALL SDL_PollEvent(SDL_Event*ev){
-    n_poll_event++;
-
-    if(!hooks_set_up){
-        setup_hooks();
-        memserver_start();
-    }
-
-    if( !g_override_keys.empty() ){
-        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
-        g_override_keys.pop();
-        return 1;
-    }
-
-    memserver_accept();
-
-    if( !g_override_keys.empty() ){
-        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
-        g_override_keys.pop();
-        return 1;
-    }
-
-    if(orig_SDL_PollEvent){
-        return orig_SDL_PollEvent(ev);
-    } else {
-        return 0;
-    }
-}
+//int SDLCALL SDL_PollEvent(SDL_Event*ev){
+//    n_poll_event++;
+//
+//    if(!hooks_set_up){
+//        setup_hooks();
+//        memserver_start();
+//    }
+//
+//    if( !g_override_keys.empty() ){
+//        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
+//        g_override_keys.pop();
+//        return 1;
+//    }
+//
+//    memserver_accept();
+//
+//    if( !g_override_keys.empty() ){
+//        memcpy(ev, &g_override_keys.front(), sizeof(*ev));
+//        g_override_keys.pop();
+//        return 1;
+//    }
+//
+//    if(orig_SDL_PollEvent){
+//        return orig_SDL_PollEvent(ev);
+//    } else {
+//        return 0;
+//    }
+//}
 
 
 pid_t getpid(){

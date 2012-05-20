@@ -5,14 +5,10 @@
 
 #include <queue>
 
-static char NULL_DATA[] = "";
-
-static queue<SDL_Event> g_override_keys;
-
-static CopiedScreen copied_screen;
-
 class LiveController : Controller {
     HTTPRequest* request;
+    static CopiedScreen copied_screen;
+    static void* SDL_PushEvent_func;
 
     public:
     int resp_code;
@@ -69,6 +65,18 @@ class LiveController : Controller {
 
     private:
 
+    void push_event(SDL_Event*event){
+        if(!event) return;
+        if(!SDL_PushEvent_func){
+            SDL_PushEvent_func = dlsym(RTLD_DEFAULT, "SDL_PushEvent");
+            if(!SDL_PushEvent_func){
+                printf("[!] dlsym SDL_PushEvent returned NULL! Cannot inject events!");
+                return;
+            }
+        }
+        ((func_t_p)SDL_PushEvent_func)(event);
+    }
+
     string detach(){
         int fd = request->getConnection()->socket_fd;
         printf("[d] fd=%d\n", fd);
@@ -82,6 +90,7 @@ class LiveController : Controller {
     string sdl_events(){
         char buf[0x200];
         int n = request->get_int("n", 0);
+
         for(int i=0; i<n; i++){
             sprintf(buf, "e%d", i);
 
@@ -96,7 +105,7 @@ class LiveController : Controller {
                 *p = v[i];
             }
 
-            g_override_keys.push(ev);
+            push_event(&ev);
         }
 
         return "OK";
@@ -250,7 +259,7 @@ class LiveController : Controller {
         resp_code = MHD_HTTP_SWITCHING_PROTOCOLS;
         // not implemented yet in libmicrohttpd
         //response = MHD_create_response_for_upgrade(upgrade_handler, NULL);
-        response = MHD_create_response_from_data(0,NULL_DATA,0,0);
+        response = MHD_create_response_from_data(0,(void*)"",0,0);
         //int fd = request->connection.socket_fd;
         MHD_add_response_header(response, "Upgrade",    "websocket");
         MHD_add_response_header(response, "Connection", "Upgrade");
@@ -302,7 +311,7 @@ class LiveController : Controller {
                 ev.key.keysym.mod      = (SDLMod)0;
                 ev.key.keysym.sym      = SDLK_LALT;
                 ev.key.keysym.unicode  = 0;
-                g_override_keys.push(ev);
+                push_event(&ev);
             }
 
             // hold left ctrl
@@ -310,28 +319,28 @@ class LiveController : Controller {
                 ev.key.keysym.mod      = (SDLMod)0;
                 ev.key.keysym.sym      = SDLK_LCTRL;
                 ev.key.keysym.unicode  = 0;
-                g_override_keys.push(ev);
+                push_event(&ev);
             }
 
             ev.key.keysym.mod      = (SDLMod)mod;
             ev.key.keysym.sym      = (SDLKey)key;
             ev.key.keysym.unicode  = ukey;
 
-            g_override_keys.push(ev);
+            push_event(&ev);
 
             ev.type                = SDL_KEYUP;
             ev.key.state           = SDL_RELEASED;
             // Key release events (SDL_KEYUP) won't necessarily (ever?) contain unicode information. 
             // http://lists.libsdl.org/pipermail/sdl-libsdl.org/2005-January/048355.html)
             ev.key.keysym.unicode  = 0;
-            g_override_keys.push(ev);
+            push_event(&ev);
 
             // release left ctrl
             if( mod & KMOD_LCTRL ){
                 ev.key.keysym.mod      = (SDLMod)0;
                 ev.key.keysym.sym      = SDLK_LCTRL;
                 ev.key.keysym.unicode  = 0;
-                g_override_keys.push(ev);
+                push_event(&ev);
             }
 
             // release left alt
@@ -339,7 +348,7 @@ class LiveController : Controller {
                 ev.key.keysym.mod      = (SDLMod)0;
                 ev.key.keysym.sym      = SDLK_LALT;
                 ev.key.keysym.unicode  = 0;
-                g_override_keys.push(ev);
+                push_event(&ev);
             }
 
             return "QUEUED";
@@ -392,3 +401,6 @@ class LiveController : Controller {
         return html;
     }
 };
+
+CopiedScreen LiveController::copied_screen;
+void* LiveController::SDL_PushEvent_func = NULL;
