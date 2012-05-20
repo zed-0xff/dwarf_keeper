@@ -136,7 +136,7 @@ class Drawer {
         struct timeval t0,t1;
         int gameover = 0;
         uint32_t remote_last_hash = 0;
-        bool remote_screen_ready = false;
+        bool remote_screen_ready = false, redraw = false;
 
         fetcher.fetch_screen(g_remote_screen);
         resize_tile(g_remote_screen.tile_width, g_remote_screen.tile_height);
@@ -162,6 +162,7 @@ class Drawer {
                 case SDL_VIDEORESIZE:
                   g_screen.resize( event.resize.w, event.resize.h );
                   events_queue.push_back(event);
+                  redraw = true;
                   break;
 
                 case SDL_USEREVENT:
@@ -193,7 +194,6 @@ class Drawer {
 
                     fetcher.total_dl += g_remote_screen.dl_size;
 
-                    //printf("[d] calling draw %x %x\n", g_remote_screen.hash, remote_last_hash);
                     draw();
 
                     gettimeofday(&t1, NULL);
@@ -202,6 +202,14 @@ class Drawer {
                     remote_last_hash = g_remote_screen.hash;
                 }
                 remote_screen_ready = false;
+                redraw = false;
+                pthread_mutex_unlock(&g_remote_screen_mutex);
+            }
+
+            if( redraw ){
+                pthread_mutex_lock(&g_remote_screen_mutex);
+                draw();
+                redraw = false;
                 pthread_mutex_unlock(&g_remote_screen_mutex);
             }
 

@@ -39,7 +39,7 @@ class EventSender {
 
             case SDL_VIDEORESIZE:
               printf("[d] resize %dx%d\n", event.resize.w, event.resize.h);
-              g_screen.queue_resize( event.resize.w, event.resize.h);
+              //g_screen.queue_resize( event.resize.w, event.resize.h);
               events_queue.push_back(event);
               break;
 

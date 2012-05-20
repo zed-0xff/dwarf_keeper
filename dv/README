@@ -4,3 +4,12 @@ eval `brew --config | grep HOMEBREW_PREFIX | sed 's/: /=/'`
 sudo bash -c 'echo '$HOMEBREW_PREFIX/share/aclocal' >> `aclocal --print-ac-dir`/dirlist'
 
 // http://code.google.com/p/snappy/issues/detail?id=24#c20
+
+
+=== Linux ===
+
+if there's no reaction to window resizing -> try to upgrade system libsdl and rebuild dv.
+
+resize works ok with libsdl-1.2.15-r1 on Gentoo.
+
+// http://bugzilla.libsdl.org/show_bug.cgi?id=1430
