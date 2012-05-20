@@ -161,7 +161,7 @@ class CopiedScreen {
         struct timeval tv;
         struct timespec ts;
         gettimeofday(&tv, NULL);
-        ts.tv_sec = tv.tv_sec + 1;
+        ts.tv_sec = tv.tv_sec + 5;  // wait 5 seconds for screen change
         ts.tv_nsec = 0;
 
         pthread_cond_timedwait(&cond_changed, &mutex, &ts);

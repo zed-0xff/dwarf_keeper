@@ -15,6 +15,7 @@ class Fetcher {
     private:
 
     CURL *curl_handle;
+    curl_slist *headers;
 
     public:
 
@@ -36,13 +37,15 @@ class Fetcher {
         port = 4545;
 
         total_dl = 0;
+        headers = NULL;
 
         memset(errbuf,0,sizeof(errbuf));
 
         curl_handle = curl_easy_init();
 
-        curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
-        curl_easy_setopt(curl_handle, CURLOPT_TCP_NODELAY, 1L);
+        curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS,     1L);
+        curl_easy_setopt(curl_handle, CURLOPT_TCP_NODELAY,    1L);
+        curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 0L);
 
         curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_func);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, this);
@@ -51,6 +54,11 @@ class Fetcher {
         curl_easy_setopt(curl_handle, CURLOPT_HEADERDATA, this);
 
         curl_easy_setopt(curl_handle, CURLOPT_ERRORBUFFER, errbuf);
+    }
+
+    void add_header(const char* hdr){
+        headers = curl_slist_append(headers, hdr);
+        curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
     }
 
     void fetch_url(const char* url_tail){

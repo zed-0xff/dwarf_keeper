@@ -354,6 +354,10 @@ static int process_request(void * cls,
                   // support client-side caching
                   char buf[0x200];
                   time_t t = time(NULL);
+
+                  strftime(buf,sizeof(buf),"%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
+                  MHD_add_response_header (response, "Date", buf);
+
                   t += 24*60*60; // cache for 24 hours
                   strftime(buf,sizeof(buf),"%a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
                   MHD_add_response_header (response, "Expires", buf);
@@ -417,7 +421,7 @@ static int process_request(void * cls,
       response = MHD_create_response_from_buffer(html.size(), (void*) html.data(), MHD_RESPMEM_MUST_COPY);
       if(is_json){
           MHD_add_response_header(response, "Content-Type", "application/json");
-      } else {
+      } else if( html != "OK" ){
           MHD_add_response_header(response, "Content-Type", "text/html; charset=utf-8");
       }
   }
@@ -438,7 +442,7 @@ void memserver_start(){
 
   mhd = MHD_start_daemon(
                        //MHD_USE_SELECT_INTERNALLY,
-                       MHD_USE_THREAD_PER_CONNECTION,
+                       MHD_USE_THREAD_PER_CONNECTION|MHD_SUPPRESS_DATE_NO_CLOCK,
                        port,
                        NULL, NULL,      // accept policy  callback + argument
                        &process_request, NULL, // access handler callback + argument

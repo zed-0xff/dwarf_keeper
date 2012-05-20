@@ -8,6 +8,11 @@ class ScreenFetcher {
     void loop(){
         size_t dl;
 
+        // add empty HTTP headers to prevent curl sending them at all
+        // this saves some traffic, especially when requests are made >10 times per second
+        fetcher.add_header("Accept:");
+        fetcher.add_header("Host:");
+
         while( 1 ){
             if( dl = fetcher.fetch_screen(screen) ){
                 pthread_mutex_lock(&g_remote_screen_mutex);

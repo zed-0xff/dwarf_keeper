@@ -36,6 +36,11 @@ class Drawer {
         memset(draw_time, 0, sizeof(draw_time));
         steps = 0;
         gettimeofday(&t_start, NULL);
+
+        // add empty HTTP headers to prevent curl sending them at all
+        // this saves some traffic, especially when requests are made >10 times per second
+        fetcher.add_header("Accept:");
+        fetcher.add_header("Host:");
     }
 
     void resize_tile(int w, int h){
