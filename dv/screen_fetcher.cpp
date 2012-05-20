@@ -8,7 +8,6 @@ class ScreenFetcher {
     void loop(){
         while( 1 ){
             if(fetcher.fetch_screen(screen)){
-                printf("[d] screen fetched\n");
                 pthread_mutex_lock(&g_remote_screen_mutex);
                 SDL_Event ev;
                 ev.type = SDL_USEREVENT;

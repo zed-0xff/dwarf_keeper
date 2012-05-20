@@ -17,7 +17,6 @@ using namespace tr1;
 class Drawer {
 
     unordered_map <uint16_t, SDL_Surface*> tilecache;
-    RemoteScreen remote_screen;
 
     int tile_width, tile_height;
     SDL_Rect tileRect;
@@ -61,29 +60,29 @@ class Drawer {
     }
 
     void check_sizes(){
-        int rpxw = remote_screen.width*tile_width;
+        int rpxw = g_remote_screen.width*tile_width;
         int lpxw = g_screen.surface->w;
-        int rpxh = remote_screen.height*tile_height;
+        int rpxh = g_remote_screen.height*tile_height;
         int lpxh = g_screen.surface->h;
 
         // remote screen width is bigger than local at least for tile_width/2 pixels
         if( rpxw - lpxw >= tile_width/2 ){
-            resize_tile(lpxw/remote_screen.width, lpxh/remote_screen.height);
+            resize_tile(lpxw/g_remote_screen.width, lpxh/g_remote_screen.height);
         }
 
         // remote width is smaller
         if( lpxw - rpxw >= lpxw/tile_width ){
-            resize_tile(lpxw/remote_screen.width, lpxh/remote_screen.height);
+            resize_tile(lpxw/g_remote_screen.width, lpxh/g_remote_screen.height);
         }
 
         // remote screen height is bigger than local at least for tile_height/2 pixels
         if( rpxh - lpxh >= tile_height/2 ){
-            resize_tile(lpxh/remote_screen.height, lpxh/remote_screen.height);
+            resize_tile(lpxh/g_remote_screen.height, lpxh/g_remote_screen.height);
         }
 
         // remote height is smaller
         if( lpxh - rpxh >= lpxh/tile_height ){
-            resize_tile(lpxh/remote_screen.height, lpxh/remote_screen.height);
+            resize_tile(lpxh/g_remote_screen.height, lpxh/g_remote_screen.height);
         }
 
     }
@@ -134,10 +133,10 @@ class Drawer {
         uint32_t remote_last_hash = 0;
         bool remote_screen_ready = false;
 
-        fetcher.fetch_screen(remote_screen);
-        resize_tile(remote_screen.tile_width, remote_screen.tile_height);
+        fetcher.fetch_screen(g_remote_screen);
+        resize_tile(g_remote_screen.tile_width, g_remote_screen.tile_height);
 
-        g_screen.resize( remote_screen.pixelWidth(), remote_screen.pixelHeight() );
+        g_screen.resize( g_remote_screen.pixelWidth(), g_remote_screen.pixelHeight() );
 
         if(!g_screen.surface){
             error("SDL_SetVideoMode fail");
@@ -161,7 +160,6 @@ class Drawer {
                   break;
 
                 case SDL_USEREVENT:
-                  printf("[d] user event\n");
                   remote_screen_ready = true;
                   break;
 
@@ -188,7 +186,9 @@ class Drawer {
                 if( g_remote_screen.hash != remote_last_hash ){
                     gettimeofday(&t0, NULL);
 
-                    printf("[d] calling draw %x %x\n", g_remote_screen.hash, remote_last_hash);
+                    fetcher.total_dl += g_remote_screen.width*g_remote_screen.height*2+4;
+
+                    //printf("[d] calling draw %x %x\n", g_remote_screen.hash, remote_last_hash);
                     draw();
 
                     gettimeofday(&t1, NULL);
@@ -215,9 +215,9 @@ class Drawer {
     void draw(){
         check_sizes();
 
-        for(int y=0; y<remote_screen.height; y++){
-            for(int x=0; x<remote_screen.width; x++){
-                uint16_t tile_id = remote_screen.at(x,y);
+        for(int y=0; y<g_remote_screen.height; y++){
+            for(int x=0; x<g_remote_screen.width; x++){
+                uint16_t tile_id = g_remote_screen.at(x,y);
                 SDL_Surface*tile = tilecache[tile_id];
 
                 if( !tile ){
@@ -240,7 +240,7 @@ class Drawer {
                 
                 tileRect.x = x*tile_width;
                 tileRect.y = y*tile_height;
-                printf("[d] blit %x at (%d, %d)\n", tile_id, x,y);
+                //printf("[d] blit %x at (%d, %d)\n", tile_id, x,y);
                 SDL_BlitSurface(tile, NULL, g_screen.surface, &tileRect);
             }
         }
