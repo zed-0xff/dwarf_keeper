@@ -1,5 +1,5 @@
 CC     := g++
-CFLAGS := -g -m32 -Iinclude -Ilibmicrohttpd/src/include -Ilibdisasm-0.23/libdisasm
+CFLAGS := -g -m32 -Iinclude -Ilibmicrohttpd/src/include -Ilibdisasm-0.23/libdisasm -Ilibsnappy
 
 
 LIBRARY := injectlib-memserver.dylib
@@ -18,13 +18,14 @@ endif
 
 LIBMICROHTTPD_A := libmicrohttpd/src/daemon/.libs/libmicrohttpd.a
 LIBDISASM_A     := libdisasm-0.23/libdisasm/.libs/libdisasm.a
+LIBSNAPPY_A     := libsnappy/.libs/libsnappy.a
 
-STATIC_LIBS     := $(LIBMICROHTTPD_A) $(LIBDISASM_A)
+STATIC_LIBS     := $(LIBMICROHTTPD_A) $(LIBDISASM_A) $(LIBSNAPPY_A)
 
 all: $(LIBRARY)
 
 clean:
-	rm *.o target *.dylib a.out
+	rm *.o *.dylib a.out
 
 $(LIBRARY): $(OBJS) $(STATIC_LIBS) Makefile
 	@echo -e '\E[47;35m'"\033[1m=================>\033[0m"
@@ -34,6 +35,7 @@ item_type.cpp: item_type.rb
 	./item_type.rb > item_type.cpp
 
 
+###############################################################################
 
 
 $(LIBMICROHTTPD_A): libmicrohttpd/Makefile
@@ -44,10 +46,11 @@ libmicrohttpd/Makefile: libmicrohttpd/configure
 	export CFLAGS="-g -m32 -fPIC" && \
 	./configure --disable-https --disable-dauth --disable-curl --disable-largefile --disable-postprocessor
 
-libmicrohttpd:
+libmicrohttpd/configure:
 	svn co https://gnunet.org/svn/libmicrohttpd
 
 
+###############################################################################
 
 
 $(LIBDISASM_A): libdisasm-0.23/Makefile
@@ -60,3 +63,21 @@ libdisasm-0.23/Makefile: libdisasm-0.23/configure
 
 libdisasm-0.23/configure:
 	tar xzf libdisasm-0.23.tar.gz
+
+
+###############################################################################
+
+
+$(LIBSNAPPY_A): libsnappy/Makefile
+	$(MAKE) -C libsnappy
+
+libsnappy/Makefile: libsnappy/configure
+	cd libsnappy && \
+	export CXXFLAGS="-g -m32 -fPIC" && \
+	./configure
+
+libsnappy/configure: libsnappy/autogen.sh
+	cd libsnappy && sh autogen.sh
+
+libsnappy/autogen.sh:
+	svn co http://snappy.googlecode.com/svn/trunk/ libsnappy

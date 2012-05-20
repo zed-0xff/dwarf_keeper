@@ -7,6 +7,7 @@
 #include <string>
 #include <stdint.h>
 #include <SDL/SDL.h>
+#include <snappy.h>
 
 using namespace std;
 
@@ -83,7 +84,11 @@ class Fetcher {
         fetch_url(url);
 
         if( data.size() > 8 ){
-            uint16_t*p = (uint16_t*)data.data();
+            string output;
+            snappy::Uncompress(data.data(), data.size(), &output);
+            //printf("[d] uncompress: %d -> %d\n", data.size(), output.size());
+
+            uint16_t*p = (uint16_t*)output.data();
             scr.width  = p[0];
             scr.height = p[1];
             scr.setData(&p[2]);
@@ -95,8 +100,13 @@ class Fetcher {
 
     string* fetch_tile(uint32_t tile_id){
         char url[0x100];
-        sprintf(url, "/live/tile.bmp?id=0x%x", tile_id);
+        sprintf(url, "/live/tile.snp?id=0x%x", tile_id);
         fetch_url(url);
+        if(data.size() > 6){
+            string output;
+            snappy::Uncompress(data.data(), data.size(), &output);
+            data = output;
+        }
         return &data;
     }
 

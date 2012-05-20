@@ -212,6 +212,23 @@ class Drawer {
 
     private:
 
+    SDL_Surface* fetch_tile(uint16_t tile_id){
+        string *ps = fetcher.fetch_tile(tile_id);
+        if(!ps) return NULL;
+
+        SDL_RWops* rw    = SDL_RWFromConstMem(ps->data(), ps->size());
+        if(!rw) return NULL;
+
+        SDL_Surface* tmp = SDL_LoadBMP_RW(rw, 1); // auto frees rw
+        if(!tmp) return NULL;
+
+        SDL_Surface* tile = SDL_DisplayFormat(tmp);
+        SDL_FreeSurface(tmp);
+
+        tilecache[tile_id] = tile;
+        return tile;
+    }
+
     void draw(){
         check_sizes();
 
@@ -221,21 +238,12 @@ class Drawer {
                 SDL_Surface*tile = tilecache[tile_id];
 
                 if( !tile ){
-                    if(string *ps = fetcher.fetch_tile(tile_id)){
-                        SDL_RWops* rw    = SDL_RWFromConstMem(ps->data(), ps->size());
-                        SDL_Surface* tmp = SDL_LoadBMP_RW(rw, 1); // auto frees rw
-                        tile             = SDL_DisplayFormat(tmp);
-                        SDL_FreeSurface(tmp);
-
+                    tile = fetch_tile(tile_id);
+                    if( !tile ){
+                        // fetch failed, use default tile
+                        tile = default_tile;
                         tilecache[tile_id] = tile;
-                        //printf("[d] tilecache: %ld tiles\n", tilecache.size());
                     }
-                }
-
-                if( !tile ){
-                    // fetch failed, use default tile
-                    tile = default_tile;
-                    tilecache[tile_id] = tile;
                 }
                 
                 tileRect.x = x*tile_width;

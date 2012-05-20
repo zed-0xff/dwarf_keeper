@@ -41,7 +41,10 @@ class LiveController : Controller {
             return tiles();
         }
         if( request->url_match("/live/tile.bmp")){
-            return tile();
+            return tile(false);
+        }
+        if( request->url_match("/live/tile.snp")){
+            return tile(true);
         }
         if( strstr(request->url, "sprite.bmp")){
             return sprite();
@@ -114,7 +117,7 @@ class LiveController : Controller {
         return bmp();
     }
 
-    const char* tile(){
+    const char* tile(bool compress=false){
         uint32_t id = request->get_uint("id", 0);
         if( !id ){
             resp_code = MHD_HTTP_NOT_FOUND;
@@ -129,7 +132,7 @@ class LiveController : Controller {
             return "ERROR: tile not found";
         }
 
-        int size = 4000; // TODO: size
+        int size = 10*1024;
         void *p = malloc(size);
 
         if(gps.screentexpos) gps.screentexpos[0] = 0;
@@ -139,7 +142,23 @@ class LiveController : Controller {
         r.render(0,0);
         r.save(p, size);
 
-        response = MHD_create_response_from_data(size, p, 1, 0);
+        int bmsize = *(int*)((char*)p+2); // BITMAPFILEHEADER.bfSize
+        if( bmsize < 1 || bmsize > size){
+            return "ERROR: bmp size";
+        }
+
+        if( compress ){
+            string compressed;
+            snappy::Compress((const char*)p, bmsize, &compressed);
+            //printf("[d] compress %d -> %d\n", bmsize, compressed.size());
+            response = MHD_create_response_from_data(
+                    compressed.size(), 
+                    (void*)compressed.data(), 
+                    0, 1); // don't free, copy
+        } else {
+            // free, don't copy
+            response = MHD_create_response_from_data(bmsize, p, 1, 0);
+        }
 
         return "OK";
     }
@@ -171,21 +190,21 @@ class LiveController : Controller {
         copied_screen.lock();
         if( copied_screen.valid() ){
             size_t size;
-            char* data;
+            string *pdata;
             uint32_t hash = request->get_uint("h", 0);
 
             if( copied_screen.changed(hash) ){
                 // screen changed or no hash
-                data = copied_screen.prepare_data(&size);
-                response = MHD_create_response_from_data( size, data, 0, 1); // don't free, copy
+                pdata = copied_screen.prepare_data();
+                response = MHD_create_response_from_data( pdata->size(), (void*)pdata->data(), 0, 1); // don't free, copy
             } else {
                 // screen NOT changed
                 // should wait for semaphore/spinlock/whatever
                 copied_screen.wait();
                 if( copied_screen.changed(hash) ){
                     // changed after wait
-                    data = copied_screen.prepare_data(&size);
-                    response = MHD_create_response_from_data( size, data, 0, 1); // don't free, copy
+                    pdata = copied_screen.prepare_data();
+                    response = MHD_create_response_from_data( pdata->size(), (void*)pdata->data(), 0, 1); // don't free, copy
                 }
             }
         } else {

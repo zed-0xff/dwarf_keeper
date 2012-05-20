@@ -1,4 +1,5 @@
 #include <unordered_map>
+#include <snappy.h>
 
 class CopiedScreen {
     int w,h;
@@ -15,6 +16,8 @@ class CopiedScreen {
     unordered_map<uint32_t,uint16_t> tiles2nos;
     uint16_t max_id;
 
+    string compressed_data;
+
     public:
 
     CopiedScreen(){
@@ -25,9 +28,7 @@ class CopiedScreen {
     }
 
     // can cause weird results if not locked
-    char* prepare_data(size_t*psize){
-        if(psize) *psize = (screen.size()+2)*2;
-
+    string* prepare_data(){
         prepared_hash = 0;
 
         prepared_data.resize(screen.size()+2);
@@ -43,7 +44,10 @@ class CopiedScreen {
             prepared_hash = prepared_hash << 1 | prepared_hash >> 31; // ROL 1
         }
 
-        return (char*)prepared_data.data();
+        compressed_data.clear();
+        snappy::Compress((const char*)prepared_data.data(), prepared_data.size()*2, &compressed_data);
+
+        return &compressed_data;
     }
 
     uint32_t tileno2tile(uint16_t tileno, bool*found = NULL){
