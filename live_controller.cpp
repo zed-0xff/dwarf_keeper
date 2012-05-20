@@ -125,7 +125,7 @@ class LiveController : Controller {
         }
 
         bool found;
-        uint32_t tile = copied_screen.tileno2tile(id, &found);
+        tile_fullid tile = copied_screen.tileno2tile(id, &found);
 
         if( !found ){
             resp_code = MHD_HTTP_NOT_FOUND;
@@ -135,9 +135,18 @@ class LiveController : Controller {
         int size = 10*1024;
         void *p = malloc(size);
 
-        if(gps.screentexpos) gps.screentexpos[0] = 0;
-
-        *(uint32_t*)gps.screen = tile;
+        if( gps.screen) *(uint32_t*)gps.screen = tile.c;
+        if( gps.screentexpos ){
+            if( tile.texpos ){
+                *gps.screentexpos = tile.texpos;
+                if( gps.screentexpos_addcolor ) *gps.screentexpos_addcolor = tile.ad;
+                if( gps.screentexpos_grayscale) *gps.screentexpos_grayscale= tile.gr;
+                if( gps.screentexpos_cf       ) *gps.screentexpos_cf       = tile.cf;
+                if( gps.screentexpos_cbr      ) *gps.screentexpos_cbr      = tile.cb;
+            } else {
+                *gps.screentexpos = 0;
+            }
+        }
         OffscreenRenderer r(1, 1);
         r.render(0,0);
         r.save(p, size);

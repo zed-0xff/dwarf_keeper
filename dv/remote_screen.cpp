@@ -13,19 +13,12 @@ class RemoteScreen {
     int tile_width, tile_height;
     uint32_t hash;
 
+    size_t dl_size; // for counting downloaded bytes count
+
     RemoteScreen(){
         tile_width = tile_height = DEFAULT_TILE_SIZE;
         width = height = 0;
     }
-
-//    void operator = (RemoteScreen&scr){
-//        data = scr.data;
-//        width = scr.width;
-//        height = scr.height;
-//        tile_width = scr.tile_width;
-//        tile_height = scr.tile_height;
-//        hash = scr.hash;
-//    }
 
     int pixelWidth(){
         return tile_width * width;

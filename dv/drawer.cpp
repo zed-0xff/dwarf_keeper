@@ -186,7 +186,7 @@ class Drawer {
                 if( g_remote_screen.hash != remote_last_hash ){
                     gettimeofday(&t0, NULL);
 
-                    fetcher.total_dl += g_remote_screen.width*g_remote_screen.height*2+4;
+                    fetcher.total_dl += g_remote_screen.dl_size;
 
                     //printf("[d] calling draw %x %x\n", g_remote_screen.hash, remote_last_hash);
                     draw();

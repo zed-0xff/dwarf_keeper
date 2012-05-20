@@ -78,7 +78,7 @@ class Fetcher {
         total_dl += dh;
     }
 
-    bool fetch_screen(RemoteScreen& scr){
+    size_t fetch_screen(RemoteScreen& scr){
         char url[0x40];
         sprintf(url,"/live.bin?h=0x%x", scr.hash);
         fetch_url(url);
@@ -92,9 +92,9 @@ class Fetcher {
             scr.width  = p[0];
             scr.height = p[1];
             scr.setData(&p[2]);
-            return true;
+            return data.size();
         } else {
-            return false;
+            return 0;
         }
     }
 

@@ -1,7 +1,20 @@
 #include <unordered_map>
 #include <snappy.h>
 
+struct tile_fullid {
+    uint32_t c;
+    uint32_t texpos;
+    uint8_t ad, gr, cf, cb;
+};
+
 class CopiedScreen {
+
+    struct Cmp {
+        bool operator() ( const tile_fullid& t1, const tile_fullid& t2 ){
+            return t1.texpos < t2.texpos;
+        }
+    };
+
     int w,h;
 
     vector<uint32_t> screen, screentexpos;
@@ -14,6 +27,7 @@ class CopiedScreen {
     uint32_t         prepared_hash;
 
     unordered_map<uint32_t,uint16_t> tiles2nos;
+    map<tile_fullid,uint16_t,Cmp> tfids2nos;
     uint16_t max_id;
 
     string compressed_data;
@@ -50,29 +64,57 @@ class CopiedScreen {
         return &compressed_data;
     }
 
-    uint32_t tileno2tile(uint16_t tileno, bool*found = NULL){
+    tile_fullid tileno2tile(uint16_t tileno, bool*pfound = NULL){
         // iteration is slower than map lookup, but this function should be
         // called a relatively few number of times
         for( auto it = tiles2nos.begin(); it != tiles2nos.end(); ++it ){
             if( it->second == tileno ){
-                if(found) *found = true;
+                if(pfound) *pfound = true;
+                return (tile_fullid){ c: it->first, texpos: 0 };
+            }
+        }
+        for( auto it = tfids2nos.begin(); it != tfids2nos.end(); ++it ){
+            if( it->second == tileno ){
+                if(pfound) *pfound = true;
                 return it->first;
             }
         }
-        if(found) *found = false;
-        return 0;
+        if(pfound) *pfound = false;
+        return (tile_fullid){ 0 };
     }
 
     uint16_t tile2no(int idx){
-        uint32_t c = screen[idx];
-        uint16_t r = tiles2nos[c];
-        if( r ){
-            return r;
+        if( screentexpos[idx] ){
+            tile_fullid tfid;
+            tfid.c = screen[idx];
+            if( tfid.texpos = screentexpos[idx] ){
+                tfid.ad = screentexpos_ad[idx];
+                tfid.gr = screentexpos_gr[idx];
+                tfid.cf = screentexpos_cf[idx];
+                tfid.cb = screentexpos_cb[idx];
+            } else {
+                tfid.ad = tfid.gr = tfid.cf = tfid.cb = 0;
+            }
+
+            uint16_t r = tfids2nos[tfid];
+            if( r ){
+                return r;
+            } else {
+                max_id++;
+                tfids2nos[tfid] = max_id;
+                return max_id;
+            } 
         } else {
-            max_id++;
-            tiles2nos[c] = max_id;
-            return max_id;
-        } 
+            uint32_t c = screen[idx];
+            uint16_t r = tiles2nos[c];
+            if( r ){
+                return r;
+            } else {
+                max_id++;
+                tiles2nos[c] = max_id;
+                return max_id;
+            } 
+        }
     }
 
     void copy(){
