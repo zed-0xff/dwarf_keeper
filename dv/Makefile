@@ -40,7 +40,11 @@ libsnappy/Makefile: libsnappy/configure
 	cd libsnappy && ./configure
 
 libsnappy/configure: libsnappy/autogen.sh
+ifeq ($(UNAME), Darwin)
+	cd libsnappy && sed -i "" "s/^libtoolize/glibtoolize/" autogen.sh && sh autogen.sh
+else
 	cd libsnappy && sh autogen.sh
+endif
 
 libsnappy/autogen.sh:
 	svn co http://snappy.googlecode.com/svn/trunk/ libsnappy
