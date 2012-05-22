@@ -1,5 +1,6 @@
-#include "common.h"
+#include "game.h"
 #include <libdis.h>
+#include <stdarg.h>
 
 #define NUM_X86_REGS 92 // from libdisasm's ia32_reg.c
 

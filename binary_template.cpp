@@ -1,4 +1,4 @@
-#include "common.h"
+#include "game.h"
 
 class BinaryTemplate {
 

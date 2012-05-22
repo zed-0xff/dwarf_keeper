@@ -1,3 +1,5 @@
+#include <dlfcn.h>
+
 typedef int(*unit_name_func_t)(void*, string*, int) __attribute__((fastcall));
 
 //.text:08091A80 55                                      push    ebp
@@ -217,8 +219,9 @@ void find_screen_info(char*region_start, char*region_end){
         "31 d2 "
         "bd d0 8a ff ff "
         "bf d0 8a ff ff "
-        "?? 17 00 00 00 "           // mov (reg), 17h
-        "89 ?? !! !! !! !! ";
+        "?? ?? 00 00 00 "           // mov (reg), 17h / 18h
+        "89 ?? !! !! !! !! "        // mov [...], ecx
+        "a3 ";                      // mov [...], eax
 
     BinaryTemplate bt(tpl, 1);
     if( char*p = bt.find(region_start, region_end) ){
@@ -390,33 +393,37 @@ void find_offscreen_renderer(){
     } \
 }
 
-void os_init(){
-    int fd = open("/proc/self/maps", O_RDONLY);
-    if( -1 == fd ){
-        perror("open /proc/self/maps: ");
-        return;
+void os_init( char*region_start = NULL, char*region_end = NULL ){
+
+    if( !region_start || !region_end ){
+        int fd = open("/proc/self/maps", O_RDONLY);
+        if( -1 == fd ){
+            perror("open /proc/self/maps: ");
+            return;
+        }
+
+        // assume first region is a program CODE
+        char buf[0x100], *pc = NULL;
+        memset(buf,0,sizeof(buf));
+        read(fd, buf, 0x40);
+        close(fd);
+
+        region_start = (char*)strtoul(buf,&pc,0x10);
+        if( pc ){
+            region_end = (char*)strtoul(pc+1,NULL,0x10);
+        }
+
+        if( !region_start || !region_end || region_start >= region_end){
+            printf("[!] invalid CODE region at %p-%p\n", region_start, region_end);
+            return;
+        }
     }
 
-    // assume first region is a program CODE
-    char buf[0x100], *pc = NULL;
-    memset(buf,0,sizeof(buf));
-    read(fd, buf, 0x40);
-    close(fd);
-
-    char *region_start = NULL, *region_end = NULL;
-
-    region_start = (char*)strtoul(buf,&pc,0x10);
-    if( pc ){
-        region_end = (char*)strtoul(pc+1,NULL,0x10);
-    }
-
-    if( !region_start || !region_end || region_start >= region_end){
-        printf("[!] invalid CODE region at %p-%p\n", region_start, region_end);
-        return;
-    }
     printf("[.] found CODE region at %p-%p\n", region_start, region_end);
 
+#ifdef BENCH_START
     BENCH_START;
+#endif
 
     find_units_vector(region_start, region_end);
     find_items_vector(region_start, region_end);
@@ -427,7 +434,7 @@ void os_init(){
     FIND_SIMPLE(item_value_func, "55 57 56 53 83 EC 5C 8B  5C 24 70 8B 6C 24 78 8B");
 
     // XXX: getItemBaseName func may be called via Item vtable
-    FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46 24 8b 6e 28 39 e8 73 32 89 c7 eb");
+    FIND_SIMPLE(item_base_name_func, "55 57 31 ff 56 53 83 ec 6c 8b b4 24 80 00 00 00 0f b6 9c 24 88 00 00 00 8b 46");
 
     // XXX: unit coords are in pUnit +0x48, +0x4a, +0x4c
     FIND_SIMPLE(unit_coords_func, "83 EC 3C 8B 44 24 40 89 7C 24 34 8B 54 24 48 89 6C 24 38 8B 7C 24 44 89 5C 24 2C 8B 6C 24 4C 89 74 24 30 F6 80 8F 00 00 00 02 89 54 24 1C 66 C7");
@@ -447,13 +454,13 @@ void os_init(){
     find_unit_info_func(region_start, region_end);
 
     FIND_BY_CALL(skill_lvl_2_string_func,
-            "8b 10 89 04 24 ff 52 1c 39 c5 "
+            "8b 10 89 04 24 ff 52 1c 39 ?? "
             "0f 84 ?? ?? ?? ?? "    // jz      loc_84DC7A8
-            "C6 05 08 ?? ?? ?? 07 " // mov     ds:byte_8E45A08, 7
-            "C6 05 09 ?? ?? ?? 00 " // mov     ds:byte_8E45A09, 0
-            "C6 05 0A ?? ?? ?? 01 " // mov     ds:byte_8E45A0A, 1
+            "C6 05 ?? ?? ?? ?? 07 " // mov     ds:gps.screenf,      7
+            "C6 05 ?? ?? ?? ?? 00 " // mov     ds:gps.screenb,      0
+            "C6 05 ?? ?? ?? ?? 01 " // mov     ds:gps.screenbright, 1
             "a1 ?? ?? ?? ?? "
-            "8b 04 a8 85 c0 "
+            "8b 04 ?? 85 c0 "
             "0f 8e ?? ?? ?? ?? "
             "89 44 24 04 "
             "89 34 24 "
@@ -469,7 +476,9 @@ void os_init(){
     find_root_screen();
     find_offscreen_renderer();
 
+#ifdef BENCH_END
     BENCH_END("bin find");
+#endif
 
     {
         int i=0;

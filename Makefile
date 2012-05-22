@@ -3,7 +3,7 @@ CFLAGS := -g -m32 -Iinclude -Ilibmicrohttpd/src/include -Ilibdisasm-0.23/libdisa
 
 
 LIBRARY := injectlib-memserver.dylib
-OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp binary_template.cpp x86_emu.cpp copied_screen.cpp
+OBJS    := 8-injectlib-http.cpp unicode.cpp dwarf.cpp item.cpp html.cpp clothes_controller.cpp common.h items_controller.cpp http_request.cpp units_controller.cpp mem_class.cpp soul.cpp unit.cpp skill.cpp reference.cpp controller.cpp building.cpp screen.cpp trade_controller.cpp item_type.cpp buildings_controller.cpp screen_controller.cpp window.cpp live_controller.cpp offscreen_renderer.cpp binary_template.cpp x86_emu.cpp copied_screen.cpp game.h
 
 UNAME = $(shell uname)
 ifeq ($(UNAME), Darwin)
@@ -22,7 +22,7 @@ LIBSNAPPY_A     := libsnappy/.libs/libsnappy.a
 
 STATIC_LIBS     := $(LIBMICROHTTPD_A) $(LIBDISASM_A) $(LIBSNAPPY_A)
 
-all: $(LIBRARY)
+all: $(LIBRARY) finder
 
 clean:
 	rm *.o *.dylib a.out
@@ -30,6 +30,9 @@ clean:
 $(LIBRARY): $(OBJS) $(STATIC_LIBS) Makefile
 	@echo -e '\E[47;35m'"\033[1m=================>\033[0m"
 	$(CC) $(CFLAGS) $< $(STATIC_LIBS) -o $@
+
+finder: finder.cpp $(LIBDISASM_A) $(OBJS) Makefile
+	$(CC) -m32 -ldl -Wl,-Ttext-segment=0x80000 -std=c++0x -Ilibdisasm-0.23/libdisasm $< $(LIBDISASM_A) -o $@
 
 item_type.cpp: item_type.rb
 	./item_type.rb > item_type.cpp
