@@ -103,11 +103,20 @@ class Unit : public MemClass {
 
     PhysAttrsVector getPhysAttrs(){
         vector<PhysAttr> r;
+
+        if( !GAME.unit_phys_attrs_offset ){
+            PhysAttr pa;
+            pa.value = pa.sub = 0;
+            pa.name = "GAME.unit_phys_attrs_offset is NULL";
+            r.push_back(pa);
+            return r;
+        }
+
         r.reserve(PHYS_ATTR_COUNT);
         for(int i=0; i<PHYS_ATTR_COUNT; i++){
             PhysAttr pa;
-            pa.value = dw( PHYS_ATTRS_OFFSET + PHYS_ATTR_SIZE*i );
-            pa.sub   = dw( PHYS_ATTRS_OFFSET + PHYS_ATTR_SIZE*i + 0x10 );
+            pa.value = dw( GAME.unit_phys_attrs_offset + PHYS_ATTR_SIZE*i );
+            pa.sub   = dw( GAME.unit_phys_attrs_offset + PHYS_ATTR_SIZE*i + 0x10 );
             pa.name  = PHYS_ATTR_NAMES[i];
             r.push_back(pa);
         }
@@ -199,7 +208,7 @@ class Unit : public MemClass {
     static const int        SEX_OFFSET =  0xa4; // word
     static const int         ID_OFFSET =  0xa8;
     static const int       WEAR_OFFSET = 0x22c;
-    static const int PHYS_ATTRS_OFFSET = 0x338; // array of 8 entries of PHYS_ATTR_SIZE each
+    //static const int PHYS_ATTRS_OFFSET = 0x338; // array of 8 entries of PHYS_ATTR_SIZE each
     //static const int       SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
     //static const int  HAPPINESS_OFFSET = 0x6a4; // dword
 

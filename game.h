@@ -20,6 +20,7 @@ static struct {
 
     uint32_t unit_soul_offset;      // offset of Soul* in Unit
     uint32_t unit_happiness_offset;
+    uint32_t unit_phys_attrs_offset;
     uint32_t soul_skills_offset;    // offset of skills vector in Soul
 
     // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)

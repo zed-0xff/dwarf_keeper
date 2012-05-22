@@ -196,6 +196,12 @@ void process_file(const char*fname){
         if( !region_end   || r_end   > region_end   ) region_end   = r_end;
     }
 
+    if( !region_start || !region_end ){
+        printf("[!] region_start(%p) and region_end(%p) must not be NULL!\n", 
+                region_start, region_end);
+        exit(1);
+    }
+
     memset(&GAME, 0, (char*)GAME_INFO_LAST_PTR - (char*)&GAME + 4 );
     os_init(region_start, region_end);
 

@@ -330,10 +330,10 @@ void find_happiness(char*region_start, char*region_end){
         printf("[!] cannot find happiness w/o unit_info_func!\n");
         return;
     }
-    // .text:08AB333E 8B 86 A4 06 00 00                    mov     eax, [esi+6A4h]
-    // .text:08AB3344 3D 95 00 00 00                       cmp     eax, 149
-    // .text:08AB3349 0F 8F 8F 01 00 00                    jg      loc_8AB34DE
-    // .text:08AB334F 83 F8 7C                             cmp     eax, 124
+    // 8B 86 A4 06 00 00                    mov     eax, [esi+6A4h]
+    // 3D 95 00 00 00                       cmp     eax, 149
+    // 0F 8F 8F 01 00 00                    jg      loc_8AB34DE
+    // 83 F8 7C                             cmp     eax, 124
     const char tpl[] = "8b ?? !! !! 00 00 3d 95 00 00 00 0f 8f ?? ?? ?? ?? 83 f8 7c";
 
     BinaryTemplate bt(tpl, 1);
@@ -342,6 +342,40 @@ void find_happiness(char*region_start, char*region_end){
     } else {
         printf("[!] tpl_unit_happiness not found!\n");
     }
+}
+
+void find_phys_attrs_offset(char*region_start, char*region_end){
+    const char tpl[] = 
+        "89 D0 "                      // mov     eax, edx
+        "C1 E1 02 "                   // shl     ecx, 2
+        "8B 04 08 "                   // mov     eax, [eax+ecx]
+        "89 4C 24 38 "                // mov     [esp+27Ch+var_244], ecx
+        "8B 40 04 "                   // mov     eax, [eax+4]
+        "85 C0 "                      // test    eax, eax
+        "0F 88 ?? ?? ?? ?? ";         // js      loc_8201257
+       // "31 C9 "                      // xor     ecx, ecx
+       // "89 !! !! !! !! 08 ";         // mov     dword ptr ds:gps, ecx
+
+    const char tpl2[] =
+       // "8B 43 10 "                   // mov     eax, [ebx+10h]
+       // "89 ?? "                      // mov     edx, ebp              / mov edx, edi
+       // "C1 E2 05 "                   // shl     edx, 5
+       // "8D 0C ?? 00 00 00 00 "       // lea     ecx, ds:0[ebp*4]      / lea ecx, ds:0[edi*4]
+        "29 CA "                      // sub     edx, ecx
+        "8B 84 10 !! !! 00 00 ";      // mov     eax, [eax+edx+33Ch] <-- offset of phys attrs in pUnit
+
+    BinaryTemplate bt(tpl);
+    BinaryTemplate bt2(tpl2, 1); // align 1
+
+    char*p = region_start;
+    while( (p < region_end) && (p = bt.find(p+4, region_end)) ){
+        if( char*p2 = bt2.find( p, p+0x10000 ) ){
+            GAME.unit_phys_attrs_offset = bt2.getResult(0);
+            return;
+        }
+    }
+
+    printf("[!] phys_attrs_offset not found!\n");
 }
 
 void find_root_screen(){
@@ -472,6 +506,7 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
     find_screen_info(region_start, region_end);
     find_soul_skills(region_start, region_end);
     find_happiness(region_start, region_end);
+    find_phys_attrs_offset(region_start, region_end);
 
     find_root_screen();
     find_offscreen_renderer();
