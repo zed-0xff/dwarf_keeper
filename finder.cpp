@@ -202,6 +202,17 @@ void process_file(const char*fname){
         exit(1);
     }
 
+//    int nCalls = 0;
+//    for(char*p = region_start; p<(region_end-0x10); p++){
+//        if( *(unsigned char*)p == 0xe8){
+//            char* addr = p+*(int*)(p+1);
+//            if(addr >= region_start && addr <= region_end){
+//                nCalls++;
+//            }
+//        }
+//    }
+//    printf("[d] total %d calls\n", nCalls);
+
     memset(&GAME, 0, (char*)GAME_INFO_LAST_PTR - (char*)&GAME + 4 );
     os_init(region_start, region_end);
 

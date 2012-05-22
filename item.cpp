@@ -129,7 +129,11 @@ class Item : public MemClass {
     }
 
     int getRaceId(){
-        return *(int16_t*)((char*)this+RACE_ID_OFFSET);
+        if( GAME.unit_refs_vector_offset ){
+            return w(RACE_ID_OFFSET - 0x24 + GAME.unit_refs_vector_offset);
+        } else {
+            return w(RACE_ID_OFFSET);
+        }
     }
 
     // http://dwarffortresswiki.org/index.php/40d:Item_designations#Wear
@@ -140,7 +144,11 @@ class Item : public MemClass {
     static const int WEAR_XX = 3;
 
     int getWear(){
-        return w(WEAR_OFFSET);
+        if( GAME.unit_refs_vector_offset ){
+            return w(WEAR_OFFSET - 0x24 + GAME.unit_refs_vector_offset);
+        } else {
+            return w(WEAR_OFFSET);
+        }
     }
 
     static const int SIZE_OK    = 0;
@@ -162,7 +170,11 @@ class Item : public MemClass {
     }
 
     RefsVector* getRefs(){
-        return (RefsVector*)((char*)this + REFS_VECTOR_OFFSET);
+        if( GAME.unit_refs_vector_offset ){
+            return (RefsVector*)checked_vector(GAME.unit_refs_vector_offset);
+        } else {
+            return NULL;
+        }
     }
 
     Coords getCoords(){
@@ -197,13 +209,13 @@ class Item : public MemClass {
     static const int COORD_Z_OFFSET         = 0x08; // word
     static const int FLAGS_OFFSET           = 0x0c;
     static const int ID_OFFSET              = 0x14;
-    static const int REFS_VECTOR_OFFSET     = 0x24; // item references vector, 3x4 bytes
-    static const int AMOUNT_OFFSET          = 0x58; // 20 in "iron bolts [20]"
+    //static const int REFS_VECTOR_OFFSET     = 0x24; // item references vector, 3x4 bytes
+    //static const int AMOUNT_OFFSET          = 0x58; // 20 in "iron bolts [20]"
     static const int WEAR_OFFSET            = 0x6c; // word - item condition
-    static const int MATERIAL_ID_OFFSET     = 0x7c;
-    static const int MATERIAL_SUB_ID_OFFSET = 0x80;
+    //static const int MATERIAL_ID_OFFSET     = 0x7c;
+    //static const int MATERIAL_SUB_ID_OFFSET = 0x80;
     static const int RACE_ID_OFFSET         = 0x84; // word
-    static const int QUALITY_OFFSET         = 0x86; // word
+    //static const int QUALITY_OFFSET         = 0x86; // word
 
     // index of functions in vtable
     static const int VTBL_FUNC_TYPE_ID    = 0; // static - no args

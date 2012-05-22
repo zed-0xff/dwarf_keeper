@@ -61,7 +61,11 @@ class Unit : public MemClass {
     }
 
     WearingVector* getWear(){
-        return (WearingVector*)((char*)this + WEAR_OFFSET);
+        if( GAME.unit_wearings_vector_offset){
+            return (WearingVector*)checked_vector(GAME.unit_wearings_vector_offset);
+        } else {
+            return NULL;
+        }
     }
 
     int getHappiness(){
@@ -200,14 +204,14 @@ class Unit : public MemClass {
     //////////////////////////////////////////////////////////////////
 
     private:
-    static const int       RACE_OFFSET =  0x44;
-    static const int    COORD_X_OFFSET =  0x48; // word
-    static const int    COORD_Y_OFFSET =  0x4a; // word
-    static const int    COORD_Z_OFFSET =  0x4c; // word
-    static const int      FLAGS_OFFSET =  0x8c;
-    static const int        SEX_OFFSET =  0xa4; // word
-    static const int         ID_OFFSET =  0xa8;
-    static const int       WEAR_OFFSET = 0x22c;
+    static const int        RACE_OFFSET =  0x44;
+    static const int     COORD_X_OFFSET =  0x48; // word
+    static const int     COORD_Y_OFFSET =  0x4a; // word
+    static const int     COORD_Z_OFFSET =  0x4c; // word
+    static const int       FLAGS_OFFSET =  0x8c;
+    static const int         SEX_OFFSET =  0xa4; // word
+    static const int          ID_OFFSET =  0xa8;
+    //static const int WEAR_VECTOR_OFFSET = 0x22c; // 34.07: 0x22c, 34.10: 0x230, 31.24: 0x204
     //static const int PHYS_ATTRS_OFFSET = 0x338; // array of 8 entries of PHYS_ATTR_SIZE each
     //static const int       SOUL_OFFSET = 0x604; // ptr, also there's a vector of one same soul ptr at +0x5f8
     //static const int  HAPPINESS_OFFSET = 0x6a4; // dword

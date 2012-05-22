@@ -415,6 +415,18 @@ void find_offscreen_renderer(){
     } \
 }
 
+#define FIND_SIMPLE_ARG(WHAT, TPL) { \
+    BinaryTemplate bt(TPL); \
+    if(char*p = bt.find(region_start, region_end)){ \
+        GAME.WHAT = bt.getResult(0); \
+        if( char* p1 = bt.find(p+1, region_end) ){ \
+            printf("[?] more than one occurency of " #WHAT "!: %p, %p\n", p, p1); \
+        } \
+    } else { \
+        printf("[!] " #WHAT " not found!\n"); \
+    } \
+}
+
 #define FIND_BY_CALL(WHAT, TPL) { \
     BinaryTemplate bt(TPL); \
     if(char*p = bt.find(region_start, region_end)){ \
@@ -507,6 +519,36 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
     find_soul_skills(region_start, region_end);
     find_happiness(region_start, region_end);
     find_phys_attrs_offset(region_start, region_end);
+
+    FIND_SIMPLE_ARG(unit_refs_vector_offset,
+        "55 "                        // push    ebp
+        "57 "                        // push    edi
+        "56 "                        // push    esi
+        "53 "                        // push    ebx
+        "31 DB "                     // xor     ebx, ebx
+        "83 EC 3C "                  // sub     esp, 3Ch
+        "8B 74 24 54 "               // mov     esi, [esp+4Ch+arg_4]
+        "8B 7C 24 50 "               // mov     edi, [esp+4Ch+arg_0]
+        "F7 46 0C 3A 0C E8 02 "      // test    dword ptr [esi+0Ch], 2E80C3Ah
+        "0F 85 82 00 00 00 "         // jnz     loc_80AE070
+        "8B 4E !! "                  // mov     ecx, [esi+24h]
+        "8B 46 !! "                  // mov     eax, [esi+28h]
+        "29 C8 "                     // sub     eax, ecx
+    );
+
+    FIND_SIMPLE_ARG(unit_wearings_vector_offset,
+        "55 "                        // push    ebp
+        "57 "                        // push    edi
+        "56 "                        // push    esi
+        "53 "                        // push    ebx
+        "83 EC 1C "                  // sub     esp, 1Ch
+        "8B 6C 24 30 "               // mov     ebp, [esp+30h]
+        "8B 9D !! !! 00 00 "         // mov     ebx, [ebp+230h]
+        "8B BD !! !! 00 00 "         // mov     edi, [ebp+234h]
+        "39 FB "                     // cmp     ebx, edi
+        "72 0C "                     // jb      short loc_8AB0E77
+        "EB 73 "                     // jmp     short loc_8AB0EE0
+    );
 
     find_root_screen();
     find_offscreen_renderer();

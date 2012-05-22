@@ -180,10 +180,12 @@ class UnitsController : Controller {
                         "<td title='flags'  class=flags>%x"
                         "<td title='coords' class=flags>(%d,%d,%d)"
                         "<td title='race'   class=flags><a href='?race=0x%x'>%x</a>"
+                        "<td title='dump'   class=flags><a href='/hexdump?offset=%p&size=0x%x&width=4'>%p</a>\n"
                 "</table>\n",
                 unit->getId(), unit->getHappiness(), unit->getFlags(),
                 c.x, c.y, c.z,
-                unit->getRace(), unit->getRace()
+                unit->getRace(), unit->getRace(),
+                unit, Unit::RECORD_SIZE, unit
         ); html += buf;
 
         html += "<div class=tables>\n";
@@ -313,13 +315,15 @@ class UnitsController : Controller {
             html += buf;
 
             int nItems = 0, totalValue = 0;
-            WearingVector*wv = unit->getWear();
-            WearingVector::iterator itr;
-            for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
-                Item* pItem = (*itr)->item;
-                totalValue += pItem->getValue();
-                nItems++;
+            if( WearingVector*wv = unit->getWear() ){
+                WearingVector::iterator itr;
+                for ( itr = wv->begin(); itr < wv->end(); ++itr ) {
+                    Item* pItem = (*itr)->item;
+                    totalValue += pItem->getValue();
+                    nItems++;
+                }
             }
+
             sprintf(buf, "<td class=r>%d</td><td class=r>%d<span class=currency>&#9788;</span></td>", nItems, totalValue);
             html += buf;
 
