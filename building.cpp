@@ -15,13 +15,28 @@ class Building : public MemClass {
 
     string getName(){
         string s;
-        ((func_t_pp)((void**)pvtbl)[VTBL_FUNC_GET_NAME])(this, &s);
-        if( s == "Zone" ){
+        if( GAME.bld_vtbl_getname_offset ){
+            ((func_t_pp)((void**)pvtbl)[ GAME.bld_vtbl_getname_offset/4 ])(this, &s);
+        }
+
+        if( s.empty() ){
+            char buf[0x100];
+            sprintf(buf, "#%d", getId());
+            return buf;
+        } else if( s == "Zone" ){
             char buf[0x100];
             sprintf(buf, "Activity Zone #%d", dw(ZONE_NUMBER_OFFSET));
             return buf;
         }
         return cp437_to_utf8(s);
+    }
+
+    int getValue(){
+        if( GAME.bld_vtbl_getname_offset ){
+            return ((func_t_p)((void**)pvtbl)[ GAME.bld_vtbl_getvalue_offset/4 ])(this);
+        } else {
+            return -1;
+        }
     }
 
     static const int FLAG_FORBIDDEN    =    1; // not passable door
@@ -75,19 +90,9 @@ class Building : public MemClass {
     }
 
     WearingVector* getItems(){
-        if( getFlag1B() && getFlag25() ){
-            return (WearingVector*)((char*)this + ITEMS_VECTOR_OFFSET);
-        } else {
-            return NULL;
-        }
-    }
-
-    int getFlag1B(){
-        return ((no_arg_func_t)((void**)pvtbl)[VTBL_FUNC_FLAG_1B])();
-    }
-
-    int getFlag25(){
-        return ((no_arg_func_t)((void**)pvtbl)[VTBL_FUNC_FLAG_25])();
+        // XXX not all buildings have items!
+        // there may be random data at vector offset!
+        return (WearingVector*)checked_vector(ITEMS_VECTOR_OFFSET);
     }
 
     Coords getCoords(){
@@ -101,7 +106,7 @@ class Building : public MemClass {
     //////////////////////////////////////////////////////////////////
     
     static BuildingsVector* getVector(){
-        return (BuildingsVector*)GAME.buildings_vector;
+        return (BuildingsVector*)checked_global_vector(GAME.buildings_vector);
     }
 
     static Building* find(int id){
@@ -127,11 +132,5 @@ class Building : public MemClass {
 
     static const int ZONE_FLAGS_OFFSET   = 0xd0; // only for zones
     static const int ZONE_NUMBER_OFFSET  = 0xe4; // only for zones
-
-
-    // index of functions in vtable
-    static const int VTBL_FUNC_FLAG_1B   = 0x1b; // if true then item has vector at ITEMS_VECTOR_OFFSET
-    static const int VTBL_FUNC_FLAG_25   = 0x25; // if true then item has vector at ITEMS_VECTOR_OFFSET
-    static const int VTBL_FUNC_GET_NAME  = 0x30;
 };
 

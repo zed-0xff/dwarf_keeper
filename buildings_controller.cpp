@@ -99,24 +99,28 @@ class BuildingsController : Controller {
             "<table class='buildings sortable'>\n"
                 "<tr>"
                     "<th>name"
+                    "<th class=sorttable_numeric>value"
                     "<th class=sorttable_numeric>items"
                     "<th>flags"
             "\n";
 
         for( int i=0; i<v->size(); i++){
-            WearingVector*wv = v->at(i)->getItems();
+            Building *bld = v->at(i);
+            WearingVector*wv = bld->getItems();
             sprintf(buf, 
                     "<tr>"
                         "<td>%s"
+                        "<td class=r>%d<span class=currency>&#9788;</span>"
                         "<td class=r>%d"
                         "\n",
-                    link_to_building(v->at(i)),
+                    link_to_building(bld),
+                    bld->getValue(),
                     wv ? wv->size() : 0
                     ); html += buf;
 
             if(strstr(buf, "Zone")){
                 html += "<td class='flags'>";
-                html += v->at(i)->zoneFlagsString();
+                html += bld->zoneFlagsString();
             }
         }
 

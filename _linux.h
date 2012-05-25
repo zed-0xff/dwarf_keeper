@@ -140,6 +140,17 @@ void find_buildings_vector(char* region_start, char* region_end){
         "8b 7a 10 "
         "8b 15 !! !! !! !!";        // arg1 - buildings_vector_end
 
+    const char tpl2[] =
+        "85 F6 "                    // test    esi, esi
+        "0F 84 E3 FE FF FF "        // jz      loc_81F5953
+        "B8 ?? ?? ?? ?? "           // mov     eax, (offset _ZNSs4_Rep20_S_empty_rep_storageE+0Ch)
+        "89 44 24 20 "              // mov     [esp+4Ch+bld_name], eax
+        "8B 06 "                    // mov     eax, [esi]
+        "8D 5C 24 20 "              // lea     ebx, [esp+4Ch+bld_name]
+        "89 5C 24 04 "              // mov     [esp+4Ch+var_48], ebx
+        "89 34 24 "                 // mov     [esp+4Ch+var_4C], esi
+        "FF 90 !! !! 00 00 ";       // call    dword ptr [eax+0C8h]  ; bld_getName
+
     BinaryTemplate bt(tpl);
     if(char*p = bt.find(region_start, region_end)){
         uint32_t v0 = bt.getResult(0);
@@ -148,9 +159,18 @@ void find_buildings_vector(char* region_start, char* region_end){
             GAME.buildings_vector = (void*)v0;
         } else {
             printf("[!] invalid buildings_vector values: %x, %x\n", v0, v1);
+            return;
         }
         if( bt.find(p+1, region_end) ){
             printf("[?] more than one occurency of tpl_buildings_vector!\n");
+            return;
+        }
+
+        if(GAME.buildings_vector){
+            BinaryTemplate bt2(tpl2);
+            if(char*p2 = bt2.find(p, p+0x1000)){
+                GAME.bld_vtbl_getname_offset = bt2.getResult(0);
+            }
         }
     } else {
             printf("[!] tpl_buildings_vector not found!\n");
@@ -548,6 +568,22 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
         "39 FB "                     // cmp     ebx, edi
         "72 0C "                     // jb      short loc_8AB0E77
         "EB 73 "                     // jmp     short loc_8AB0EE0
+    );
+
+    FIND_SIMPLE_ARG(bld_vtbl_getvalue_offset,
+        "55 "                           // push    ebp
+        "57 "                           // push    edi
+        "56 "                           // push    esi
+        "53 "                           // push    ebx
+        "83 EC 1C "                     // sub     esp, 1Ch
+        "8B 7C 24 30 "                  // mov     edi, [esp+2Ch+arg_0]
+        "8B 07 "                        // mov     eax, [edi]
+        "89 3C 24 "                     // mov     [esp+2Ch+var_2C], edi
+        "FF 90 !! !! 00 00 "            // call    dword ptr [eax+118h]    ; bld_getValue
+        "8B 5C 24 34 "                  // mov     ebx, [esp+2Ch+arg_4]
+        "85 DB "                        // test    ebx, ebx
+        "89 C5 "                        // mov     ebp, eax
+        "74 60 "                        // jz      short loc_8091FE0
     );
 
     find_root_screen();

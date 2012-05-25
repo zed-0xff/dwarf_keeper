@@ -23,7 +23,11 @@ static struct {
     uint32_t unit_phys_attrs_offset;
     uint32_t unit_refs_vector_offset;
     uint32_t unit_wearings_vector_offset;
+
     uint32_t soul_skills_offset;    // offset of skills vector in Soul
+
+    uint32_t bld_vtbl_getname_offset;
+    uint32_t bld_vtbl_getvalue_offset;
 
     // int cmp_item_size(int itemType, int itemSubType, int race_id_1, int race_id_2)
     void *cmp_item_size_func;

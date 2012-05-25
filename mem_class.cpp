@@ -21,7 +21,9 @@ class MemClass {
         return *(int32_t*)((char*)this+offset);
     }
 
-    void* checked_vector(int offset){
+    static const int DEFAULT_MAX_DIFF = 16777216; // 0x1000000
+
+    static void* checked_global_vector(void*offset, int max_diff=DEFAULT_MAX_DIFF){
         // in-memory storage of vector consists of 3 pointers:
         //  a) data start
         //  b) last used entry ptr
@@ -29,13 +31,18 @@ class MemClass {
         //
         // so, must be: a <= b <= c
         //
-        void **p = (void**)((char*)this+offset);
-        //printf("[d] checked_vector: %p, %p, %p\n", p[0], p[1], p[2]);
+        void **p = (void**)offset;
+
         if( p[0] && p[1] && p[2] && (p[0] <= p[1]) && (p[1] <= p[2]) ){
-            return p;
-        } else {
-            return NULL;
+            if( (max_diff == 0) || (((void**)p[2]-(void**)p[0]) <= max_diff) ){
+                return p;
+            }
         }
+        return NULL;
+    }
+
+    void* checked_vector(int offset, int max_diff=DEFAULT_MAX_DIFF){
+        return checked_global_vector((char*)this+offset, max_diff);
     }
 };
 
