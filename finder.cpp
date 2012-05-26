@@ -216,6 +216,13 @@ void process_file(const char*fname){
     memset(&GAME, 0, (char*)GAME_INFO_LAST_PTR - (char*)&GAME + 4 );
     os_init(region_start, region_end);
 
+    if(verbose){
+        int i = 0;
+        for(uint32_t*p = (uint32_t*)&GAME; p <= (uint32_t*)GAME_INFO_LAST_PTR; p++, i++){
+            printf("[d] %2d: %8x\n", i, *p);
+        }
+    }
+
     munmap_file(fd);
 }
 
@@ -228,6 +235,12 @@ int main(int argc, char *argv[]) {
             puts("I need a Dwarf Fortress binary filename(s) !");
             exit(1);
             break;
+
+        case 2:
+            verbose = 1;
+            process_file(argv[1]);
+            break;
+
         default:
             verbose = 0;
             for(int i=1; i<argc; i++){

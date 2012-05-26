@@ -110,6 +110,12 @@ table.dwarves .flags {
     font-family: monospace;
 }
 
+table.dwarves .job {
+    color: gray;
+    font-size: 10pt;
+    font-weight: normal;
+}
+
 .crosshair {
     width: 9px;
     height: 9px;

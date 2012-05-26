@@ -131,7 +131,7 @@ class BinaryTemplate {
                 switch( vtpl[i].type ){
                     case PART_DATA:
                         if(!memcmp(vtpl[i].data.data(), p1, vtpl[i].size)){
-                            if(debug) printf("[d] matched %d bytes at %p\n", vtpl[i].size, p1);
+                            if(debug>1) printf("[d] matched %d bytes at %p\n", vtpl[i].size, p1);
                             p1 += vtpl[i].size;
                         } else {
                             stop = true; // compare failed
@@ -156,7 +156,7 @@ class BinaryTemplate {
                 }
             }
             if( i >= vtpl.size() && !stop ){
-                if( debug) printf("[d] i=%d at %p\n", i, p);
+                if( debug ) printf("[d] i=%2d at %p\n", i, p);
                 // full match!
                 return p;
             }

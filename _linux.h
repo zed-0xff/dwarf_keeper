@@ -586,6 +586,32 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
         "74 60 "                        // jz      short loc_8091FE0
     );
 
+    FIND_SIMPLE_ARG(unit_job_offset,
+        "81 EC 3C 01 00 00 "            // sub     esp, 13Ch
+        "89 BC 24 34 01 00 00 "         // mov     [esp+13Ch+var_8], edi
+        "8B BC 24 40 01 00 00 "         // mov     edi, [esp+13Ch+pUnit]
+        "89 B4 24 30 01 00 00 "         // mov     [esp+13Ch+var_C], esi
+        "8B B4 24 44 01 00 00 "         // mov     esi, [esp+13Ch+arg_4]
+        "89 9C 24 2C 01 00 00 "         // mov     [esp+13Ch+var_10], ebx
+        "89 AC 24 38 01 00 00 "         // mov     [esp+13Ch+var_4], ebp
+        "8B 87 !! !! 00 00 "            // mov     eax, [edi+288h]
+        // ...
+        // mov [esp+4], ebp ; pString
+        // mov [esp+0], eax ; pJob
+        // call job_name
+    );
+
+    FIND_SIMPLE(job_name_func,
+        "56 "                           // push    esi
+        "53 "                           // push    ebx
+        "83 EC 34 "                     // sub     esp, 34h
+        "8B 5C 24 40 "                  // mov     ebx, [esp+3Ch+arg_0]
+        "8B 74 24 44 "                  // mov     esi, [esp+3Ch+pString]
+        "0F BF 43 08 "                  // movsx   eax, word ptr [ebx+8]
+        "3D AB 00 00 00 "               // cmp     eax, 0ABh
+        "74 60 "                        // jz      short loc_872F3E8
+    );
+
     find_root_screen();
     find_offscreen_renderer();
 

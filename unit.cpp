@@ -60,6 +60,18 @@ class Unit : public MemClass {
         return i(RACE_OFFSET);
     }
 
+    string getJob(){
+        if( !GAME.unit_job_offset ) return "Error: unit_job_offset is NULL";
+        if( !GAME.job_name_func   ) return "Error: job_name_func is NULL";
+
+        void *pJob = ptr(GAME.unit_job_offset);
+        if( !pJob ) return "";
+
+        string s;
+        ((func_t_pp)(GAME.job_name_func))(pJob,&s);
+        return s;
+    }
+
     WearingVector* getWear(){
         if( GAME.unit_wearings_vector_offset){
             return (WearingVector*)checked_vector(GAME.unit_wearings_vector_offset);

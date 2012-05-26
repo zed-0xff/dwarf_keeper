@@ -20,6 +20,9 @@ class MemClass {
     int32_t i(int offset){
         return *(int32_t*)((char*)this+offset);
     }
+    void* ptr(int offset){
+        return *(void**)((char*)this+offset);
+    }
 
     static const int DEFAULT_MAX_DIFF = 16777216; // 0x1000000
 

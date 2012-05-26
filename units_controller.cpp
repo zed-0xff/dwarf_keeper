@@ -6,6 +6,8 @@ class UnitsController : Controller {
     string want_grep;
     int race_filter;
 
+    uint32_t want_flags;
+
     public:
 
     int resp_code;
@@ -20,6 +22,8 @@ class UnitsController : Controller {
         } else {
             race_filter = request->get_int("race",-1);
         }
+
+        want_flags = req.get_uint("f", 0);
     }
 
     string to_html(){
@@ -176,16 +180,20 @@ class UnitsController : Controller {
                     "<tr id='unit_%d'>"
                         "<td>"
                             "<div class=crosshair></div>"
+                        "<td title='coords' class=flags>(%d,%d,%d)"
                         "<td title='Happiness' class=happiness>%d"
                         "<td title='flags'  class=flags>%x"
-                        "<td title='coords' class=flags>(%d,%d,%d)"
                         "<td title='race'   class=flags><a href='?race=0x%x'>%x</a>"
-                        "<td title='dump'   class=flags><a href='/hexdump?offset=%p&size=0x%x&width=4'>%p</a>\n"
+                        "<td title='dump'   class=flags><a href='/hexdump?offset=%p&size=0x%x&width=4'>%p</a>"
+                        "<td title='job'   class=flags>%s\n"
                 "</table>\n",
-                unit->getId(), unit->getHappiness(), unit->getFlags(),
+                unit->getId(), 
                 c.x, c.y, c.z,
+                unit->getHappiness(), 
+                unit->getFlags(),
                 unit->getRace(), unit->getRace(),
-                unit, Unit::RECORD_SIZE, unit
+                unit, Unit::RECORD_SIZE, unit,
+                unit->getJob().c_str()
         ); html += buf;
 
         html += "<div class=tables>\n";
@@ -282,11 +290,14 @@ class UnitsController : Controller {
             "<th class=sorttable_numeric title='total items value'>value "
             "<th class=sorttable_numeric title='greater is better'>happiness "
             "<th class=flags>flags"
+            "<th class=job>job"
             "\n";
 
         int idx = 0, nUnits = 0;
 
         while(Unit* unit=Unit::getNext(&idx, race_filter)){
+            if( want_flags && ((unit->getFlags() & want_flags) == 0 )) continue;
+
             s = unit->getName();
 
             if( !want_grep.empty() ){
@@ -299,9 +310,9 @@ class UnitsController : Controller {
             // dwarven babies have no useful info
             if(s.find(", Dwarven Baby") != string::npos) continue;
 
-            if(!str_replace(s, ", ", "</a></td><td class=prof>")){
+            if(!str_replace(s, ", ", "</a><td class=prof>")){
                 // no profession
-                s += "</a></td><td class=prof>";
+                s += "</a><td class=prof>";
             }
 
             sprintf(buf, 
@@ -324,14 +335,16 @@ class UnitsController : Controller {
                 }
             }
 
-            sprintf(buf, "<td class=r>%d</td><td class=r>%d<span class=currency>&#9788;</span></td>", nItems, totalValue);
+            sprintf(buf, "<td class=r>%d<td class=r>%d<span class=currency>&#9788;</span>", nItems, totalValue);
             html += buf;
 
-            sprintf(buf, "<td class=r>%d</td>", unit->getHappiness());
+            sprintf(buf, "<td class=r>%d", unit->getHappiness());
             html += buf;
 
-            sprintf(buf, "<td class='flags r'>%x</td>", unit->getFlags());
+            sprintf(buf, "<td class='flags r'>%x", unit->getFlags());
             html += buf;
+
+            html += "<td class=job>" + unit->getJob();
 
             html += "</tr>\n";
         }
