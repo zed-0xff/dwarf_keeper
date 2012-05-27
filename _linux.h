@@ -612,6 +612,8 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
         "74 60 "                        // jz      short loc_872F3E8
     );
 
+//    FIND_SIMPLE(unit_type_func, "83 ec 1c 89 ?? ?? ?? 8b ?? 24 20 89 ?? 24 14 ?? 05 00 00 00");
+
     find_root_screen();
     find_offscreen_renderer();
 

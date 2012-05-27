@@ -296,7 +296,8 @@ class UnitsController : Controller {
         int idx = 0, nUnits = 0;
 
         while(Unit* unit=Unit::getNext(&idx, race_filter)){
-            if( want_flags && ((unit->getFlags() & want_flags) == 0 )) continue;
+            uint32_t flags = unit->getFlags();
+            if( want_flags && ((flags & want_flags) == 0 )) continue;
 
             s = unit->getName();
 
@@ -308,7 +309,7 @@ class UnitsController : Controller {
             nUnits++;
 
             // dwarven babies have no useful info
-            if(s.find(", Dwarven Baby") != string::npos) continue;
+            //if(s.find(", Dwarven Baby") != string::npos) continue;
 
             if(!str_replace(s, ", ", "</a><td class=prof>")){
                 // no profession
@@ -341,10 +342,17 @@ class UnitsController : Controller {
             sprintf(buf, "<td class=r>%d", unit->getHappiness());
             html += buf;
 
-            sprintf(buf, "<td class='flags r'>%x", unit->getFlags());
+            sprintf(buf, "<td class='flags r'>%x", flags);
             html += buf;
 
             html += "<td class=job>" + unit->getJob();
+
+            if( flags & Unit::FLAG_CAGED ){
+                html += " <b>(CAGED)</b>";
+            }
+            if( flags & Unit::FLAG_CHAINED ){
+                html += " <b>(CHAINED)</b>";
+            }
 
             html += "</tr>\n";
         }

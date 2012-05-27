@@ -17,6 +17,7 @@ static struct {
     void *unit_name_func;
     void *unit_info_func;   // (pUnit, string*)
     void *unit_coords_func; // (pUnit, int *px, int *py, int *pz)
+//    void *unit_type_func;   // (pUnit)
 
     uint32_t unit_soul_offset;      // offset of Soul* in Unit
     uint32_t unit_happiness_offset;

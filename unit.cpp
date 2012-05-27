@@ -50,9 +50,11 @@ class Unit : public MemClass {
         return i(ID_OFFSET);
     }
 
-    static const int FLAG_DEAD = 2;
+    static const int FLAG_DEAD    = 2;
+    static const int FLAG_CAGED   = 0x2000000;
+    static const int FLAG_CHAINED = 0x8000000;
 
-    int getFlags(){
+    uint32_t getFlags(){
         return dw(FLAGS_OFFSET);
     }
 
@@ -65,12 +67,41 @@ class Unit : public MemClass {
         if( !GAME.job_name_func   ) return "Error: job_name_func is NULL";
 
         void *pJob = ptr(GAME.unit_job_offset);
-        if( !pJob ) return "";
+        if( !pJob ){
+            //return getType();
+            return "";
+        }
 
         string s;
         ((func_t_pp)(GAME.job_name_func))(pJob,&s);
         return s;
     }
+
+//    string getType(){
+//        if( !GAME.unit_type_func ) return "Error: unit_type_func is NULL";
+//        switch( int t = ((func_t_p)(GAME.unit_type_func))(this)){
+//            case  0: 
+//            case 11:
+//                     return "Wild Animal";
+//            case  1: 
+//            case 15:
+//                     return "Undead";
+//            case  5: 
+//            case 14:
+//                     return "Berserk";
+//            case  6: return "Invader";
+//            case  8: return "Diplomat";
+//            case  9: return "Underworld";
+//            case 10: return "Visitor";
+//            case 12: return "Guest";
+//            case 13: return "Resident";
+//            default: {
+//                     char buf[0x100];
+//                     sprintf(buf, "Hostile %d", t);
+//                     return buf;
+//                     }
+//        }
+//    }
 
     WearingVector* getWear(){
         if( GAME.unit_wearings_vector_offset){
