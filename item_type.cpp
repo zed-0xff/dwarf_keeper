@@ -58,6 +58,9 @@ class ItemType {
     static const int BACKPACKS              =  60;
     static const int QUIVERS                =  61;
     static const int CATAPULT_PARTS         =  62;
+    static const int BALLISTA_PARTS         =  63;
+    static const int SIEGE_AMMO             =  64;
+    static const int BALLISTA_ARROW_HEADS   =  65;
     static const int MECHANISMS             =  66;
     static const int TRAP_COMPONENTS        =  67;
     static const int DRINKS                 =  68;
@@ -139,6 +142,9 @@ class ItemType {
             case BACKPACKS             : return "backpacks";
             case QUIVERS               : return "quivers";
             case CATAPULT_PARTS        : return "catapult parts";
+            case BALLISTA_PARTS        : return "ballista parts";
+            case SIEGE_AMMO            : return "siege ammo";
+            case BALLISTA_ARROW_HEADS  : return "ballista arrow heads";
             case MECHANISMS            : return "mechanisms";
             case TRAP_COMPONENTS       : return "trap components";
             case DRINKS                : return "drinks";
