@@ -20,6 +20,7 @@ int diff_ms(timeval t1, timeval t2)
 LocalScreen     g_screen;
 RemoteScreen    g_remote_screen;
 pthread_mutex_t g_remote_screen_mutex;
+int             g_desktop_w=0, g_desktop_h=0; // local desktop size
 
 #include "fetcher.cpp"
 #include "drawer.cpp"
@@ -38,6 +39,12 @@ int main ( int argc, char *argv[] ){
     pthread_mutex_init(&g_remote_screen_mutex, NULL);
 
     SDL_Init(SDL_INIT_VIDEO);
+    
+    if( const SDL_VideoInfo* vinfo = SDL_GetVideoInfo() ){
+        g_desktop_w = vinfo->current_w;
+        g_desktop_h = vinfo->current_h;
+    }
+
     SDL_EnableUNICODE(1);
     SDL_WM_SetCaption("SDL", "SDL");
 

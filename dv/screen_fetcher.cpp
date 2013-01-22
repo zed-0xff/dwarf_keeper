@@ -23,7 +23,7 @@ class ScreenFetcher {
                 g_remote_screen.dl_size = dl;
                 pthread_mutex_unlock(&g_remote_screen_mutex);
             } else {
-                SDL_Delay(10);
+                SDL_Delay(50);
             }
         }
     }

@@ -137,11 +137,14 @@ class Drawer {
         int gameover = 0;
         uint32_t remote_last_hash = 0;
         bool remote_screen_ready = false, redraw = false;
+        int w, h;
 
         fetcher.fetch_screen(g_remote_screen);
         resize_tile(g_remote_screen.tile_width, g_remote_screen.tile_height);
 
-        g_screen.resize( g_remote_screen.pixelWidth(), g_remote_screen.pixelHeight() );
+        w = g_remote_screen.pixelWidth();
+        h = g_remote_screen.pixelHeight();
+        g_screen.resize( w, h );
 
         if(!g_screen.surface){
             error("SDL_SetVideoMode fail");
@@ -150,6 +153,21 @@ class Drawer {
         while(!gameover){
             SDL_Event event;
             vector <SDL_Event> events_queue;
+
+            if( g_desktop_w ){
+                if( w && h && (w > g_desktop_w || h > g_desktop_h) ){
+                    // resize remote screen to fit local
+                    printf("[d] resizing remote to %dx%d\n", g_desktop_w, g_desktop_h);
+                    event.type = SDL_VIDEORESIZE;
+                    event.resize.w = g_desktop_w;
+                    event.resize.h = g_desktop_h;
+                    events_queue.push_back(event);
+                    redraw = true;
+                }
+                g_desktop_w = 0; // also a flag
+            }
+
+            SDL_WaitEvent(NULL);
 
             while (SDL_PollEvent(&event)) {
               switch (event.type) {
