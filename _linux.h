@@ -540,7 +540,7 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
     find_happiness(region_start, region_end);
     find_phys_attrs_offset(region_start, region_end);
 
-    FIND_SIMPLE_ARG(unit_refs_vector_offset,
+    FIND_SIMPLE_ARG(item_refs_vector_offset,
         "55 "                        // push    ebp
         "57 "                        // push    edi
         "56 "                        // push    esi
@@ -613,6 +613,28 @@ void os_init( char*region_start = NULL, char*region_end = NULL ){
     );
 
 //    FIND_SIMPLE(unit_type_func, "83 ec 1c 89 ?? ?? ?? 8b ?? 24 20 89 ?? 24 14 ?? 05 00 00 00");
+
+    FIND_SIMPLE_ARG(item_id_offset,
+        "55 "                           // push    ebp
+        "8B 0D ?? ?? ?? ?? "            // mov     ecx, ds:items_vector_end
+        "8B 2D ?? ?? ?? ?? "            // mov     ebp, ds:items_vector
+        "57 "                           // push    edi
+        "89 C7 "                        // mov     edi, eax
+        "56 "                           // push    esi
+        "31 C0 "                        // xor     eax, eax
+        "53 "                           // push    ebx
+        "29 E9 "                        // sub     ecx, ebp
+        "C1 F9 02 "                     // sar     ecx, 2
+        "74 4D "                        // jz      short loc_80559F8
+        "83 FF FF "                     // cmp     edi, 0FFFFFFFFh
+        "74 48 "                        // jz      short loc_80559F8
+        "49 "                           // dec     ecx
+        "78 45 "                        // js      short loc_80559F8
+        "89 CA "                        // mov     edx, ecx
+        "D1 FA "                        // sar     edx, 1
+        "8B 44 95 00 "                  // mov     eax, [ebp+edx*4+0]
+        "8B 70 !! "                     // mov     esi, [eax+18h]          ; item id offset
+    );
 
     find_root_screen();
     find_offscreen_renderer();

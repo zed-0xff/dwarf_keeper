@@ -111,7 +111,11 @@ class Item : public MemClass {
     }
 
     int getId(){
-        return dw(ID_OFFSET);
+        if( GAME.item_id_offset ){
+            return dw( GAME.item_id_offset );
+        } else {
+            return -1;
+        }
     }
 
     int getTypeId(){
@@ -129,8 +133,8 @@ class Item : public MemClass {
     }
 
     int getRaceId(){
-        if( GAME.unit_refs_vector_offset ){
-            return w(RACE_ID_OFFSET - 0x24 + GAME.unit_refs_vector_offset);
+        if( GAME.item_refs_vector_offset ){
+            return w(RACE_ID_OFFSET - 0x24 + GAME.item_refs_vector_offset);
         } else {
             return w(RACE_ID_OFFSET);
         }
@@ -144,8 +148,8 @@ class Item : public MemClass {
     static const int WEAR_XX = 3;
 
     int getWear(){
-        if( GAME.unit_refs_vector_offset ){
-            return w(WEAR_OFFSET - 0x24 + GAME.unit_refs_vector_offset);
+        if( GAME.item_refs_vector_offset ){
+            return w(WEAR_OFFSET - 0x24 + GAME.item_refs_vector_offset);
         } else {
             return w(WEAR_OFFSET);
         }
@@ -170,8 +174,8 @@ class Item : public MemClass {
     }
 
     RefsVector* getRefs(){
-        if( GAME.unit_refs_vector_offset ){
-            return (RefsVector*)checked_vector(GAME.unit_refs_vector_offset);
+        if( GAME.item_refs_vector_offset ){
+            return (RefsVector*)checked_vector(GAME.item_refs_vector_offset);
         } else {
             return NULL;
         }
@@ -208,7 +212,7 @@ class Item : public MemClass {
     static const int COORD_Y_OFFSET         = 0x06; // word
     static const int COORD_Z_OFFSET         = 0x08; // word
     static const int FLAGS_OFFSET           = 0x0c;
-    static const int ID_OFFSET              = 0x14;
+    //static const int ID_OFFSET              = 0x14; // 0x14 for 34.07, 0x18 for 34.10
     //static const int REFS_VECTOR_OFFSET     = 0x24; // item references vector, 3x4 bytes
     //static const int AMOUNT_OFFSET          = 0x58; // 20 in "iron bolts [20]"
     static const int WEAR_OFFSET            = 0x6c; // word - item condition
